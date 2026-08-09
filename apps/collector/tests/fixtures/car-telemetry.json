@@ -1,0 +1,17 @@
+{
+  "packetId": 6,
+  "packetSize": 1347,
+  "playerIndex": 3,
+  "sessionUid": "123456789012345",
+  "frameIdentifier": 1042,
+  "speedKph": 287,
+  "throttle": 0.84,
+  "steer": -0.18,
+  "brake": 0.12,
+  "clutch": 0,
+  "gear": 7,
+  "rpm": 11980,
+  "drs": 1,
+  "tyreTemperatures": [92, 93, 91, 94],
+  "surfaceType": [0, 0, 0, 0]
+}

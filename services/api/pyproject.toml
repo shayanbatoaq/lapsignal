@@ -1,0 +1,46 @@
+[project]
+name = "lapsignal-api"
+version = "0.1.0a1"
+description = "LapSignal local telemetry API and deterministic analytics engine"
+requires-python = ">=3.12"
+dependencies = [
+  "alembic>=1.16",
+  "duckdb>=1.3",
+  "fastapi>=0.116",
+  "numpy>=2.3",
+  "openai-agents>=0.8",
+  "polars>=1.31",
+  "pyarrow>=21",
+  "pydantic>=2.11",
+  "pydantic-settings>=2.10",
+  "scipy>=1.16",
+  "sqlalchemy>=2.0.41",
+  "uvicorn[standard]>=0.35"
+]
+
+[dependency-groups]
+dev = [
+  "httpx>=0.28",
+  "pytest>=8.4",
+  "pytest-asyncio>=1.1",
+  "ruff>=0.12"
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["lapsignal"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+ignore = ["E501"]

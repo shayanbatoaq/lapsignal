@@ -1,0 +1,11 @@
+{
+  "product": "0.1.0-alpha.1",
+  "build": 1,
+  "web": "0.1.0-alpha.1",
+  "api": "0.1.0-alpha.1",
+  "collector": "0.1.0-alpha.1",
+  "telemetry_schema": 1,
+  "f1_2021_adapter": "0.1.0",
+  "analysis_pipeline": "0.1.0",
+  "coach_prompt": "coach-v1"
+}

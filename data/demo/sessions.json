@@ -1,0 +1,1273 @@
+[
+  {
+    "id": "f1-controller-silverstone",
+    "title": "Silverstone controller race simulation",
+    "session_uid": "demo-f1-controller-silverstone",
+    "game_id": "f1_2021",
+    "game_label": "F1 2021",
+    "track_id": "silverstone",
+    "track_name": "Silverstone",
+    "track_length_m": 5891.0,
+    "car_id": "formula-2021",
+    "car_class": "Formula",
+    "session_type": "Race simulation",
+    "input_device": "controller",
+    "started_at": "2026-08-08T18:42:00+00:00",
+    "completed_at": "2026-08-08T19:37:00+00:00",
+    "demo_data": true,
+    "analysis_status": "analyzed",
+    "provenance": {
+      "product_version": "0.1.0-alpha.1",
+      "build": 1,
+      "telemetry_schema_version": 1,
+      "adapter_version": "0.1.0",
+      "collector_version": "0.1.0-alpha.1",
+      "analysis_version": "0.1.0",
+      "prompt_version": "coach-v1",
+      "git_sha": "local",
+      "generated_at": "2026-08-09T00:00:00Z",
+      "demo_seed": 20210809
+    },
+    "metrics": {
+      "pace": {
+        "clean_laps": 11,
+        "best_lap_ms": 89696,
+        "median_lap_ms": 90136,
+        "mean_lap_ms": 90269.8,
+        "std_dev_ms": 497.1,
+        "consistency_score": 94.8,
+        "theoretical_best_ms": 89374,
+        "pace_degradation_ms_per_lap": 48.5,
+        "limitations": []
+      },
+      "stint": {
+        "pace_degradation_ms_per_lap": 48.5,
+        "phase_consistency": {
+          "opening": 94.8,
+          "middle": 93.8,
+          "closing": 92.5
+        },
+        "tyre_wear_correlation": 0.287,
+        "increasing_error_frequency": false,
+        "long_run_stability_score": 93.6,
+        "limitations": []
+      },
+      "braking": [
+        {
+          "zone_id": "zone-1",
+          "brake_onset_distance_m": 592.4,
+          "initial_pressure": 0.776,
+          "peak_pressure": 0.98,
+          "duration_s": 1.007,
+          "release_smoothness": 0.5,
+          "trail_braking_proxy": 0.859,
+          "minimum_speed_kph": 268.2
+        },
+        {
+          "zone_id": "zone-2",
+          "brake_onset_distance_m": 1513.9,
+          "initial_pressure": 0.467,
+          "peak_pressure": 0.941,
+          "duration_s": 1.51,
+          "release_smoothness": 0.5,
+          "trail_braking_proxy": 0.753,
+          "minimum_speed_kph": 237.3
+        },
+        {
+          "zone_id": "zone-3",
+          "brake_onset_distance_m": 2599.9,
+          "initial_pressure": 0.829,
+          "peak_pressure": 0.972,
+          "duration_s": 1.007,
+          "release_smoothness": 0.5,
+          "trail_braking_proxy": 0.824,
+          "minimum_speed_kph": 242.5
+        },
+        {
+          "zone_id": "zone-4",
+          "brake_onset_distance_m": 3653.1,
+          "initial_pressure": 0.743,
+          "peak_pressure": 0.98,
+          "duration_s": 1.007,
+          "release_smoothness": 0.5,
+          "trail_braking_proxy": 0.875,
+          "minimum_speed_kph": 260.4
+        },
+        {
+          "zone_id": "zone-5",
+          "brake_onset_distance_m": 4706.2,
+          "initial_pressure": 0.642,
+          "peak_pressure": 0.965,
+          "duration_s": 1.51,
+          "release_smoothness": 0.5,
+          "trail_braking_proxy": 0.619,
+          "minimum_speed_kph": 237.3
+        },
+        {
+          "zone_id": "zone-6",
+          "brake_onset_distance_m": 5397.3,
+          "initial_pressure": 0.391,
+          "peak_pressure": 0.963,
+          "duration_s": 1.51,
+          "release_smoothness": 0.5,
+          "trail_braking_proxy": 0.8,
+          "minimum_speed_kph": 225.4
+        }
+      ],
+      "throttle": {
+        "pickup_distance_m": 5561.89,
+        "time_to_full_s": 1.006,
+        "modulation": 1.1
+      },
+      "steering": {
+        "smoothness": 0.429,
+        "correction_count": 113,
+        "abrupt_changes": 27,
+        "limitation": "Input smoothness is device-aware and is not a vehicle-balance diagnosis."
+      }
+    },
+    "findings": [
+      {
+        "id": "f1-controller-silverstone-consistency",
+        "type": "lap_variation",
+        "priority": 1,
+        "severity": "medium",
+        "confidence": 0.91,
+        "title": "Stabilize the repeatable lap first",
+        "plain_language": "Your clean-lap spread is wider than the strongest phase of this stint.",
+        "recommended_action": "Run five laps at a controlled pace and repeat the same brake markers before adding pace.",
+        "evidence": [
+          {
+            "metric": "consistency_score",
+            "value": 94.8,
+            "unit": "score_0_100",
+            "reference_value": 99.0,
+            "delta": -4.2,
+            "lap_numbers": [
+              1,
+              2,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12
+            ],
+            "zone_id": null
+          }
+        ],
+        "limitations": [],
+        "analysis_version": "0.1.0"
+      }
+    ],
+    "analysis_version": "0.1.0",
+    "report": {
+      "id": "report-f1-controller-silverstone",
+      "session_id": "f1-controller-silverstone",
+      "mode": "rule_based",
+      "label": "Rule-based coach",
+      "session_summary": "12 laps analyzed; best clean lap 89696 ms with a 94.8/100 consistency score.",
+      "top_priorities": [
+        {
+          "title": "Stabilize the repeatable lap first",
+          "action": "Run five laps at a controlled pace and repeat the same brake markers before adding pace.",
+          "confidence": 0.91,
+          "evidence_ids": [
+            "f1-controller-silverstone-consistency"
+          ]
+        }
+      ],
+      "what_improved": "The most repeatable clean laps preserve progressive control inputs after minimum speed.",
+      "what_regressed": "No material regression is supported by this stint.",
+      "next_stint_plan": "Complete five controlled laps: repeat the same initial brake markers, release progressively, and review only after the stint.",
+      "confidence_summary": "High confidence in recorded lap-time metrics; technique findings use only comparable clean laps.",
+      "limitations": [],
+      "evidence_references": [
+        "f1-controller-silverstone-consistency"
+      ],
+      "provenance": {
+        "fallback_used": true,
+        "model_id": null,
+        "prompt_version": "coach-v1",
+        "analysis_version": "0.1.0",
+        "finding_ids": [
+          "f1-controller-silverstone-consistency"
+        ],
+        "tool_calls": [],
+        "token_usage": null,
+        "latency_ms": 0,
+        "timestamp": "2026-08-09T00:00:00Z",
+        "response_status": "complete",
+        "git_sha": "local"
+      }
+    },
+    "laps": [
+      {
+        "id": "f1-controller-silverstone-lap-1",
+        "lap_number": 1,
+        "lap_time_ms": 90351,
+        "sector_times_ms": [
+          28849,
+          31915,
+          29587
+        ],
+        "valid": true,
+        "classification": "clean",
+        "quality_score": 0.95,
+        "tyre_wear_pct": 5.75
+      },
+      {
+        "id": "f1-controller-silverstone-lap-2",
+        "lap_number": 2,
+        "lap_time_ms": 90136,
+        "sector_times_ms": [
+          28570,
+          31936,
+          29630
+        ],
+        "valid": true,
+        "classification": "clean",
+        "quality_score": 0.95,
+        "tyre_wear_pct": 7.0
+      },
+      {
+        "id": "f1-controller-silverstone-lap-3",
+        "lap_number": 3,
+        "lap_time_ms": 90747,
+        "sector_times_ms": [
+          28734,
+          32037,
+          29976
+        ],
+        "valid": false,
+        "classification": "invalid",
+        "quality_score": 0.35,
+        "tyre_wear_pct": 8.25
+      },
+      {
+        "id": "f1-controller-silverstone-lap-4",
+        "lap_number": 4,
+        "lap_time_ms": 89696,
+        "sector_times_ms": [
+          28592,
+          31592,
+          29512
+        ],
+        "valid": true,
+        "classification": "clean",
+        "quality_score": 0.95,
+        "tyre_wear_pct": 9.5
+      },
+      {
+        "id": "f1-controller-silverstone-lap-5",
+        "lap_number": 5,
+        "lap_time_ms": 89805,
+        "sector_times_ms": [
+          28562,
+          31784,
+          29459
+        ],
+        "valid": true,
+        "classification": "clean",
+        "quality_score": 0.95,
+        "tyre_wear_pct": 10.75
+      },
+      {
+        "id": "f1-controller-silverstone-lap-6",
+        "lap_number": 6,
+        "lap_time_ms": 90360,
+        "sector_times_ms": [
+          28715,
+          32086,
+          29559
+        ],
+        "valid": true,
+        "classification": "clean",
+        "quality_score": 0.95,
+        "tyre_wear_pct": 12.0
+      },
+      {
+        "id": "f1-controller-silverstone-lap-7",
+        "lap_number": 7,
+        "lap_time_ms": 90106,
+        "sector_times_ms": [
+          28622,
+          31963,
+          29521
+        ],
+        "valid": true,
+        "classification": "clean",
+        "quality_score": 0.95,
+        "tyre_wear_pct": 13.25
+      },
+      {
+        "id": "f1-controller-silverstone-lap-8",
+        "lap_number": 8,
+        "lap_time_ms": 90125,
+        "sector_times_ms": [
+          28520,
+          31880,
+          29725
+        ],
+        "valid": true,
+        "classification": "clean",
+        "quality_score": 0.95,
+        "tyre_wear_pct": 14.5
+      },
+      {
+        "id": "f1-controller-silverstone-lap-9",
+        "lap_number": 9,
+        "lap_time_ms": 91648,
+        "sector_times_ms": [
+          29116,
+          32624,
+          29908
+        ],
+        "valid": true,
+        "classification": "anomalous",
+        "quality_score": 0.95,
+        "tyre_wear_pct": 15.75
+      },
+      {
+        "id": "f1-controller-silverstone-lap-10",
+        "lap_number": 10,
+        "lap_time_ms": 89937,
+        "sector_times_ms": [
+          28728,
+          31947,
+          29262
+        ],
+        "valid": true,
+        "classification": "clean",
+        "quality_score": 0.95,
+        "tyre_wear_pct": 17.0
+      },
+      {
+        "id": "f1-controller-silverstone-lap-11",
+        "lap_number": 11,
+        "lap_time_ms": 90555,
+        "sector_times_ms": [
+          28756,
+          32037,
+          29762
+        ],
+        "valid": true,
+        "classification": "clean",
+        "quality_score": 0.95,
+        "tyre_wear_pct": 18.25
+      },
+      {
+        "id": "f1-controller-silverstone-lap-12",
+        "lap_number": 12,
+        "lap_time_ms": 90249,
+        "sector_times_ms": [
+          28648,
+          31940,
+          29661
+        ],
+        "valid": true,
+        "classification": "clean",
+        "quality_score": 0.95,
+        "tyre_wear_pct": 19.5
+      }
+    ]
+  },
+  {
+    "id": "gt3-spa-practice",
+    "title": "GT3 technique practice",
+    "session_uid": "demo-gt3-spa-practice",
+    "game_id": "generic_gt3",
+    "game_label": "GT3 simulator",
+    "track_id": "ardenne-circuit",
+    "track_name": "Ardenne Circuit",
+    "track_length_m": 7004.0,
+    "car_id": "gt3-demo",
+    "car_class": "GT3",
+    "session_type": "Practice",
+    "input_device": "wheel",
+    "started_at": "2026-08-05T16:10:00+00:00",
+    "completed_at": "2026-08-05T17:05:00+00:00",
+    "demo_data": true,
+    "analysis_status": "analyzed",
+    "provenance": {
+      "product_version": "0.1.0-alpha.1",
+      "build": 1,
+      "telemetry_schema_version": 1,
+      "adapter_version": "0.1.0",
+      "collector_version": "0.1.0-alpha.1",
+      "analysis_version": "0.1.0",
+      "prompt_version": "coach-v1",
+      "git_sha": "local",
+      "generated_at": "2026-08-09T00:00:00Z",
+      "demo_seed": 20210810
+    },
+    "metrics": {
+      "pace": {
+        "clean_laps": 13,
+        "best_lap_ms": 138368,
+        "median_lap_ms": 139071,
+        "mean_lap_ms": 139154.4,
+        "std_dev_ms": 645.0,
+        "consistency_score": 92.2,
+        "theoretical_best_ms": 137911,
+        "pace_degradation_ms_per_lap": -109.0,
+        "limitations": []
+      },
+      "stint": {
+        "pace_degradation_ms_per_lap": -109.0,
+        "phase_consistency": {
+          "opening": 95.7,
+          "middle": 97.4,
+          "closing": 98.1
+        },
+        "tyre_wear_correlation": null,
+        "increasing_error_frequency": false,
+        "long_run_stability_score": 92.2,
+        "limitations": [
+          "Tyre-wear correlation is unavailable because the channel is missing or sparse."
+        ]
+      },
+      "braking": [
+        {
+          "zone_id": "zone-1",
+          "brake_onset_distance_m": 665.2,
+          "initial_pressure": 0.498,
+          "peak_pressure": 0.966,
+          "duration_s": 2.326,
+          "release_smoothness": 0.5,
+          "trail_braking_proxy": 0.833,
+          "minimum_speed_kph": 269.9
+        },
+        {
+          "zone_id": "zone-2",
+          "brake_onset_distance_m": 1799.9,
+          "initial_pressure": 0.661,
+          "peak_pressure": 0.955,
+          "duration_s": 2.326,
+          "release_smoothness": 0.5,
+          "trail_braking_proxy": 0.725,
+          "minimum_speed_kph": 236.3
+        },
+        {
+          "zone_id": "zone-3",
+          "brake_onset_distance_m": 3052.0,
+          "initial_pressure": 0.564,
+          "peak_pressure": 0.948,
+          "duration_s": 2.326,
+          "release_smoothness": 0.5,
+          "trail_braking_proxy": 0.795,
+          "minimum_speed_kph": 241.9
+        },
+        {
+          "zone_id": "zone-4",
+          "brake_onset_distance_m": 4304.1,
+          "initial_pressure": 0.46,
+          "peak_pressure": 0.973,
+          "duration_s": 2.325,
+          "release_smoothness": 0.5,
+          "trail_braking_proxy": 0.853,
+          "minimum_speed_kph": 262.8
+        },
+        {
+          "zone_id": "zone-5",
+          "brake_onset_distance_m": 5556.2,
+          "initial_pressure": 0.354,
+          "peak_pressure": 0.98,
+          "duration_s": 3.1,
+          "release_smoothness": 0.434,
+          "trail_braking_proxy": 0.596,
+          "minimum_speed_kph": 235.2
+        },
+        {
+          "zone_id": "zone-6",
+          "brake_onset_distance_m": 6417.1,
+          "initial_pressure": 0.6,
+          "peak_pressure": 0.935,
+          "duration_s": 2.326,
+          "release_smoothness": 0.5,
+          "trail_braking_proxy": 0.771,
+          "minimum_speed_kph": 227.0
+        }
+      ],
+      "throttle": {
+        "pickup_distance_m": 6612.72,
+        "time_to_full_s": 1.551,
+        "modulation": 1.01
+      },
+      "steering": {
+        "smoothness": 0.434,
+        "correction_count": 109,
+        "abrupt_changes": 29,
+        "limitation": "Input smoothness is device-aware and is not a vehicle-balance diagnosis."
+      }
+    },
+    "findings": [
+      {
+        "id": "gt3-spa-practice-consistency",
+        "type": "lap_variation",
+        "priority": 1,
+        "severity": "medium",
+        "confidence": 0.91,
+        "title": "Stabilize the repeatable lap first",
+        "plain_language": "Your clean-lap spread is wider than the strongest phase of this stint.",
+        "recommended_action": "Run five laps at a controlled pace and repeat the same brake markers before adding pace.",
+        "evidence": [
+          {
+            "metric": "consistency_score",
+            "value": 92.2,
+            "unit": "score_0_100",
+            "reference_value": 99.0,
+            "delta": -6.8,
+            "lap_numbers": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12,
+              13,
+              14
+            ],
+            "zone_id": null
+          }
+        ],
+        "limitations": [],
+        "analysis_version": "0.1.0"
+      }
+    ],
+    "analysis_version": "0.1.0",
+    "report": {
+      "id": "report-gt3-spa-practice",
+      "session_id": "gt3-spa-practice",
+      "mode": "rule_based",
+      "label": "Rule-based coach",
+      "session_summary": "14 laps analyzed; best clean lap 138368 ms with a 92.2/100 consistency score.",
+      "top_priorities": [
+        {
+          "title": "Stabilize the repeatable lap first",
+          "action": "Run five laps at a controlled pace and repeat the same brake markers before adding pace.",
+          "confidence": 0.91,
+          "evidence_ids": [
+            "gt3-spa-practice-consistency"
+          ]
+        }
+      ],
+      "what_improved": "The most repeatable clean laps preserve progressive control inputs after minimum speed.",
+      "what_regressed": "No material regression is supported by this stint.",
+      "next_stint_plan": "Complete five controlled laps: repeat the same initial brake markers, release progressively, and review only after the stint.",
+      "confidence_summary": "High confidence in recorded lap-time metrics; technique findings use only comparable clean laps.",
+      "limitations": [
+        "Tyre-wear correlation is unavailable because the channel is missing or sparse."
+      ],
+      "evidence_references": [
+        "gt3-spa-practice-consistency"
+      ],
+      "provenance": {
+        "fallback_used": true,
+        "model_id": null,
+        "prompt_version": "coach-v1",
+        "analysis_version": "0.1.0",
+        "finding_ids": [
+          "gt3-spa-practice-consistency"
+        ],
+        "tool_calls": [],
+        "token_usage": null,
+        "latency_ms": 0,
+        "timestamp": "2026-08-09T00:00:00Z",
+        "response_status": "complete",
+        "git_sha": "local"
+      }
+    },
+    "laps": [
+      {
+        "id": "gt3-spa-practice-lap-1",
+        "lap_number": 1,
+        "lap_time_ms": 140102,
+        "sector_times_ms": [
+          44453,
+          49747,
+          45902
+        ],
+        "valid": true,
+        "classification": "clean",
+        "quality_score": 0.95,
+        "tyre_wear_pct": null
+      },
+      {
+        "id": "gt3-spa-practice-lap-2",
+        "lap_number": 2,
+        "lap_time_ms": 139905,
+        "sector_times_ms": [
+          44740,
+          49562,
+          45603
+        ],
+        "valid": true,
+        "classification": "clean",
+        "quality_score": 0.95,
+        "tyre_wear_pct": null
+      },
+      {
+        "id": "gt3-spa-practice-lap-3",
+        "lap_number": 3,
+        "lap_time_ms": 139562,
+        "sector_times_ms": [
+          44441,
+          49656,
+          45465
+        ],
+        "valid": true,
+        "classification": "clean",
+        "quality_score": 0.95,
+        "tyre_wear_pct": null
+      },
+      {
+        "id": "gt3-spa-practice-lap-4",
+        "lap_number": 4,
+        "lap_time_ms": 139350,
+        "sector_times_ms": [
+          44473,
+          49080,
+          45797
+        ],
+        "valid": true,
+        "classification": "clean",
+        "quality_score": 0.95,
+        "tyre_wear_pct": null
+      },
+      {
+        "id": "gt3-spa-practice-lap-5",
+        "lap_number": 5,
+        "lap_time_ms": 139092,
+        "sector_times_ms": [
+          44304,
+          49476,
+          45312
+        ],
+        "valid": true,
+        "classification": "clean",
+        "quality_score": 0.95,
+        "tyre_wear_pct": null
+      },
+      {
+        "id": "gt3-spa-practice-lap-6",
+        "lap_number": 6,
+        "lap_time_ms": 139735,
+        "sector_times_ms": [
+          44197,
+          49675,
+          45863
+        ],
+        "valid": false,
+        "classification": "invalid",
+        "quality_score": 0.35,
+        "tyre_wear_pct": null
+      },
+      {
+        "id": "gt3-spa-practice-lap-7",
+        "lap_number": 7,
+        "lap_time_ms": 139071,
+        "sector_times_ms": [
+          43975,
+          49003,
+          46093
+        ],
+        "valid": true,
+        "classification": "clean",
+        "quality_score": 0.95,
+        "tyre_wear_pct": null
+      },
+      {
+        "id": "gt3-spa-practice-lap-8",
+        "lap_number": 8,
+        "lap_time_ms": 138763,
+        "sector_times_ms": [
+          43992,
+          49147,
+          45624
+        ],
+        "valid": true,
+        "classification": "clean",
+        "quality_score": 0.95,
+        "tyre_wear_pct": null
+      },
+      {
+        "id": "gt3-spa-practice-lap-9",
+        "lap_number": 9,
+        "lap_time_ms": 138722,
+        "sector_times_ms": [
+          44344,
+          49093,
+          45285
+        ],
+        "valid": true,
+        "classification": "clean",
+        "quality_score": 0.95,
+        "tyre_wear_pct": null
+      },
+      {
+        "id": "gt3-spa-practice-lap-10",
+        "lap_number": 10,
+        "lap_time_ms": 138754,
+        "sector_times_ms": [
+          44065,
+          49247,
+          45442
+        ],
+        "valid": true,
+        "classification": "clean",
+        "quality_score": 0.95,
+        "tyre_wear_pct": null
+      },
+      {
+        "id": "gt3-spa-practice-lap-11",
+        "lap_number": 11,
+        "lap_time_ms": 140423,
+        "sector_times_ms": [
+          44381,
+          49776,
+          46266
+        ],
+        "valid": true,
+        "classification": "anomalous",
+        "quality_score": 0.95,
+        "tyre_wear_pct": null
+      },
+      {
+        "id": "gt3-spa-practice-lap-12",
+        "lap_number": 12,
+        "lap_time_ms": 138368,
+        "sector_times_ms": [
+          43730,
+          48993,
+          45645
+        ],
+        "valid": true,
+        "classification": "clean",
+        "quality_score": 0.95,
+        "tyre_wear_pct": null
+      },
+      {
+        "id": "gt3-spa-practice-lap-13",
+        "lap_number": 13,
+        "lap_time_ms": 138490,
+        "sector_times_ms": [
+          43971,
+          49107,
+          45412
+        ],
+        "valid": true,
+        "classification": "clean",
+        "quality_score": 0.95,
+        "tyre_wear_pct": null
+      },
+      {
+        "id": "gt3-spa-practice-lap-14",
+        "lap_number": 14,
+        "lap_time_ms": 138405,
+        "sector_times_ms": [
+          44041,
+          49176,
+          45188
+        ],
+        "valid": true,
+        "classification": "clean",
+        "quality_score": 0.95,
+        "tyre_wear_pct": null
+      }
+    ]
+  },
+  {
+    "id": "hypercar-endurance-stint",
+    "title": "Hypercar long-run development",
+    "session_uid": "demo-hypercar-endurance-stint",
+    "game_id": "synthetic_endurance",
+    "game_label": "Endurance prototype",
+    "track_id": "la-sarthe-inspired",
+    "track_name": "Mulsanne Endurance Loop",
+    "track_length_m": 13626.0,
+    "car_id": "hypercar-demo",
+    "car_class": "Hypercar",
+    "session_type": "Endurance stint",
+    "input_device": "controller",
+    "started_at": "2026-07-29T19:30:00+00:00",
+    "completed_at": "2026-07-29T20:25:00+00:00",
+    "demo_data": true,
+    "analysis_status": "analyzed",
+    "provenance": {
+      "product_version": "0.1.0-alpha.1",
+      "build": 1,
+      "telemetry_schema_version": 1,
+      "adapter_version": "0.1.0",
+      "collector_version": "0.1.0-alpha.1",
+      "analysis_version": "0.1.0",
+      "prompt_version": "coach-v1",
+      "git_sha": "local",
+      "generated_at": "2026-08-09T00:00:00Z",
+      "demo_seed": 20210811
+    },
+    "metrics": {
+      "pace": {
+        "clean_laps": 14,
+        "best_lap_ms": 211434,
+        "median_lap_ms": 212179,
+        "mean_lap_ms": 212480.9,
+        "std_dev_ms": 728.4,
+        "consistency_score": 95.6,
+        "theoretical_best_ms": 210623,
+        "pace_degradation_ms_per_lap": 146.5,
+        "limitations": []
+      },
+      "stint": {
+        "pace_degradation_ms_per_lap": 146.5,
+        "phase_consistency": {
+          "opening": 98.5,
+          "middle": 99.6,
+          "closing": 97.0
+        },
+        "tyre_wear_correlation": 0.793,
+        "increasing_error_frequency": false,
+        "long_run_stability_score": 91.9,
+        "limitations": []
+      },
+      "braking": [
+        {
+          "zone_id": "zone-1",
+          "brake_onset_distance_m": 1294.1,
+          "initial_pressure": 0.459,
+          "peak_pressure": 0.97,
+          "duration_s": 3.558,
+          "release_smoothness": 0.5,
+          "trail_braking_proxy": 0.839,
+          "minimum_speed_kph": 270.1
+        },
+        {
+          "zone_id": "zone-2",
+          "brake_onset_distance_m": 3501.7,
+          "initial_pressure": 0.628,
+          "peak_pressure": 0.947,
+          "duration_s": 3.557,
+          "release_smoothness": 0.5,
+          "trail_braking_proxy": 0.73,
+          "minimum_speed_kph": 238.3
+        },
+        {
+          "zone_id": "zone-3",
+          "brake_onset_distance_m": 5937.6,
+          "initial_pressure": 0.526,
+          "peak_pressure": 0.954,
+          "duration_s": 3.558,
+          "release_smoothness": 0.5,
+          "trail_braking_proxy": 0.801,
+          "minimum_speed_kph": 240.0
+        },
+        {
+          "zone_id": "zone-4",
+          "brake_onset_distance_m": 8373.5,
+          "initial_pressure": 0.419,
+          "peak_pressure": 0.976,
+          "duration_s": 3.558,
+          "release_smoothness": 0.5,
+          "trail_braking_proxy": 0.857,
+          "minimum_speed_kph": 261.3
+        },
+        {
+          "zone_id": "zone-5",
+          "brake_onset_distance_m": 10885.6,
+          "initial_pressure": 0.768,
+          "peak_pressure": 0.979,
+          "duration_s": 3.558,
+          "release_smoothness": 0.5,
+          "trail_braking_proxy": 0.601,
+          "minimum_speed_kph": 232.8
+        },
+        {
+          "zone_id": "zone-6",
+          "brake_onset_distance_m": 12484.2,
+          "initial_pressure": 0.564,
+          "peak_pressure": 0.941,
+          "duration_s": 3.558,
+          "release_smoothness": 0.5,
+          "trail_braking_proxy": 0.776,
+          "minimum_speed_kph": 226.9
+        }
+      ],
+      "throttle": {
+        "pickup_distance_m": 6318.2,
+        "time_to_full_s": 2.372,
+        "modulation": 7.77
+      },
+      "steering": {
+        "smoothness": 0.425,
+        "correction_count": 111,
+        "abrupt_changes": 25,
+        "limitation": "Input smoothness is device-aware and is not a vehicle-balance diagnosis."
+      }
+    },
+    "findings": [
+      {
+        "id": "hypercar-endurance-stint-consistency",
+        "type": "lap_variation",
+        "priority": 1,
+        "severity": "medium",
+        "confidence": 0.91,
+        "title": "Stabilize the repeatable lap first",
+        "plain_language": "Your clean-lap spread is wider than the strongest phase of this stint.",
+        "recommended_action": "Run five laps at a controlled pace and repeat the same brake markers before adding pace.",
+        "evidence": [
+          {
+            "metric": "consistency_score",
+            "value": 95.6,
+            "unit": "score_0_100",
+            "reference_value": 99.0,
+            "delta": -3.4,
+            "lap_numbers": [
+              1,
+              2,
+              3,
+              4,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12,
+              14,
+              15,
+              16
+            ],
+            "zone_id": null
+          }
+        ],
+        "limitations": [],
+        "analysis_version": "0.1.0"
+      },
+      {
+        "id": "hypercar-endurance-stint-degradation",
+        "type": "stint_degradation",
+        "priority": 2,
+        "severity": "medium",
+        "confidence": 0.84,
+        "title": "Protect closing-stint execution",
+        "plain_language": "Clean-lap pace trends slower through this stint.",
+        "recommended_action": "Target stable inputs for the final third and compare the same corners after the run.",
+        "evidence": [
+          {
+            "metric": "pace_degradation_slope",
+            "value": 146.5,
+            "unit": "ms_per_lap",
+            "reference_value": 0,
+            "delta": 146.5,
+            "lap_numbers": [
+              1,
+              2,
+              3,
+              4,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12,
+              14,
+              15,
+              16
+            ],
+            "zone_id": null
+          }
+        ],
+        "limitations": [
+          "This is a descriptive performance pattern, not a medical fatigue conclusion."
+        ],
+        "analysis_version": "0.1.0"
+      }
+    ],
+    "analysis_version": "0.1.0",
+    "report": {
+      "id": "report-hypercar-endurance-stint",
+      "session_id": "hypercar-endurance-stint",
+      "mode": "rule_based",
+      "label": "Rule-based coach",
+      "session_summary": "16 laps analyzed; best clean lap 211434 ms with a 95.6/100 consistency score.",
+      "top_priorities": [
+        {
+          "title": "Stabilize the repeatable lap first",
+          "action": "Run five laps at a controlled pace and repeat the same brake markers before adding pace.",
+          "confidence": 0.91,
+          "evidence_ids": [
+            "hypercar-endurance-stint-consistency"
+          ]
+        },
+        {
+          "title": "Protect closing-stint execution",
+          "action": "Target stable inputs for the final third and compare the same corners after the run.",
+          "confidence": 0.84,
+          "evidence_ids": [
+            "hypercar-endurance-stint-degradation"
+          ]
+        }
+      ],
+      "what_improved": "The most repeatable clean laps preserve progressive control inputs after minimum speed.",
+      "what_regressed": "No material regression is supported by this stint.",
+      "next_stint_plan": "Complete five controlled laps: repeat the same initial brake markers, release progressively, and review only after the stint.",
+      "confidence_summary": "High confidence in recorded lap-time metrics; technique findings use only comparable clean laps.",
+      "limitations": [],
+      "evidence_references": [
+        "hypercar-endurance-stint-consistency",
+        "hypercar-endurance-stint-degradation"
+      ],
+      "provenance": {
+        "fallback_used": true,
+        "model_id": null,
+        "prompt_version": "coach-v1",
+        "analysis_version": "0.1.0",
+        "finding_ids": [
+          "hypercar-endurance-stint-consistency",
+          "hypercar-endurance-stint-degradation"
+        ],
+        "tool_calls": [],
+        "token_usage": null,
+        "latency_ms": 0,
+        "timestamp": "2026-08-09T00:00:00Z",
+        "response_status": "complete",
+        "git_sha": "local"
+      }
+    },
+    "laps": [
+      {
+        "id": "hypercar-endurance-stint-lap-1",
+        "lap_number": 1,
+        "lap_time_ms": 212097,
+        "sector_times_ms": [
+          67834,
+          75412,
+          68851
+        ],
+        "valid": true,
+        "classification": "clean",
+        "quality_score": 0.95,
+        "tyre_wear_pct": 5.75
+      },
+      {
+        "id": "hypercar-endurance-stint-lap-2",
+        "lap_number": 2,
+        "lap_time_ms": 211817,
+        "sector_times_ms": [
+          67046,
+          74905,
+          69866
+        ],
+        "valid": true,
+        "classification": "clean",
+        "quality_score": 0.95,
+        "tyre_wear_pct": 7.0
+      },
+      {
+        "id": "hypercar-endurance-stint-lap-3",
+        "lap_number": 3,
+        "lap_time_ms": 211434,
+        "sector_times_ms": [
+          67062,
+          74797,
+          69575
+        ],
+        "valid": true,
+        "classification": "clean",
+        "quality_score": 0.95,
+        "tyre_wear_pct": 8.25
+      },
+      {
+        "id": "hypercar-endurance-stint-lap-4",
+        "lap_number": 4,
+        "lap_time_ms": 211893,
+        "sector_times_ms": [
+          67611,
+          74726,
+          69556
+        ],
+        "valid": true,
+        "classification": "clean",
+        "quality_score": 0.95,
+        "tyre_wear_pct": 9.5
+      },
+      {
+        "id": "hypercar-endurance-stint-lap-5",
+        "lap_number": 5,
+        "lap_time_ms": 212793,
+        "sector_times_ms": [
+          67698,
+          75121,
+          69974
+        ],
+        "valid": false,
+        "classification": "invalid",
+        "quality_score": 0.35,
+        "tyre_wear_pct": 10.75
+      },
+      {
+        "id": "hypercar-endurance-stint-lap-6",
+        "lap_number": 6,
+        "lap_time_ms": 211983,
+        "sector_times_ms": [
+          67405,
+          74988,
+          69590
+        ],
+        "valid": true,
+        "classification": "clean",
+        "quality_score": 0.95,
+        "tyre_wear_pct": 12.0
+      },
+      {
+        "id": "hypercar-endurance-stint-lap-7",
+        "lap_number": 7,
+        "lap_time_ms": 212055,
+        "sector_times_ms": [
+          67346,
+          75220,
+          69489
+        ],
+        "valid": true,
+        "classification": "clean",
+        "quality_score": 0.95,
+        "tyre_wear_pct": 13.25
+      },
+      {
+        "id": "hypercar-endurance-stint-lap-8",
+        "lap_number": 8,
+        "lap_time_ms": 212048,
+        "sector_times_ms": [
+          67571,
+          75351,
+          69126
+        ],
+        "valid": true,
+        "classification": "clean",
+        "quality_score": 0.95,
+        "tyre_wear_pct": 14.5
+      },
+      {
+        "id": "hypercar-endurance-stint-lap-9",
+        "lap_number": 9,
+        "lap_time_ms": 212261,
+        "sector_times_ms": [
+          67561,
+          74734,
+          69966
+        ],
+        "valid": true,
+        "classification": "clean",
+        "quality_score": 0.95,
+        "tyre_wear_pct": 15.75
+      },
+      {
+        "id": "hypercar-endurance-stint-lap-10",
+        "lap_number": 10,
+        "lap_time_ms": 212663,
+        "sector_times_ms": [
+          67830,
+          75411,
+          69422
+        ],
+        "valid": true,
+        "classification": "clean",
+        "quality_score": 0.95,
+        "tyre_wear_pct": 17.0
+      },
+      {
+        "id": "hypercar-endurance-stint-lap-11",
+        "lap_number": 11,
+        "lap_time_ms": 212883,
+        "sector_times_ms": [
+          67629,
+          74944,
+          70310
+        ],
+        "valid": true,
+        "classification": "clean",
+        "quality_score": 0.95,
+        "tyre_wear_pct": 18.25
+      },
+      {
+        "id": "hypercar-endurance-stint-lap-12",
+        "lap_number": 12,
+        "lap_time_ms": 214254,
+        "sector_times_ms": [
+          68133,
+          76027,
+          70094
+        ],
+        "valid": true,
+        "classification": "anomalous",
+        "quality_score": 0.95,
+        "tyre_wear_pct": 19.5
+      },
+      {
+        "id": "hypercar-endurance-stint-lap-13",
+        "lap_number": 13,
+        "lap_time_ms": 214287,
+        "sector_times_ms": [
+          68520,
+          76227,
+          69540
+        ],
+        "valid": false,
+        "classification": "invalid",
+        "quality_score": 0.35,
+        "tyre_wear_pct": 20.75
+      },
+      {
+        "id": "hypercar-endurance-stint-lap-14",
+        "lap_number": 14,
+        "lap_time_ms": 212764,
+        "sector_times_ms": [
+          67306,
+          75536,
+          69922
+        ],
+        "valid": true,
+        "classification": "clean",
+        "quality_score": 0.95,
+        "tyre_wear_pct": 22.0
+      },
+      {
+        "id": "hypercar-endurance-stint-lap-15",
+        "lap_number": 15,
+        "lap_time_ms": 213336,
+        "sector_times_ms": [
+          67597,
+          75198,
+          70541
+        ],
+        "valid": true,
+        "classification": "clean",
+        "quality_score": 0.95,
+        "tyre_wear_pct": 23.25
+      },
+      {
+        "id": "hypercar-endurance-stint-lap-16",
+        "lap_number": 16,
+        "lap_time_ms": 213245,
+        "sector_times_ms": [
+          67816,
+          75657,
+          69772
+        ],
+        "valid": true,
+        "classification": "clean",
+        "quality_score": 0.95,
+        "tyre_wear_pct": 24.5
+      }
+    ]
+  }
+]
