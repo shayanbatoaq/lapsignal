@@ -36,9 +36,9 @@ def fallback_report(session: dict, extra_limitation: str | None = None) -> dict:
     return report
 
 
-async def generate_coach_report(session: dict) -> dict:
+async def generate_coach_report(session: dict, cloud_allowed: bool = False) -> dict:
     settings = get_settings()
-    if not settings.openai_api_key:
+    if not settings.openai_api_key or not cloud_allowed:
         return fallback_report(session)
 
     started = time.perf_counter()

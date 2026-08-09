@@ -57,6 +57,7 @@ PROFILE: dict = {
     "coaching_goal": "consistency",
     "units": "metric",
     "ai_consent": False,
+    "cloud_ai_enabled": False,
 }
 
 
@@ -392,7 +393,8 @@ async def coach(session_id: str):
     session = get_demo_session(session_id)
     if not session:
         raise HTTPException(404, "Session not found")
-    return await generate_coach_report(session)
+    cloud_allowed = bool(PROFILE["ai_consent"] and PROFILE["cloud_ai_enabled"])
+    return await generate_coach_report(session, cloud_allowed=cloud_allowed)
 
 
 @app.post("/v1/sessions/{session_id}/coach/questions")

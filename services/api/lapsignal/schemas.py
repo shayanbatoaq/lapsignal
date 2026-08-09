@@ -94,6 +94,7 @@ class DriverProfilePayload(BaseModel):
     coaching_goal: Literal["pace", "consistency", "racecraft", "tyre_management", "learning"]
     units: Literal["metric", "imperial"] = "metric"
     ai_consent: bool = False
+    cloud_ai_enabled: bool = False
 
 
 class CoachQuestion(BaseModel):

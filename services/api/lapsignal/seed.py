@@ -49,6 +49,7 @@ def seed_database(reset: bool = False) -> dict:
             coaching_goal="consistency",
             units="metric",
             ai_consent=False,
+            cloud_ai_enabled=False,
         )
         adapter = GameAdapter(
             id="f1-2021-adapter",

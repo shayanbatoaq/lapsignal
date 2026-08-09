@@ -58,16 +58,16 @@ OPENAI_COACH_MODEL=gpt-5.6-luna
 OPENAI_DEEP_MODEL=gpt-5.6-terra
 ```
 
-Keep all values server-side and enable AI consent in the profile. Model access is account-dependent. Without the key, every flow uses the labeled rule-based coach.
+Keep all values server-side and enable both **AI consent** and **Cloud AI** in Settings. The server enforces both flags. Model access is account-dependent. Without the key or either flag, every flow uses the labeled rule-based coach.
 
 ## 8. Verification results
 
 - `pnpm generate:client`: 21 operations and 7 schema names generated.
 - `pnpm seed`: 3 sessions and 7,560 samples.
-- `pnpm check`: pass in 132.5 s.
+- `pnpm check`: pass.
 - TypeScript/React/collector/Python lint: pass.
 - Strict TypeScript type checking: pass across contracts, domain, collector, and web.
-- Unit/API/evaluation tests: 50 pass (contracts 1, telemetry domain 3, collector 10, web 7, Python 29).
+- Unit/API/evaluation tests: 51 pass (contracts 1, telemetry domain 3, collector 10, web 7, Python 30).
 - Coach evaluation cases: all 12 pass.
 - Next.js 16.3 production build: pass; all 11 application routes generated.
 - Playwright: 8/8 pass across 1440×900 desktop and 390×844 mobile, including console-error, chart, replay, and keyboard checks.

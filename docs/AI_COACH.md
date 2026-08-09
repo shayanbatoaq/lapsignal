@@ -6,7 +6,7 @@ LapSignal has one optional coaching agent and one deterministic fallback. Neithe
 
 Without `OPENAI_API_KEY`, `generate_coach_report` returns a polished **Rule-based coach** report. It selects no more than three stored findings and includes their exact IDs, limitations, analysis/prompt versions, timestamp, response status, and fallback provenance.
 
-With a key, the server uses the current [OpenAI Agents SDK for Python](https://openai.github.io/openai-agents-python/) `Agent`, `Runner`, function tools, and a Pydantic output type. The SDK's documented [agents](https://openai.github.io/openai-agents-python/agents/) and [tools](https://openai.github.io/openai-agents-python/tools/) patterns informed the implementation. Model IDs are environment-configurable; the account must have access to the selected model.
+With a key plus persisted **AI consent** and **Cloud AI** enablement, the server uses the current [OpenAI Agents SDK for Python](https://openai.github.io/openai-agents-python/) `Agent`, `Runner`, function tools, and a Pydantic output type. The SDK's documented [agents](https://openai.github.io/openai-agents-python/agents/) and [tools](https://openai.github.io/openai-agents-python/tools/) patterns informed the implementation. Model IDs are environment-configurable; the account must have access to the selected model.
 
 The agent can call only:
 
@@ -32,4 +32,4 @@ Provenance contains model ID, prompt and analysis versions, supplied finding IDs
 
 ## Consent and data boundary
 
-AI is opt-in. Keep `OPENAI_API_KEY` server-side and set profile consent before enabling the cloud path. Only derived evidence needed for a report may leave the machine. Do not add a raw-telemetry tool or place secrets in any `NEXT_PUBLIC_*` variable. SDK tracing must follow the same privacy boundary if enabled later.
+AI is opt-in. Keep `OPENAI_API_KEY` server-side; the server requires both profile consent and the separate cloud-enable flag before entering the SDK path. Only derived evidence needed for a report may leave the machine. Do not add a raw-telemetry tool or place secrets in any `NEXT_PUBLIC_*` variable. SDK tracing must follow the same privacy boundary if enabled later.

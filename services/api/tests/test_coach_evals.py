@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 from copy import deepcopy
+from types import SimpleNamespace
 
 import pytest
 
+from lapsignal import coach
 from lapsignal.analytics import analyze_session
+from lapsignal.coach import generate_coach_report
 from lapsignal.demo import build_fallback_report, get_demo_sessions
 
 SCENARIOS = [
@@ -21,6 +24,18 @@ SCENARIOS = [
     "missing_tyre_data",
     "insufficient_clean_laps",
 ]
+
+
+@pytest.mark.asyncio
+async def test_cloud_coach_requires_explicit_server_consent(monkeypatch):
+    monkeypatch.setattr(
+        coach,
+        "get_settings",
+        lambda: SimpleNamespace(openai_api_key="synthetic-test-key"),
+    )
+    report = await generate_coach_report(get_demo_sessions()[0], cloud_allowed=False)
+    assert report["label"] == "Rule-based coach"
+    assert report["provenance"]["fallback_used"] is True
 
 
 def _scenario(name: str) -> dict:

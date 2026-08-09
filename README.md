@@ -60,7 +60,7 @@ pnpm --filter @lapsignal/collector start listen --port 20777 --data-dir ..\..\da
 
 ## Optional OpenAI coach
 
-Fallback coaching is always available. To opt in to the hosted coach, set these server-only values in `.env` and enable AI consent in Settings:
+Fallback coaching is always available. To opt in to the hosted coach, set these server-only values in `.env`, then enable both **AI consent** and **Cloud AI** in Settings:
 
 ```dotenv
 OPENAI_API_KEY=your-key

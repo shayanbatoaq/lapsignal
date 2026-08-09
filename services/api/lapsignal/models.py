@@ -22,6 +22,7 @@ class DriverProfile(TimestampMixin, Base):
     coaching_goal: Mapped[str] = mapped_column(String, default="consistency")
     units: Mapped[str] = mapped_column(String, default="metric")
     ai_consent: Mapped[bool] = mapped_column(Boolean, default=False)
+    cloud_ai_enabled: Mapped[bool] = mapped_column(Boolean, default=False)
 
 
 class Device(TimestampMixin, Base):
