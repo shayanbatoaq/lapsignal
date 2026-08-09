@@ -181,7 +181,7 @@ def seed_database(reset: bool = False) -> dict:
         versions = json.loads((Path(__file__).resolve().parents[3] / "versions.json").read_text())
         db.add(
             AppBuild(
-                id="build-1",
+                id="build-2",
                 product_version=versions["product"],
                 build_number=versions["build"],
                 git_sha=settings.git_sha,

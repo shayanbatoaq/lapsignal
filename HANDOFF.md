@@ -1,10 +1,11 @@
-# LapSignal v0.1.0-alpha.1 handoff
+# LapSignal v0.1.0-alpha.2 handoff
 
-Local demo, replay, analytics, collector, fallback-coach, UI, documentation, and build acceptance paths were verified on Windows 11 on 2026-08-09. A real OpenAI request and physical PS4 packet stream were not executed because the environment supplied neither an API key nor console hardware; their boundaries, native socket, binary fixtures, fallback, and setup path are implemented and documented.
+Local demo, replay, analytics, collector, fallback-coach, pit-wall UI, documentation, and build acceptance paths were verified on Windows 11 on 2026-08-10. A real OpenAI request and physical PS4 packet stream were not executed because the environment supplied neither an API key nor console hardware; their boundaries, native socket, binary fixtures, fallback, and setup path are implemented and documented.
 
 ## 1. What was built
 
-- Premium responsive marketing and product UI for overview, onboarding, live telemetry, sessions, detail, two-to-four-lap comparison, coach, progress, settings, and shareable reports.
+- Distinctive graphite/crimson pit-wall marketing and product UI for overview, onboarding, live telemetry, sessions, detail, two-to-four-lap comparison, debrief, context-separated progress, settings, and shareable reports.
+- Seed-grounded landing narrative, compact timing rails, sector dividers, confidence lamps, device-aware context, code-native signal mark, semantic telemetry colors, and refreshed social metadata/assets.
 - Three fixed-seed synthetic sessions: F1-style controller, GT3 wheel practice, and hypercar endurance; 42 laps and 7,560 normalized samples total.
 - FastAPI REST/WebSocket service, SQLite/Alembic metadata model, Parquet artifacts, bounded live buffer, export/delete flows, error envelopes, validation, CORS, and version compatibility response.
 - Deterministic pace, consistency, distance alignment, braking, throttle, steering, and stint analytics with evidence/limitations.
@@ -70,21 +71,23 @@ Keep all values server-side and enable both **AI consent** and **Cloud AI** in S
 - Unit/API/evaluation tests: 51 pass (contracts 1, telemetry domain 3, collector 10, web 7, Python 30).
 - Coach evaluation cases: all 12 pass.
 - Next.js 16.3 production build: pass; all 11 application routes generated.
-- Playwright: 8/8 pass across 1440×900 desktop and 390×844 mobile, including console-error, chart, replay, and keyboard checks.
+- Playwright: 11 pass and 1 intentionally skipped duplicate across 1440×900 desktop and 390×844 mobile, including console-error, chart, replay, keyboard, and horizontal-overflow checks; an additional matrix covers 1280×800, 768×900, and 360×844.
 - API process startup and `/health`: pass.
 - Native UDP bind/start/stop and recording flush: pass.
 - One non-failing dependency warning remains: Starlette's current TestClient adapter warns about a future `httpx2` migration.
 
 ## 9. QA captures
 
-- `artifacts/qa/desktop-dashboard.png` — 1440×900 viewport, full-page dashboard.
-- `artifacts/qa/mobile-dashboard.png` — 390×844 viewport, full-page mobile dashboard.
+- `artifacts/qa/v0.1.0-alpha.2/landing-desktop.png` — 1440×900 viewport, full landing page.
+- `artifacts/qa/v0.1.0-alpha.2/landing-mobile.png` — 390×844 viewport, full landing page.
+- `artifacts/qa/v0.1.0-alpha.2/dashboard-desktop.png` and `dashboard-mobile.png` — full dashboard captures.
+- `artifacts/qa/v0.1.0-alpha.2/session-debrief-desktop.png` and `session-debrief-mobile.png` — full session/debrief captures with measured telemetry.
 
 These generated QA artifacts are intentionally gitignored.
 
 ## 10. Version
 
-Product/web/API/collector: `v0.1.0-alpha.1`; build `1`; telemetry schema `1`; F1 2021 adapter `0.1.0`; analytics `0.1.0`; prompt `coach-v1`; local Git SHA defaults to `local` until a release build supplies `GIT_SHA`.
+Product/web/API/collector: `v0.1.0-alpha.2`; build `2`; telemetry schema `1`; F1 2021 adapter `0.1.0`; analytics `0.1.0`; prompt `coach-v1`; local Git SHA defaults to `local` until a release build supplies `GIT_SHA`.
 
 ## 11. Known limitations
 

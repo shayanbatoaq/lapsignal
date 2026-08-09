@@ -69,7 +69,7 @@ async def lifespan(_: FastAPI):
 
 app = FastAPI(
     title="LapSignal API",
-    version="0.1.0-alpha.1",
+    version="0.1.0-alpha.2",
     description="Evidence-backed local telemetry ingestion, analytics, and coaching.",
     lifespan=lifespan,
 )
@@ -135,7 +135,7 @@ def _versions() -> dict:
     versions.update(
         {
             "git_sha": settings.git_sha,
-            "build_date": "2026-08-09",
+            "build_date": "2026-08-10",
             "compatibility": {
                 "collector_api": "compatible",
                 "adapter_schema": "compatible",

@@ -8,7 +8,7 @@ import {
   Columns3,
   Radio,
   Settings,
-  Sparkles,
+  ListChecks,
   TimerReset
 } from "lucide-react";
 import Link from "next/link";
@@ -21,7 +21,7 @@ const navigation = [
   { href: "/app/live", label: "Live session", icon: Radio },
   { href: "/app/sessions", label: "Sessions", icon: TimerReset },
   { href: "/app/compare", label: "Compare", icon: Columns3 },
-  { href: "/app/coach", label: "Coach", icon: Sparkles },
+  { href: "/app/coach", label: "Debrief", icon: ListChecks },
   { href: "/app/progress", label: "Progress", icon: BarChart3 },
   { href: "/app/settings", label: "Settings", icon: Settings }
 ] as const;
@@ -52,12 +52,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </nav>
         <div className="sidebar-foot">
           <div className="collector-mini"><span className="status-dot idle" /> <span>Collector idle</span></div>
-          <small>v0.1.0-alpha.1 · build 1</small>
+          <small>v0.1.0-alpha.2 · build 2</small>
         </div>
       </aside>
       <div className="app-workspace">
         <header className="topbar">
-          <div><p className="eyebrow">LapSignal workspace</p><h1>{title}</h1></div>
+          <div><p className="eyebrow">Pit-wall workspace</p><h1>{title}</h1></div>
           <div className="topbar-status">
             <span className="status-chip"><Activity size={14} /> Demo data</span>
             <span className="status-chip muted"><span className="status-dot idle" /> Collector offline</span>

@@ -37,6 +37,19 @@ export async function getReport(reportId: string) {
   return session?.report ?? null;
 }
 
+export async function getTelemetry(session: Session, lapNumbers: number[]): Promise<TelemetryTrace[]> {
+  try {
+    const query = new URLSearchParams({ lap_numbers: lapNumbers.join(","), max_points: "180" });
+    const response = await fetch(`${API_URL}/v1/sessions/${session.id}/telemetry?${query}`, { cache: "no-store", signal: AbortSignal.timeout(1800) });
+    if (!response.ok) throw new Error("telemetry unavailable");
+    const payload = await response.json() as { traces: TelemetryTrace[] };
+    if (!payload.traces.length) throw new Error("telemetry empty");
+    return payload.traces;
+  } catch {
+    return telemetryForLaps(session, lapNumbers);
+  }
+}
+
 export function telemetryForLaps(session: Session, lapNumbers: number[]): TelemetryTrace[] {
   return lapNumbers.map((lapNumber) => {
     const lap = session.laps.find((item) => item.lap_number === lapNumber) ?? session.laps[0]!;

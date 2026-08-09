@@ -15,6 +15,21 @@ All notable changes follow [Keep a Changelog](https://keepachangelog.com/en/1.1.
 - Windows/PS4, protocol, privacy, security, deployment, evaluation, and architecture documentation.
 - Credential-free Windows CI, 50 unit/API/evaluation tests, and eight desktop/mobile Playwright flows.
 
+## [0.1.0-alpha.2] - 2026-08-10
+
+### Changed
+
+- Rebuilt the marketing and product experience around a graphite/crimson pit-wall design system with Manrope, Barlow Condensed, Geist Mono, compact timing rails, sector dividers, status lamps, and a new code-native LapSignal line mark.
+- Reframed the landing page as a seeded Silverstone post-stint debrief with stored lap, sector, stint, confidence, hardware, workflow, and compatibility evidence.
+- Applied the system across overview, live, sessions, session detail, comparison, debrief, progress, settings, onboarding, report, loading, error, empty, and responsive navigation states.
+- Switched session and comparison telemetry views to the API's recorded, downsampled traces with deterministic fallback and a functional chart-reset control.
+- Replaced fabricated cross-track progress claims with a context-separated evidence archive built only from seeded metrics.
+- Refreshed the favicon, metadata, and 1200x630 Open Graph card; added 1280, 768, 390, and 360 responsive/overflow coverage.
+
+### Fixed
+
+- Removed generic AI/SaaS visual cues and unsupported landing/comparison metrics while preserving all collector, analytics, replay, consent, export, and data-control behavior.
+
 ## [0.1.0-alpha.1] - 2026-08-09
 
 ### Added

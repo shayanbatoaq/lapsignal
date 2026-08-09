@@ -17,7 +17,7 @@ export function ConnectionState({ online }: { online: boolean }) {
 }
 
 export function VersionBadge() {
-  return <span className="tag mono">v0.1.0-alpha.1 · build 1</span>;
+  return <span className="tag mono">v0.1.0-alpha.2 · build 2</span>;
 }
 
 export function MetricCard({ label, value, detail, trend, icon: Icon }: { label: string; value: string; detail?: string; trend?: string; icon?: LucideIcon }) {
@@ -36,7 +36,19 @@ export function SectionHeading({ eyebrow, title, action }: { eyebrow?: string; t
 
 export function Confidence({ value }: { value: number }) {
   const label = value >= 0.85 ? "High" : value >= 0.68 ? "Medium" : "Low";
-  return <span className={`confidence confidence-${label.toLowerCase()}`}><span aria-hidden="true">{label === "High" ? "●" : label === "Medium" ? "◆" : "△"}</span>{label} · {Math.round(value * 100)}%</span>;
+  return <span className={`confidence confidence-${label.toLowerCase()}`}><span className="confidence-lamp" aria-hidden="true" />{label} · {Math.round(value * 100)}%</span>;
+}
+
+export function SessionRail({ label, value, detail, tone = "neutral" }: { label: string; value: string; detail?: string; tone?: "neutral" | "loss" | "reference" | "positive" }) {
+  return <div className={`session-rail rail-${tone}`}><span>{label}</span><strong>{value}</strong>{detail && <small>{detail}</small>}</div>;
+}
+
+export function DeltaBadge({ value, label }: { value: string; label?: string }) {
+  return <span className="delta-badge"><strong>{value}</strong>{label && <span>{label}</span>}</span>;
+}
+
+export function SignalDivider({ label }: { label: string }) {
+  return <div className="signal-divider" aria-label={label}><span>{label}</span><i /><b /></div>;
 }
 
 export function EvidenceCard({ finding, compact = false }: { finding: Finding; compact?: boolean }) {
