@@ -3,6 +3,7 @@ import { join } from "node:path";
 import pino from "pino";
 import { telemetrySampleSchema, type CollectorHeartbeat, type TelemetrySample } from "@lapsignal/contracts";
 import { ApiDelivery } from "./delivery.js";
+import { collectorBuildIdentity } from "./build-identity.js";
 
 export async function replayFixture(
   fixturePath: string,
@@ -36,7 +37,8 @@ export async function replayFixture(
     packet_rate_hz: 20 * speed,
     packet_loss_available: false,
     out_of_order_frames: 0,
-    last_packet_at: null
+    last_packet_at: null,
+    build_identity: collectorBuildIdentity()
   };
   await delivery.heartbeat(heartbeat);
   for (let index = 0; index < samples.length; index += 4) {

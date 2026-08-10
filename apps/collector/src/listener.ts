@@ -7,6 +7,7 @@ import { ApiDelivery } from "./delivery.js";
 import { parseF12021Packet, PacketParseError } from "./protocol/parser.js";
 import { SessionRecorder } from "./recording.js";
 import { FrameTracker } from "./stats.js";
+import { collectorBuildIdentity } from "./build-identity.js";
 
 export interface ListenOptions {
   bindAddress: string;
@@ -63,7 +64,8 @@ export class CollectorListener {
         adapterVersion: "0.1.0",
         telemetrySchema: 1,
         recording: this.options.record,
-        queued: this.delivery.queued()
+        queued: this.delivery.queued(),
+        buildIdentity: collectorBuildIdentity()
       },
       "LapSignal collector listening for F1 2021 UDP"
     );
@@ -111,7 +113,8 @@ export class CollectorListener {
       packet_rate_hz: this.stats.packetRateHz(),
       packet_loss_available: false,
       out_of_order_frames: this.stats.outOfOrderFrames,
-      last_packet_at: this.lastPacketAt
+      last_packet_at: this.lastPacketAt,
+      build_identity: collectorBuildIdentity()
     };
   }
 
@@ -124,7 +127,8 @@ export class CollectorListener {
         packetLoss: "unavailable",
         outOfOrderFrames: this.stats.outOfOrderFrames,
         queued: this.delivery.queued(),
-        lastPacketAt: this.lastPacketAt
+        lastPacketAt: this.lastPacketAt,
+        buildIdentity: collectorBuildIdentity()
       },
       "collector status"
     );

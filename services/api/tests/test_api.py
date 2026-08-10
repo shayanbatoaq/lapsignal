@@ -63,10 +63,20 @@ def cleanup_live_test_artifacts():
 
 def test_health_and_version():
     with TestClient(app) as client:
-        assert client.get("/health").json()["status"] == "ok"
+        health = client.get("/health").json()
+        assert health["status"] == "ok"
+        assert health["application_version"] == "0.1.0-alpha.3"
+        assert health["build_number"] == 3
+        assert health["process_id"] > 0
+        assert health["cloud_ai_guard_active"] is True
+        assert health["ai_contract_schema_hash"] == (
+            "5e1d18d4a757a6ac2f145710f4cff0d231daa02e00772900a5ce0abf5f41bc6c"
+        )
+        assert health["diagnostics_contract_version"] == "2"
         version = client.get("/v1/version").json()
         assert version["product"] == "0.1.0-alpha.3"
         assert version["build"] == 3
+        assert version["build_identity"]["component"] == "api"
 
 
 def test_ai_status_never_validates_provider_while_cloud_gate_is_disabled(monkeypatch):
@@ -129,6 +139,38 @@ def test_ingestion_validation_and_live_snapshot():
         assert response.status_code == 200
         assert response.json()["accepted"] == 1
         assert client.get("/v1/collector/status").json()["collector_id"] == "test"
+
+
+def test_collector_heartbeat_exposes_safe_build_identity():
+    build_identity = {
+        "component": "collector",
+        "application_version": "0.1.0-alpha.3",
+        "build_number": 3,
+        "git_commit": "test-commit",
+        "process_id": 4242,
+        "process_start_time": "2026-08-11T00:00:00Z",
+    }
+    with TestClient(app) as client:
+        response = client.post(
+            "/v1/collector/heartbeat",
+            json={
+                "collector_id": "collector-test",
+                "collector_version": "0.1.0-alpha.3",
+                "adapter_version": "0.1.0",
+                "telemetry_schema_version": 1,
+                "mode": "live",
+                "session_uid": None,
+                "packet_rate_hz": 0,
+                "packet_loss_available": False,
+                "out_of_order_frames": 0,
+                "last_packet_at": None,
+                "build_identity": build_identity,
+            },
+        )
+        assert response.status_code == 200
+        assert client.get("/v1/collector/status").json()["collector_build_identity"] == (
+            build_identity
+        )
 
 
 def test_invalid_ingest_uses_error_envelope():

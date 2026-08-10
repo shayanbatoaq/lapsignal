@@ -89,7 +89,15 @@ export const collectorHeartbeatSchema = z.object({
   packet_rate_hz: z.number().nonnegative(),
   packet_loss_available: z.literal(false),
   out_of_order_frames: z.number().int().nonnegative(),
-  last_packet_at: z.string().datetime().nullable()
+  last_packet_at: z.string().datetime().nullable(),
+  build_identity: z.object({
+    component: z.literal("collector"),
+    application_version: z.string().min(1),
+    build_number: z.number().int().positive(),
+    git_commit: z.string().min(1),
+    process_id: z.number().int().positive(),
+    process_start_time: z.string().datetime()
+  })
 });
 
 export const collectorSessionEventSchema = z.object({

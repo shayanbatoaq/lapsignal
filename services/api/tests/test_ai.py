@@ -15,10 +15,13 @@ from pydantic import BaseModel
 
 import lapsignal.ai as ai_module
 from lapsignal.ai import (
+    AZURE_ENDPOINT,
     COACH_SCHEMA_NAME,
     COACH_STRICT_SCHEMA_HASH,
+    DIRECT_OPENAI_ENDPOINT,
     OPENROUTER_CHAT_PATH,
     AICoachOutput,
+    AIPreflightState,
     OpenAICompatibleProvider,
     OpenRouterProvider,
     PriorityAction,
@@ -35,6 +38,7 @@ from lapsignal.ai import (
     get_provider,
     summarize_chat_request,
     usage_cost_usd,
+    validate_ai_preflight,
     validate_output,
 )
 from lapsignal.ai_contracts import (
@@ -661,6 +665,7 @@ def test_exact_chat_completions_wire_serialization_is_offline_and_not_mixed():
             "reasoning_effort",
             "response_format",
             "stream",
+            "tools",
         ],
         "requested_model": "openai/gpt-5-mini",
         "streaming_mode": False,
@@ -681,7 +686,7 @@ def test_exact_chat_completions_wire_serialization_is_offline_and_not_mixed():
     }
     assert body["stream"] is False
     assert "verbosity" not in body
-    assert "tools" not in body and "tool_choice" not in body
+    assert body["tools"] == [] and "tool_choice" not in body
     assert "input" not in body and "text" not in body and "text_format" not in body
 
 
@@ -695,6 +700,21 @@ def test_request_builder_has_no_responses_api_fields():
     assert request["response_format"]["type"] == "json_schema"
     assert "text" not in request and "input" not in request
     assert summarize_chat_request(request)["endpoint_path"].endswith("/chat/completions")
+
+
+def test_endpoint_families_use_deliberate_token_parameters():
+    bundle = evidence_bundle(get_demo_sessions()[0])
+    common = {
+        "model": "openai/gpt-5-mini",
+        "max_tokens": 1500,
+        "routing": {"data_collection": "deny", "require_parameters": True},
+    }
+    direct = build_openrouter_chat_request(bundle, **common, endpoint_family=DIRECT_OPENAI_ENDPOINT)
+    azure = build_openrouter_chat_request(bundle, **common, endpoint_family=AZURE_ENDPOINT)
+    assert direct["max_tokens"] == 1500 and "max_completion_tokens" not in direct
+    assert azure["max_completion_tokens"] == 1500 and "max_tokens" not in azure
+    assert direct["provider"]["require_parameters"] is True
+    assert direct["tools"] == [] and azure["tools"] == []
 
 
 def test_official_client_strict_schema_is_the_runtime_contract():
@@ -865,7 +885,50 @@ def test_disabled_cloud_gate_returns_safe_fallback_without_provider_call(monkeyp
         )
     )
     assert result["mode"] == "rule_based"
-    assert result["explanation"] == "Cloud AI requires both consent controls."
+    assert result["explanation"] == "Cloud AI preflight blocked (cloud_ai_disabled)."
+
+
+@pytest.mark.parametrize(
+    ("change", "failure"),
+    [
+        ({"application_version": "0.1.0-alpha.2"}, "application_version_mismatch"),
+        ({"schema_hash": "old"}, "schema_hash_mismatch"),
+        ({"cloud_ai_guard_active": False}, "cloud_ai_guard_inactive"),
+        ({"ai_consent": False}, "ai_consent_missing"),
+        ({"cloud_ai_enabled": False}, "cloud_ai_disabled"),
+        ({"provider_configured": False}, "provider_not_configured"),
+    ],
+)
+def test_every_ai_preflight_failure_blocks_provider_calls(monkeypatch, change, failure):
+    values = {
+        "application_version": "0.1.0-alpha.3",
+        "schema_hash": COACH_STRICT_SCHEMA_HASH,
+        "cloud_ai_guard_active": True,
+        "ai_consent": True,
+        "cloud_ai_enabled": True,
+        "ai_provider": "openrouter",
+        "provider_configured": True,
+    }
+    values.update(change)
+    state = AIPreflightState(**values)
+    assert failure in validate_ai_preflight(state)
+    calls = {"provider": 0}
+
+    def forbidden_provider(_name=None):
+        calls["provider"] += 1
+        raise AssertionError("Provider construction must not occur after failed preflight")
+
+    monkeypatch.setattr(ai_module, "local_ai_preflight_state", lambda _profile: state)
+    monkeypatch.setattr(ai_module, "get_provider", forbidden_provider)
+    result = asyncio.run(
+        generate_with_fallback(
+            object(),
+            get_demo_sessions()[0],
+            {"ai_consent": True, "cloud_ai_enabled": True},
+        )
+    )
+    assert result["mode"] == "rule_based"
+    assert calls["provider"] == 0
 
 
 def test_invalid_model_is_actionable(monkeypatch):

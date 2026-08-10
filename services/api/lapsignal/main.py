@@ -3,10 +3,13 @@ from __future__ import annotations
 import asyncio
 import json
 import math
+import os
 import shutil
+import signal
 import uuid
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime, timedelta
+from pathlib import Path
 
 from fastapi import (
     BackgroundTasks,
@@ -22,7 +25,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy import select
 
-from .ai import ProviderFailure, generate_with_fallback, safe_status
+from .ai import ProviderFailure, coach_schema_hash, generate_with_fallback, safe_status
+from .build_identity import api_build_identity
 from .coach import answer_question
 from .config import REPO_ROOT, get_settings
 from .database import SessionLocal
@@ -87,9 +91,11 @@ async def lifespan(_: FastAPI):
     seed_database(reset=False)
     stop = asyncio.Event()
     task = asyncio.create_task(_inactivity_monitor(stop))
+    managed_stop_task = asyncio.create_task(_managed_stop_monitor(stop))
     yield
     stop.set()
     await task
+    await managed_stop_task
 
 
 app = FastAPI(
@@ -159,7 +165,7 @@ def _versions() -> dict:
     versions = json.loads((REPO_ROOT / "versions.json").read_text(encoding="utf-8"))
     versions.update(
         {
-            "git_sha": settings.git_sha,
+            "git_sha": _build_identity()["git_commit"],
             "build_date": "2026-08-10",
             "compatibility": {
                 "collector_api": "compatible",
@@ -169,6 +175,18 @@ def _versions() -> dict:
         }
     )
     return versions
+
+
+def _build_identity() -> dict:
+    try:
+        with SessionLocal() as db:
+            cloud_ai_enabled = bool(_profile_dict(db)["cloud_ai_enabled"])
+    except Exception:
+        cloud_ai_enabled = False
+    return api_build_identity(
+        cloud_ai_enabled=cloud_ai_enabled,
+        schema_hash=coach_schema_hash(),
+    )
 
 
 def _lap_without_telemetry(lap: dict) -> dict:
@@ -232,6 +250,7 @@ def _public_live_status() -> dict:
     )
     return {
         **LIVE_STATUS,
+        "api_build_identity": _build_identity(),
         "online": state in {"LIVE", "REPLAY"},
         "state": state,
         "source_label": {
@@ -264,6 +283,27 @@ async def _inactivity_monitor(stop: asyncio.Event) -> None:
                 with SessionLocal() as db:
                     finalize_live_session(db, uid, interrupted=True)
                 LIVE_STATUS["recording"] = False
+
+
+async def _managed_stop_monitor(stop: asyncio.Event) -> None:
+    raw_path = os.getenv("LAPSIGNAL_STOP_FILE")
+    if not raw_path:
+        await stop.wait()
+        return
+    stop_path = (REPO_ROOT / "data" / "local" / "dev-services" / Path(raw_path).name).resolve()
+    expected_parent = (REPO_ROOT / "data" / "local" / "dev-services").resolve()
+    if stop_path.parent != expected_parent:
+        await stop.wait()
+        return
+    while not stop.is_set():
+        if stop_path.is_file():
+            stop_path.unlink(missing_ok=True)
+            os.kill(os.getpid(), signal.SIGINT)
+            return
+        try:
+            await asyncio.wait_for(stop.wait(), timeout=0.4)
+        except TimeoutError:
+            pass
 
 
 async def _ingest(collector_id: str, samples: list[dict]) -> dict:
@@ -331,12 +371,17 @@ async def _run_demo_replay() -> None:
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "mode": "demo" if settings.demo_mode else "local", "database": "ready"}
+    return {
+        "status": "ok",
+        "mode": "demo" if settings.demo_mode else "local",
+        "database": "ready",
+        **_build_identity(),
+    }
 
 
 @app.get("/v1/version")
 def version():
-    return _versions()
+    return {**_versions(), "build_identity": _build_identity()}
 
 
 @app.get("/v1/collector/status")
@@ -361,6 +406,7 @@ async def collector_heartbeat(payload: CollectorHeartbeat):
             "last_packet_at": payload.last_packet_at.isoformat()
             if payload.last_packet_at
             else None,
+            "collector_build_identity": payload.build_identity.model_dump(mode="json"),
         }
     )
     await _broadcast({"type": "collector_status", "status": _public_live_status()})

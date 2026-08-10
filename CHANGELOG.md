@@ -10,6 +10,8 @@ All notable changes follow [Keep a Changelog](https://keepachangelog.com/en/1.1.
 
 ### Added
 
+- Verified Windows development service management through `dev:status`, `dev:stop`, and `dev:clean-start`, with project PID manifests, guarded shutdown, duplicate detection, current-build health gates, and API/web/collector build identity.
+- Fail-before-network Cloud-AI preflight coverage for version, schema, guard, consent, enabled state, provider configuration, and explicit direct-versus-Azure token parameters.
 - LapSignal monorepo foundation and independently versioned contracts.
 - Three fixed-seed sessions, 42 laps, 7,560 telemetry samples, Parquet artifacts, and a normalized replay fixture.
 - FastAPI/SQLite metadata service, deterministic analytics, evidence findings, bounded live ingestion, and WebSocket stream.

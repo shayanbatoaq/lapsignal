@@ -22,7 +22,9 @@ corepack pnpm seed
 corepack pnpm dev:demo
 ```
 
-Open [http://localhost:3000](http://localhost:3000). The API and interactive OpenAPI document are at [http://localhost:8000](http://localhost:8000) and [http://localhost:8000/docs](http://localhost:8000/docs). `pnpm dev:demo` reseeds deterministic data, then starts both processes; the separate `pnpm seed` above is useful as an explicit setup check.
+Open [http://localhost:3000](http://localhost:3000). The API and interactive OpenAPI document are at [http://localhost:8000](http://localhost:8000) and [http://localhost:8000/docs](http://localhost:8000/docs). `pnpm dev:demo` reseeds deterministic data, then safely starts the API, web app, and collector; the separate `pnpm seed` above is useful as an explicit setup check.
+
+Use `pnpm dev:status`, `pnpm dev:stop`, and `pnpm dev:clean-start` for PID-verified Windows process management. Clean start proves the current alpha.3/build 3 identity for all three services and never stops an unrelated process merely because it owns an expected port.
 
 Copy `.env.example` to `.env` only when overriding defaults. No variable is required for demo or replay mode.
 
@@ -30,7 +32,7 @@ Copy `.env.example` to `.env` only when overriding defaults. No variable is requ
 
 - **Demo:** `pnpm dev:demo` serves 42 laps across F1-style controller, GT3 practice, and synthetic hypercar endurance sessions.
 - **Replay:** with the API running, use `pnpm collector:replay`. The fixture follows the same heartbeat and batch-ingestion path as live data and updates `/app/live`.
-- **Live F1 2021:** run `corepack pnpm dev:live` and `corepack pnpm collector:listen`, then send PS4 telemetry to the laptop IPv4 address on UDP port `20777`. See [PS4 setup](docs/PS4_F1_2021_SETUP.md).
+- **Live F1 2021:** run `corepack pnpm dev:live`, then send PS4 telemetry to the laptop IPv4 address on UDP port `20777`. The managed development stack includes the collector. See [PS4 setup](docs/PS4_F1_2021_SETUP.md).
 
 Useful collector diagnostics:
 
@@ -44,8 +46,11 @@ pnpm --filter @lapsignal/collector start listen --port 20777 --data-dir ..\..\da
 
 | Command | Purpose |
 | --- | --- |
-| `pnpm dev` | Start FastAPI and Next.js without reseeding |
-| `pnpm dev:demo` | Seed, then start API and web |
+| `pnpm dev` | Clean-start API, web, and collector without reseeding |
+| `pnpm dev:demo` | Seed, then clean-start API, web, and collector |
+| `pnpm dev:status` | Report verified LapSignal service ownership |
+| `pnpm dev:stop` | Stop only verified LapSignal services |
+| `pnpm dev:clean-start` | Replace verified stale services and prove current build identity |
 | `pnpm build` | Build all buildable workspaces |
 | `pnpm lint` | Run TypeScript/React and Python lint checks |
 | `pnpm typecheck` | Run strict TypeScript checks |

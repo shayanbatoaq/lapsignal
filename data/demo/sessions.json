@@ -168,7 +168,7 @@
       "id": "report-f1-controller-silverstone",
       "session_id": "f1-controller-silverstone",
       "mode": "rule_based",
-      "label": "Rule-based coach",
+      "label": "Rule-based coaching",
       "session_summary": "12 laps analyzed; best clean lap 89696 ms with a 94.8/100 consistency score.",
       "top_priorities": [
         {
@@ -548,7 +548,7 @@
       "id": "report-gt3-spa-practice",
       "session_id": "gt3-spa-practice",
       "mode": "rule_based",
-      "label": "Rule-based coach",
+      "label": "Rule-based coaching",
       "session_summary": "14 laps analyzed; best clean lap 138368 ms with a 92.2/100 consistency score.",
       "top_priorities": [
         {
@@ -997,7 +997,7 @@
       "id": "report-hypercar-endurance-stint",
       "session_id": "hypercar-endurance-stint",
       "mode": "rule_based",
-      "label": "Rule-based coach",
+      "label": "Rule-based coaching",
       "session_summary": "16 laps analyzed; best clean lap 211434 ms with a 95.6/100 consistency score.",
       "top_priorities": [
         {

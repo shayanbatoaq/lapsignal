@@ -7,6 +7,7 @@ import re
 import time
 import uuid
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from typing import Any, Literal
 
@@ -24,6 +25,7 @@ from .ai_diagnostics import (
     failure_from_exception,
     failure_from_payload,
 )
+from .build_identity import APPLICATION_VERSION, CLOUD_AI_GUARD_ACTIVE
 from .config import get_settings
 from .models import AIRun
 
@@ -33,6 +35,9 @@ COACH_SCHEMA_NAME = "lap_signal_coaching"
 LEGACY_COACH_SCHEMA_HASH = "4bc590dca7118f1a4ec2f50fce09daa29618fb0fe12c3a281a7e2fa590f1da24"
 COACH_STRICT_SCHEMA_HASH = "5e1d18d4a757a6ac2f145710f4cff0d231daa02e00772900a5ce0abf5f41bc6c"
 OPENROUTER_CHAT_PATH = "/api/v1/chat/completions"
+DIRECT_OPENAI_ENDPOINT = "direct_openai"
+AZURE_ENDPOINT = "azure"
+EndpointFamily = Literal["direct_openai", "azure"]
 COACH_SYSTEM_PROMPT = (
     "You are LapSignal's bounded race engineer. Use only the supplied deterministic evidence. "
     "Never invent a corner, lap, delta, car, track, performance mode, or setup value. Never claim "
@@ -178,15 +183,74 @@ def coach_schema_hash() -> str:
     return canonical_json_hash(coach_strict_schema())
 
 
+def token_budget_parameter(endpoint_family: EndpointFamily) -> str:
+    if endpoint_family == DIRECT_OPENAI_ENDPOINT:
+        return "max_tokens"
+    if endpoint_family == AZURE_ENDPOINT:
+        return "max_completion_tokens"
+    raise ValueError(f"Unsupported endpoint family: {endpoint_family}")
+
+
+@dataclass(frozen=True)
+class AIPreflightState:
+    application_version: str
+    schema_hash: str
+    cloud_ai_guard_active: bool
+    ai_consent: bool
+    cloud_ai_enabled: bool
+    ai_provider: str
+    provider_configured: bool
+
+
+def validate_ai_preflight(state: AIPreflightState) -> tuple[str, ...]:
+    failures: list[str] = []
+    if state.application_version != APPLICATION_VERSION:
+        failures.append("application_version_mismatch")
+    if state.schema_hash != COACH_STRICT_SCHEMA_HASH:
+        failures.append("schema_hash_mismatch")
+    if not state.cloud_ai_guard_active:
+        failures.append("cloud_ai_guard_inactive")
+    if not state.ai_consent:
+        failures.append("ai_consent_missing")
+    if not state.cloud_ai_enabled:
+        failures.append("cloud_ai_disabled")
+    if state.ai_provider not in {"openrouter", "openai"}:
+        failures.append("provider_configuration_mismatch")
+    if not state.provider_configured:
+        failures.append("provider_not_configured")
+    return tuple(failures)
+
+
+def local_ai_preflight_state(profile: dict[str, Any]) -> AIPreflightState:
+    settings = get_settings()
+    configured = (
+        bool(settings.openrouter_api_key and settings.openrouter_coach_model)
+        if settings.ai_provider == "openrouter"
+        else bool(settings.openai_api_key and settings.openai_coach_model)
+        if settings.ai_provider == "openai"
+        else False
+    )
+    return AIPreflightState(
+        application_version=APPLICATION_VERSION,
+        schema_hash=coach_schema_hash(),
+        cloud_ai_guard_active=CLOUD_AI_GUARD_ACTIVE,
+        ai_consent=bool(profile.get("ai_consent")),
+        cloud_ai_enabled=bool(profile.get("cloud_ai_enabled")),
+        ai_provider=settings.ai_provider,
+        provider_configured=configured,
+    )
+
+
 def build_openrouter_chat_request(
     bundle: EvidenceBundle,
     *,
     model: str,
     max_tokens: int,
     routing: dict[str, Any],
+    endpoint_family: EndpointFamily = DIRECT_OPENAI_ENDPOINT,
 ) -> dict[str, Any]:
     schema = coach_strict_schema()
-    return {
+    request: dict[str, Any] = {
         "model": model,
         "messages": [
             {"role": "system", "content": COACH_SYSTEM_PROMPT},
@@ -197,7 +261,7 @@ def build_openrouter_chat_request(
             },
         ],
         "stream": False,
-        "max_tokens": max_tokens,
+        "tools": [],
         "reasoning_effort": "low",
         "response_format": {
             "type": "json_schema",
@@ -209,6 +273,8 @@ def build_openrouter_chat_request(
         },
         "provider": routing,
     }
+    request[token_budget_parameter(endpoint_family)] = max_tokens
+    return request
 
 
 def build_openrouter_json_object_request(
@@ -217,8 +283,9 @@ def build_openrouter_json_object_request(
     model: str,
     max_tokens: int,
     routing: dict[str, Any],
+    endpoint_family: EndpointFamily = DIRECT_OPENAI_ENDPOINT,
 ) -> dict[str, Any]:
-    return {
+    request: dict[str, Any] = {
         "model": model,
         "messages": [
             {
@@ -232,11 +299,13 @@ def build_openrouter_json_object_request(
             },
         ],
         "stream": False,
-        "max_tokens": max_tokens,
+        "tools": [],
         "reasoning_effort": "low",
         "response_format": {"type": "json_object"},
         "provider": routing,
     }
+    request[token_budget_parameter(endpoint_family)] = max_tokens
+    return request
 
 
 def summarize_chat_request(request: dict[str, Any]) -> dict[str, Any]:
@@ -500,17 +569,16 @@ class OpenAICompatibleProvider(AIProvider):
     async def generate_session_debrief(
         self, bundle: EvidenceBundle, *, max_tokens: int = 500
     ) -> ProviderResult:
-        await self.health_check()
         settings = get_settings()
         attempts = 0
         while True:
             try:
                 completion = await self.client.chat.completions.parse(
                     model=self.model,
-                    max_completion_tokens=max_tokens,
+                    max_tokens=max_tokens,
                     reasoning_effort="low",
-                    verbosity="low",
                     response_format=AICoachOutput,
+                    tools=[],
                     messages=[
                         {
                             "role": "system",
@@ -580,6 +648,7 @@ class OpenRouterProvider(OpenAICompatibleProvider):
             model=self.model,
             max_tokens=max_tokens,
             routing=self._extra_body()["provider"],
+            endpoint_family=DIRECT_OPENAI_ENDPOINT,
         )
 
     async def generate_session_debrief(
@@ -591,7 +660,6 @@ class OpenRouterProvider(OpenAICompatibleProvider):
             for message in request["messages"]
             if isinstance(message, dict) and isinstance(message.get("content"), str)
         )
-        await self.health_check()
         settings = get_settings()
         attempts = 0
         while True:
@@ -800,25 +868,20 @@ async def generate_with_fallback(
 ) -> dict:
     bundle = evidence_bundle(session, profile)
     bundle_hash = evidence_hash(bundle)
+    try:
+        preflight_failures = validate_ai_preflight(local_ai_preflight_state(profile))
+    except Exception:
+        preflight_failures = ("local_contract_validation_failed",)
+    if preflight_failures:
+        result = await RuleBasedProvider().generate_session_debrief(bundle)
+        return report_payload(
+            result,
+            bundle,
+            "rule_based",
+            cached=False,
+            explanation=f"Cloud AI preflight blocked ({preflight_failures[0]}).",
+        )
     provider = get_provider()
-    if not (profile.get("ai_consent") and profile.get("cloud_ai_enabled")):
-        result = await RuleBasedProvider().generate_session_debrief(bundle)
-        return report_payload(
-            result,
-            bundle,
-            "rule_based",
-            cached=False,
-            explanation="Cloud AI requires both consent controls.",
-        )
-    if not provider.is_configured():
-        result = await RuleBasedProvider().generate_session_debrief(bundle)
-        return report_payload(
-            result,
-            bundle,
-            "rule_based",
-            cached=False,
-            explanation="Cloud provider is not configured.",
-        )
     requested = provider.provider_metadata()["coach_model"]
     if get_settings().ai_cache_enabled and not regenerate:
         cached_run = db.scalar(
@@ -995,6 +1058,9 @@ def safe_status() -> dict:
         "fallback_available": True,
         "canonical_env": "repository root .env",
         "integration": "direct_chat_completions_v2",
+        "endpoint_family": DIRECT_OPENAI_ENDPOINT,
+        "token_budget_parameter": token_budget_parameter(DIRECT_OPENAI_ENDPOINT),
+        "cloud_ai_guard_active": CLOUD_AI_GUARD_ACTIVE,
         "schema_name": COACH_SCHEMA_NAME,
         "schema_hash": coach_schema_hash(),
         "streaming": False,

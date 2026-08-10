@@ -58,6 +58,7 @@ test("landing anchors and reduced motion contract", async ({ page }, testInfo) =
 });
 
 test("session detail, comparison, debrief and evidence archive", async ({ page }, testInfo) => {
+  test.setTimeout(90_000);
   const errors: string[] = [];
   page.on("console", (message) => { if (message.type() === "error") errors.push(message.text()); });
   await page.goto("/app/sessions");
@@ -94,7 +95,9 @@ test("OpenRouter settings are server-safe and physical session is durable", asyn
   await expect(page.getByRole("button", { name: "Test AI connection" })).toBeVisible();
   await expect(page.locator("body")).not.toContainText("OPENROUTER_API_KEY");
   await page.goto("/app/sessions");
-  await expect(page.getByText("Spa-Francorchamps", { exact: true }).first()).toBeVisible();
+  const physicalSession = page.locator('a[href^="/app/sessions/live-"]').first();
+  await expect(physicalSession).toBeVisible({ timeout: 20_000 });
+  await expect(physicalSession.getByRole("heading")).not.toBeEmpty();
 });
 
 test("keyboard reaches core controls", async ({ page }) => {

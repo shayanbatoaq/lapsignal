@@ -77,6 +77,15 @@ class TelemetrySample(BaseModel):
         return value
 
 
+class CollectorBuildIdentity(BaseModel):
+    component: Literal["collector"]
+    application_version: str
+    build_number: int = Field(ge=1)
+    git_commit: str
+    process_id: int = Field(ge=1)
+    process_start_time: datetime
+
+
 class CollectorHeartbeat(BaseModel):
     collector_id: str
     collector_version: str
@@ -88,6 +97,7 @@ class CollectorHeartbeat(BaseModel):
     packet_loss_available: Literal[False] = False
     out_of_order_frames: int = Field(ge=0)
     last_packet_at: datetime | None = None
+    build_identity: CollectorBuildIdentity
 
 
 class IngestBatch(BaseModel):

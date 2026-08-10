@@ -24,16 +24,28 @@ corepack pnpm seed
 ## Start demo mode
 
 ```powershell
-corepack pnpm dev:demo
+pnpm dev:demo
 ```
 
-Open `http://localhost:3000`. Stop both processes with Ctrl+C. Local metadata is written to `data\local\lapsignal.db`; normalized demo artifacts are Parquet files under `data\demo`. Both are reproducible with `pnpm seed`.
+Open `http://localhost:3000`. Local metadata is written to `data\local\lapsignal.db`; normalized demo artifacts are Parquet files under `data\demo`. Both are reproducible with `pnpm seed`.
 
-If port 3000 or 8000 is occupied, identify the owner with:
+LapSignal uses project-specific PID manifests under ignored `data\local\dev-services`. The manager verifies the executable, exact command markers, recorded working directory, process creation time, expected port owner, version, build, Git identity, AI schema, and Cloud-AI guard before it treats a service as owned or current. It never terminates a process only because it occupies port 3000, 8000, or UDP 20777.
+
+```powershell
+pnpm dev:status
+pnpm dev:stop
+pnpm dev:clean-start
+```
+
+`dev:clean-start` gracefully requests shutdown through per-service control files, force-stops only after re-verifying the same LapSignal process identity, removes only validated stale PID manifests, and starts the API before the web app and collector. It does not contact any AI provider. Readiness requires the current API at `http://localhost:8000/health`, OpenAPI at `http://localhost:8000/docs`, the current web identity at `http://localhost:3000/api/build`, the frontend at `http://localhost:3000`, and a current collector heartbeat.
+
+If a command reports `port_owned_by_other_process`, inspect rather than terminating by port:
 
 ```powershell
 Get-NetTCPConnection -State Listen | Where-Object LocalPort -In 3000,8000
 ```
+
+Use `pnpm dev:status` again after resolving the unrelated listener. An invalid or unverifiable PID file is deliberately a safety block, not permission to delete it.
 
 ## Validate the workspace
 

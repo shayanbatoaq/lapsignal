@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { existsSync, unlinkSync } from "node:fs";
 import { resolve } from "node:path";
 import { Command } from "commander";
 import { runDoctor } from "./doctor.js";
@@ -26,7 +27,22 @@ program.command("listen")
       record: options.record
     });
     await listener.start();
-    const shutdown = async () => { await listener.stop(); process.exitCode = 0; };
+    let stopping = false;
+    const stopFile = process.env.LAPSIGNAL_STOP_FILE;
+    let stopWatcher: NodeJS.Timeout | null = null;
+    const shutdown = async () => {
+      if (stopping) return;
+      stopping = true;
+      if (stopWatcher) clearInterval(stopWatcher);
+      await listener.stop();
+      process.exitCode = 0;
+    };
+    stopWatcher = setInterval(() => {
+      if (stopFile && existsSync(stopFile)) {
+        unlinkSync(stopFile);
+        void shutdown();
+      }
+    }, 400);
     process.once("SIGINT", () => void shutdown());
     process.once("SIGTERM", () => void shutdown());
   });
