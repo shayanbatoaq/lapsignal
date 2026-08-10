@@ -1,6 +1,6 @@
 [project]
 name = "lapsignal-api"
-version = "0.1.0a2"
+version = "0.1.0a3"
 description = "LapSignal local telemetry API and deterministic analytics engine"
 requires-python = ">=3.12"
 dependencies = [

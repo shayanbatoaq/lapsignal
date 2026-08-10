@@ -28,7 +28,7 @@ class Settings(BaseSettings):
     openai_coach_model: str = "gpt-5.6-luna"
     openai_deep_model: str = "gpt-5.6-terra"
     git_sha: str = "local"
-    build_number: int = 2
+    build_number: int = 3
 
     @field_validator("data_dir")
     @classmethod

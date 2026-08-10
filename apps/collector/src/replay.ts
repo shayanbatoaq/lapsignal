@@ -28,7 +28,7 @@ export async function replayFixture(
   );
   const heartbeat: CollectorHeartbeat = {
     collector_id: collectorId,
-    collector_version: "0.1.0-alpha.2",
+    collector_version: "0.1.0-alpha.3",
     adapter_version: "0.1.0",
     telemetry_schema_version: 1,
     mode: "replay",

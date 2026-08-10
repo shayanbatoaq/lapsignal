@@ -7,7 +7,7 @@ import { CollectorListener } from "./listener.js";
 import { replayFixture } from "./replay.js";
 
 const program = new Command();
-program.name("lapsignal-collector").description("LapSignal native Windows F1 2021 UDP collector").version("0.1.0-alpha.2");
+program.name("lapsignal-collector").description("LapSignal native Windows F1 2021 UDP collector").version("0.1.0-alpha.3");
 
 program.command("listen")
   .description("Listen for F1 2021 UDP telemetry")

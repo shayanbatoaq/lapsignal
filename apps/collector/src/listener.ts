@@ -59,7 +59,7 @@ export class CollectorListener {
       {
         bind: `${this.options.bindAddress}:${this.options.port}`,
         api: this.options.apiUrl,
-        collectorVersion: "0.1.0-alpha.2",
+        collectorVersion: "0.1.0-alpha.3",
         adapterVersion: "0.1.0",
         telemetrySchema: 1,
         recording: this.options.record,
@@ -100,7 +100,7 @@ export class CollectorListener {
   private heartbeatPayload(): CollectorHeartbeat {
     return {
       collector_id: `collector-${process.pid}`,
-      collector_version: "0.1.0-alpha.2",
+      collector_version: "0.1.0-alpha.3",
       adapter_version: "0.1.0",
       telemetry_schema_version: 1,
       mode: "live",

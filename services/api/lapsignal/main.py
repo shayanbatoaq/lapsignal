@@ -69,7 +69,7 @@ async def lifespan(_: FastAPI):
 
 app = FastAPI(
     title="LapSignal API",
-    version="0.1.0-alpha.2",
+    version="0.1.0-alpha.3",
     description="Evidence-backed local telemetry ingestion, analytics, and coaching.",
     lifespan=lifespan,
 )

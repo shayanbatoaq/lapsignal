@@ -52,7 +52,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </nav>
         <div className="sidebar-foot">
           <div className="collector-mini"><span className="status-dot idle" /> <span>Collector idle</span></div>
-          <small>v0.1.0-alpha.2 · build 2</small>
+          <small>v0.1.0-alpha.3 · build 3</small>
         </div>
       </aside>
       <div className="app-workspace">

@@ -2,23 +2,51 @@ import { expect, test } from "@playwright/test";
 import { mkdir } from "node:fs/promises";
 import { resolve } from "node:path";
 
-const artifacts = resolve(process.cwd(), "../../artifacts/qa/v0.1.0-alpha.2");
+const artifacts = resolve(process.cwd(), "../../artifacts/qa/v0.1.0-alpha.3");
 
 test.beforeAll(async () => { await mkdir(artifacts, { recursive: true }); });
 
 test("landing page and demo dashboard", async ({ page }, testInfo) => {
+  test.setTimeout(75_000);
   const errors: string[] = [];
   page.on("console", (message) => { if (message.type() === "error") errors.push(message.text()); });
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: /Find the time/i })).toBeVisible();
-  if (testInfo.project.name === "desktop") await page.screenshot({ path: resolve(artifacts, "landing-desktop.png"), fullPage: true });
-  else await page.screenshot({ path: resolve(artifacts, "landing-mobile.png"), fullPage: true });
-  await page.getByRole("link", { name: /Open the seeded debrief/i }).click();
-  await expect(page.getByText(/Pit-wall call/i)).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Every lap has a signal/i })).toBeVisible();
+  await expect(page.locator("main > section")).toHaveCount(5);
+  const landingWords = await page.locator("main").evaluate((main) => {
+    const walker = document.createTreeWalker(main, NodeFilter.SHOW_TEXT);
+    let text = "";
+    for (let node = walker.nextNode(); node; node = walker.nextNode()) text += ` ${node.textContent ?? ""}`;
+    return text.match(/[A-Za-z0-9]+(?:[’'-][A-Za-z0-9]+)*/g)?.length ?? 0;
+  });
+  expect(landingWords).toBeGreaterThanOrEqual(300);
+  expect(landingWords).toBeLessThanOrEqual(400);
+  if (testInfo.project.name === "desktop") {
+    await page.screenshot({ path: resolve(artifacts, "landing-hero-desktop.png") });
+    await page.screenshot({ path: resolve(artifacts, "landing-full-desktop.png"), fullPage: true });
+  } else {
+    await page.screenshot({ path: resolve(artifacts, "landing-hero-mobile.png") });
+    await page.screenshot({ path: resolve(artifacts, "landing-full-mobile.png"), fullPage: true });
+  }
+  await page.getByRole("link", { name: /Analyze a demo lap/i }).first().click();
+  await expect(page).toHaveURL(/\/app$/, { timeout: 20_000 });
+  await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible({ timeout: 20_000 });
   await expect(page.getByRole("status").getByText("Demo data")).toBeVisible();
   if (testInfo.project.name === "desktop") await page.screenshot({ path: resolve(artifacts, "dashboard-desktop.png"), fullPage: true });
   else await page.screenshot({ path: resolve(artifacts, "dashboard-mobile.png"), fullPage: true });
   expect(errors.filter((error) => !error.includes("favicon"))).toEqual([]);
+});
+
+test("landing anchors and reduced motion contract", async ({ page }, testInfo) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/");
+  const anchorTargets = await page.locator('a[href^="#"]').evaluateAll((links) => links.map((link) => link.getAttribute("href")));
+  for (const target of new Set(anchorTargets)) {
+    expect(target).toBeTruthy();
+    expect(await page.locator(target!).count(), `Missing landing anchor ${target}`).toBe(1);
+  }
+  await expect(page.locator("[data-motion-dot]").first()).toHaveCSS("display", "none");
+  if (testInfo.project.name === "desktop") await page.screenshot({ path: resolve(artifacts, "landing-reduced-motion.png"), fullPage: true });
 });
 
 test("session detail, comparison, debrief and evidence archive", async ({ page }, testInfo) => {
@@ -65,6 +93,7 @@ test("core routes do not overflow horizontally", async ({ page }) => {
 });
 
 test("1280, 768 and 360 responsive matrix stays inside the viewport", async ({ page }, testInfo) => {
+  test.setTimeout(60_000);
   test.skip(testInfo.project.name !== "desktop", "The desktop project owns the additional viewport matrix.");
   for (const viewport of [{ width: 1280, height: 800 }, { width: 768, height: 900 }, { width: 360, height: 844 }]) {
     await page.setViewportSize(viewport);
@@ -72,6 +101,7 @@ test("1280, 768 and 360 responsive matrix stays inside the viewport", async ({ p
       await page.goto(route);
       const dimensions = await page.evaluate(() => ({ scrollWidth: document.documentElement.scrollWidth, innerWidth: window.innerWidth }));
       expect(dimensions.scrollWidth, `${route} at ${viewport.width}px`).toBeLessThanOrEqual(dimensions.innerWidth);
+      if (route === "/" && viewport.width === 1280) await page.screenshot({ path: resolve(artifacts, "landing-laptop-1280.png") });
     }
   }
 });

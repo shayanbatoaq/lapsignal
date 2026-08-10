@@ -12,7 +12,7 @@ describe("product UI primitives", () => {
 
   it("shows exact component version", () => {
     render(createElement(VersionBadge));
-    expect(screen.getByText("v0.1.0-alpha.2 · build 2")).toBeInTheDocument();
+    expect(screen.getByText("v0.1.0-alpha.3 · build 3")).toBeInTheDocument();
   });
 
   it("distinguishes connected and disconnected states in text", () => {

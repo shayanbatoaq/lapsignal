@@ -10,8 +10,8 @@ def test_health_and_version():
     with TestClient(app) as client:
         assert client.get("/health").json()["status"] == "ok"
         version = client.get("/v1/version").json()
-        assert version["product"] == "0.1.0-alpha.2"
-        assert version["build"] == 2
+        assert version["product"] == "0.1.0-alpha.3"
+        assert version["build"] == 3
 
 
 def test_session_list_filters_and_paginates():
