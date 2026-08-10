@@ -4,6 +4,10 @@ All notable changes follow [Keep a Changelog](https://keepachangelog.com/en/1.1.
 
 ## [Unreleased]
 
+### Changed
+
+- Replaced the landing page's fictional circuit outline with attributed, normalized Spa-Francorchamps, Red Bull Ring, and Monza centerlines while preserving the telemetry-marker animation and reduced-motion fallback.
+
 ### Added
 
 - LapSignal monorepo foundation and independently versioned contracts.

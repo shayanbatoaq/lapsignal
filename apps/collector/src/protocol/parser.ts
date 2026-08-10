@@ -13,6 +13,7 @@ import {
   type ParticipantData,
   type SessionData
 } from "./types.js";
+import { trackValue } from "./catalogs.js";
 
 export class PacketParseError extends Error {
   constructor(
@@ -25,16 +26,8 @@ export class PacketParseError extends Error {
 }
 
 const HEADER_SIZE = 24;
-const TRACKS = [
-  "Melbourne", "Paul Ricard", "Shanghai", "Sakhir", "Catalunya", "Monaco", "Montreal",
-  "Silverstone", "Hockenheim", "Hungaroring", "Spa", "Monza", "Singapore", "Suzuka",
-  "Abu Dhabi", "Texas", "Brazil", "Austria", "Sochi", "Mexico", "Baku", "Sakhir Short",
-  "Silverstone Short", "Texas Short", "Suzuka Short", "Hanoi", "Zandvoort", "Imola",
-  "Portimao", "Jeddah"
-] as const;
-
 export function trackName(trackId: number | null | undefined): string | null {
-  return trackId == null ? null : TRACKS[trackId] ?? `track-${trackId}`;
+  return trackId == null ? null : trackValue(trackId).name;
 }
 
 export function parseHeader(buffer: Buffer): PacketHeader {
@@ -92,11 +85,21 @@ function parseMotion(buffer: Buffer, header: PacketHeader): MotionData {
 
 function parseSession(buffer: Buffer): SessionData {
   return {
+    weather: buffer.readUInt8(24),
+    trackTemperatureC: buffer.readInt8(25),
+    airTemperatureC: buffer.readInt8(26),
     totalLaps: buffer.readUInt8(27),
     trackLengthM: buffer.readUInt16LE(28),
     sessionType: buffer.readUInt8(30),
     trackId: buffer.readInt8(31),
-    formula: buffer.readUInt8(32)
+    formula: buffer.readUInt8(32),
+    assists: {
+      steering: buffer.readUInt8(616), braking: buffer.readUInt8(617),
+      gearbox: buffer.readUInt8(618), pit: buffer.readUInt8(619),
+      pitRelease: buffer.readUInt8(620), ers: buffer.readUInt8(621),
+      drs: buffer.readUInt8(622), racingLine: buffer.readUInt8(623),
+      racingLineType: buffer.readUInt8(624)
+    }
   };
 }
 

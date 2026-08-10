@@ -1,12 +1,13 @@
-import { Activity, ArrowRight, Gamepad2, Gauge, RadioTower, ShieldCheck, Timer } from "lucide-react";
+import { Activity, ArrowRight, Gamepad2, Gauge, ShieldCheck, Timer } from "lucide-react";
 import Link from "next/link";
 import { DemoBanner, MetricCard, SectionHeading, SessionRail } from "@/components/UI";
 import { getSessions } from "@/lib/data";
 import { formatLapTime } from "@lapsignal/telemetry-domain";
+import { CollectorReadiness } from "@/components/CollectorReadiness";
 
 export default async function DashboardPage() {
   const sessions = await getSessions();
-  const latest = sessions[0]!;
+  const latest = sessions.find((session) => session.findings.length > 0 && session.metrics.pace.best_lap_ms != null) ?? sessions[0]!;
   const pace = latest.metrics.pace;
   const finding = latest.findings[0]!;
   const inputContexts = new Set(sessions.map((session) => session.input_device)).size;
@@ -15,7 +16,7 @@ export default async function DashboardPage() {
     <DemoBanner />
     <div className="dashboard-grid">
       <section className="span-8 surface-card session-hero">
-        <div className="session-meta"><span className="tag demo">Seeded run</span><span className="tag">{latest.game_label}</span><span className="tag">{latest.input_device}</span></div>
+        <div className="session-meta"><span className={`tag ${latest.demo_data?"demo":""}`}>{latest.demo_data?"Seeded run":"Physical capture"}</span><span className="tag">{latest.game_label}</span><span className="tag">{latest.input_device}</span></div>
         <h2>{latest.track_name}<br />{latest.session_type}</h2>
         <p>{latest.laps.length} laps · {pace.clean_laps} clean · analysis complete</p>
         <div className="session-primary-time"><span>Best clean lap</span><strong>{formatLapTime(pace.best_lap_ms)}</strong></div>
@@ -39,7 +40,7 @@ export default async function DashboardPage() {
         <div className="stint-rails"><SessionRail label="OPENING" value={`${latest.metrics.stint.phase_consistency.opening}`} detail="consistency / 100"/><SessionRail label="MIDDLE" value={`${latest.metrics.stint.phase_consistency.middle}`} detail="consistency / 100"/><SessionRail label="CLOSING" value={`${latest.metrics.stint.phase_consistency.closing}`} detail="consistency / 100" tone="loss"/></div>
         <div className="technical-list" style={{marginTop:14}}><div className="technical-row"><span>Pace degradation</span><strong>{pace.pace_degradation_ms_per_lap} ms/lap</strong></div><div className="technical-row"><span>Error frequency increasing</span><strong>{latest.metrics.stint.increasing_error_frequency ? "Yes" : "No"}</strong></div></div>
       </section>
-      <section className="span-12 surface-card"><SectionHeading eyebrow="System readiness" title="Collector and analysis chain" /><div className="dashboard-grid"><div className="span-4"><div className="state-card"><RadioTower size={20}/><div><strong>Collector offline</strong><p>Expected in demo mode. Start the native Windows listener when the PS4 is ready.</p></div></div></div><div className="span-4"><MetricCard icon={Activity} label="Replay fixture" value="Ready" detail="same batch ingestion path" /></div><div className="span-4"><MetricCard icon={ShieldCheck} label="Schema compatibility" value="Matched" detail="schema 1 · adapter 0.1.0" /></div></div></section>
+      <section className="span-12 surface-card"><SectionHeading eyebrow="System readiness" title="Collector and analysis chain" /><div className="dashboard-grid"><div className="span-4"><CollectorReadiness/></div><div className="span-4"><MetricCard icon={Activity} label="Replay fixture" value="Ready" detail="same batch ingestion path" /></div><div className="span-4"><MetricCard icon={ShieldCheck} label="Schema compatibility" value="Matched" detail="schema 1 · adapter 0.1.0" /></div></div></section>
     </div>
   </>;
 }

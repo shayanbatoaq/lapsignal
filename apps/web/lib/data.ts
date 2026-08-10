@@ -12,12 +12,12 @@ async function fixtureSessions(): Promise<Session[]> {
 
 export async function getSessions(): Promise<Session[]> {
   try {
-    const response = await fetch(`${API_URL}/v1/sessions?page_size=50`, { cache: "no-store", signal: AbortSignal.timeout(1200) });
+    const response = await fetch(`${API_URL}/v1/sessions?page_size=50`, { cache: "no-store", signal: AbortSignal.timeout(15000) });
     if (!response.ok) throw new Error("API unavailable");
     const list = (await response.json()).items as Array<Record<string, unknown>>;
     const full = await Promise.all(
       list.map(async (item) => {
-        const detail = await fetch(`${API_URL}/v1/sessions/${item.id}`, { cache: "no-store", signal: AbortSignal.timeout(1200) });
+        const detail = await fetch(`${API_URL}/v1/sessions/${item.id}`, { cache: "no-store", signal: AbortSignal.timeout(15000) });
         if (!detail.ok) throw new Error("detail unavailable");
         return detail.json() as Promise<Session>;
       })

@@ -63,11 +63,20 @@ export interface MotionData {
 }
 
 export interface SessionData {
+  weather: number;
+  trackTemperatureC: number;
+  airTemperatureC: number;
   totalLaps: number;
   trackLengthM: number;
   sessionType: number;
   trackId: number;
   formula: number;
+  assists: AssistProfile;
+}
+
+export interface AssistProfile {
+  steering: number; braking: number; gearbox: number; pit: number;
+  pitRelease: number; ers: number; drs: number; racingLine: number; racingLineType: number;
 }
 
 export interface LapData {

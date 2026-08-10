@@ -33,6 +33,14 @@ class TelemetrySample(BaseModel):
     car_id: str | None = None
     car_class: str | None = None
     session_type: str | None = None
+    track_name: str | None = None
+    track_length_m: float | None = None
+    weather: str | None = None
+    formula: str | None = None
+    team_id: int | None = None
+    team_name: str | None = None
+    car_number: int | None = None
+    assist_profile: dict[str, str] | None = None
     input_device: Literal["controller", "wheel", "unknown"] = "unknown"
     lap_number: int = Field(ge=0)
     lap_distance_m: float | None = None
@@ -77,7 +85,7 @@ class CollectorHeartbeat(BaseModel):
     mode: Literal["live", "replay"]
     session_uid: str | None = None
     packet_rate_hz: float = Field(ge=0)
-    dropped_frames: int = Field(ge=0)
+    packet_loss_available: Literal[False] = False
     out_of_order_frames: int = Field(ge=0)
     last_packet_at: datetime | None = None
 
@@ -95,6 +103,22 @@ class DriverProfilePayload(BaseModel):
     units: Literal["metric", "imperial"] = "metric"
     ai_consent: bool = False
     cloud_ai_enabled: bool = False
+    post_session_ai_enabled: bool = False
+    ai_live_lap_coaching: bool = False
+
+
+class CollectorSessionEvent(BaseModel):
+    collector_id: str
+    session_uid: str
+    event: Literal["session_ended", "session_changed", "collector_shutdown"]
+    interrupted: bool = False
+    raw_capture_path: str | None = None
+    normalized_capture_path: str | None = None
+
+
+class PerformanceModePayload(BaseModel):
+    performance_mode: Literal["equal", "realistic", "unknown"]
+    performance_mode_source: Literal["user", "imported", "default", "unknown"] = "user"
 
 
 class CoachQuestion(BaseModel):

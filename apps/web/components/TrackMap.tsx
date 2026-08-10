@@ -1,15 +1,5 @@
-export function TrackMap() {
-  return (
-    <div className="track-map" role="img" aria-label="Normalized distance map with six analysis zones">
-      <svg viewBox="0 0 360 220" aria-hidden="true">
-        <path className="track-shadow" d="M39 135C18 96 45 46 98 42C140 39 153 70 190 54C237 33 307 46 321 93C335 141 298 181 252 180C211 179 194 151 155 174C100 206 58 170 39 135Z" />
-        <path className="track-line" pathLength="100" d="M39 135C18 96 45 46 98 42C140 39 153 70 190 54C237 33 307 46 321 93C335 141 298 181 252 180C211 179 194 151 155 174C100 206 58 170 39 135Z" />
-        {["M54 65", "M168 58", "M291 69", "M310 144", "M191 164", "M68 165"].map((position, index) => {
-          const [, x, y] = position.match(/M(\d+) (\d+)/) ?? [];
-          return <g key={index} transform={`translate(${x} ${y})`}><circle r="11" /><text y="4" textAnchor="middle">{index + 1}</text></g>;
-        })}
-      </svg>
-      <div className="map-legend"><span><i className="map-dot loss" /> Time-loss zone</span><span><i className="map-line" /> Normalized path</span></div>
-    </div>
-  );
-}
+"use client";
+import { useEffect,useRef } from "react";
+const SPA="M109.2 271.9 L39.5 318 L33.9 321.2 L28 321.1 L28.1 315 L54 263.3 L107.5 207.9 L117.8 191.6 L128.2 184.3 L146.7 179.2 L152.2 175.8 L193.4 145.1 L209.8 135 L360 77.7 L372.4 74.5 L378.4 76.4 L387.4 85.4 L393.6 86.7 L411.6 79.8 L417.9 78.6 L424.1 80 L466.8 127.9 L472 139.4 L469.5 145.2 L464.2 148.6 L457.8 148.9 L452.4 145.6 L432.1 120.7 L425.9 119.4 L396 131 L322.3 153.1 L314.1 162.7 L312.7 175.4 L313.9 188.2 L318.6 200 L334.1 211.3 L401.9 231.2 L412.5 238.1 L414.9 244 L410 262.5 L411.6 274.9 L421.6 282.8 L450.5 296.9 L459.9 305.3 L461.2 311.5 L459 317.5 L448.4 333.7 L439.6 342.9 L433.6 345.2 L420.8 344.7 L402.3 339.3 L385.3 330.3 L356.5 304.8 L330.8 268 L318.1 253.5 L295.4 241.5 L270.9 233.8 L258.3 231.5 L245.6 233.2 L199.5 255.7 L143 268.3 L137.8 265.6 L138.6 259.3 L135.5 254.2 L129.7 256.4 Z";
+const FALLBACK="M39 135C18 96 45 46 98 42C140 39 153 70 190 54C237 33 307 46 321 93C335 141 298 181 252 180C211 179 194 151 155 174C100 206 58 170 39 135Z";
+export function TrackMap({trackId="unknown",progress=0,sector}:{trackId?:string;progress?:number;sector?:number|null}){const pathRef=useRef<SVGPathElement>(null);const marker=useRef<SVGCircleElement>(null);const spa=trackId.includes("spa");useEffect(()=>{const path=pathRef.current;if(!path||!marker.current)return;const point=path.getPointAtLength(path.getTotalLength()*Math.max(0,Math.min(1,progress)));marker.current.setAttribute("cx",String(point.x));marker.current.setAttribute("cy",String(point.y));},[progress,spa]);return <div className="track-map" role="img" aria-label={`${spa?"Spa-Francorchamps":"Track"} layout, car position${sector?`, sector ${sector}`:""}`}><svg viewBox={spa?"0 40 500 330":"0 0 360 220"} aria-hidden="true"><path className="track-shadow" d={spa?SPA:FALLBACK}/><path ref={pathRef} className="track-line" d={spa?SPA:FALLBACK}/>{spa&&<><circle className="sector-marker" cx="209.8" cy="135" r="5"/><circle className="sector-marker" cx="414.9" cy="244" r="5"/><g transform="translate(109 272)"><path className="start-line" d="M-9 -9L9 9M-4 -14L14 4"/></g></>}<circle ref={marker} className="live-car-marker" r="8"/></svg><div className="map-legend"><span><i className="map-dot loss"/> Car position</span><span><i className="map-line"/> {spa?"Spa-Francorchamps · original code-native outline":"Layout unavailable · normalized fallback"}</span></div></div>}

@@ -1,35 +1,33 @@
 # AI coach architecture
 
-LapSignal has one optional coaching agent and one deterministic fallback. Neither path calculates telemetry metrics. The evidence contract comes from a completed analysis run and is validated again before a report is returned.
+LapSignal has one bounded race-engineer path and one deterministic fallback. Analytics remains authoritative: no model calculates telemetry metrics, and raw high-frequency telemetry is never sent to a provider.
 
-## Runtime paths
+## Providers and configuration
 
-Without `OPENAI_API_KEY`, `generate_coach_report` returns a polished **Rule-based coach** report. It selects no more than three stored findings and includes their exact IDs, limitations, analysis/prompt versions, timestamp, response status, and fallback provenance.
+`AI_PROVIDER` selects `rule_based`, `openai`, or `openrouter` through one server-side provider interface. OpenRouter uses the official OpenAI Python client directly against the configurable `OPENROUTER_BASE_URL`; it does not use an Agents runner. The preferred candidate is one non-streaming `POST /api/v1/chat/completions` request with no tools, `openai/gpt-5-mini`, `max_tokens`, and Chat Completions structured output under `response_format.json_schema`. `openai/gpt-5.2` remains reserved for optional deeper analysis. Direct OpenAI configuration remains supported independently.
 
-With a key plus persisted **AI consent** and **Cloud AI** enablement, the server uses the current [OpenAI Agents SDK for Python](https://openai.github.io/openai-agents-python/) `Agent`, `Runner`, function tools, and a Pydantic output type. The SDK's documented [agents](https://openai.github.io/openai-agents-python/agents/) and [tools](https://openai.github.io/openai-agents-python/tools/) patterns informed the implementation. Model IDs are environment-configurable; the account must have access to the selected model.
+The canonical secret file is the repository-root `.env`, loaded by `services/api/lapsignal/config.py`. The browser receives only provider name, configured state, model IDs, reachability, sanitized diagnostics, and last success time. OpenRouter attribution and router-metadata headers are server-side only; routing requires parameter support and defaults data collection to `deny`. ZDR is requested only when explicitly enabled. Raw headers and bodies are never persisted.
 
-The agent can call only:
+## Consent and cadence
 
-- `get_session_summary`
-- `get_lap_comparison`
-- `get_top_findings`
-- `get_stint_analysis`
-- `get_driver_progress`
-- `get_finding_evidence`
-- `search_coaching_knowledge`
+Both persisted **AI consent** and **Cloud AI** must be enabled. The provider must also be configured, its exact model slug validated, and Evidence Bundle v1 must validate. Manual generation is allowed; post-session generation is separately opt-in; per-lap coaching is experimental and off by default. A telemetry sample can never trigger a provider call.
 
-Tools close over one selected session and return compact summaries, not arbitrary database queries, filesystem access, raw captures, or full high-frequency traces. A returned report is rejected if any `evidence_references` value is absent from the supplied finding set. Failure or unavailable cloud service falls back locally and adds a visible limitation.
+## Evidence Bundle v1
 
-## Structured output
+The compact bundle contains session/track/car context, manual performance mode and source, completed lap summaries, deterministic consistency values, up to three priority losses, zone references, equipment profile, and stable evidence IDs. It excludes raw samples, participant names, network identifiers, IP addresses, paths, secrets, and unrelated personal information. A canonical JSON hash makes unchanged evidence cacheable.
 
-The Pydantic schema requires `session_summary`, at most three priorities, `what_improved`, `what_regressed`, `next_stint_plan`, `confidence_summary`, limitations, and evidence references. The prompt prohibits invented references, guaranteed gains, unevidenced setup advice, vehicle-balance diagnoses as fact, and wheel-specific advice for controller users.
+## Structured validation and fallback
 
-Provenance contains model ID, prompt and analysis versions, supplied finding IDs, permitted tool set, token usage when available, latency, timestamp, status, fallback flag, and Git SHA. The alpha exposes this in reports/settings but does not yet persist live cloud runs through a durable job queue.
+The Pydantic output permits a summary, a positive observation, no more than three priority actions, and limitations. Every action requires supplied evidence IDs and bounded confidence; `expected_gain_seconds` is required and must remain null unless a later deterministic contract explicitly supplies a gain. The runtime request uses the official OpenAI Python client's strict Pydantic transformation. The resulting schema hash is `5e1d18d4a757a6ac2f145710f4cff0d231daa02e00772900a5ce0abf5f41bc6c`; a recursive local contract audit runs before provider health or generation network access. Unsupported evidence, invented performance context, exact time-gain language, malformed output, or a provider error is discarded before display. The UI then shows rule-based coaching with a discreet sanitized reason.
 
-## Coaching knowledge
+Run metadata persists in `ai_runs`: provider, requested/resolved model, prompt/schema versions, evidence hash/cache key, timestamps, latency, token counts when returned, cost when available, status, cache state, validation result, and validated response JSON. Failed runs use the same JSON field only for a bounded `developer_diagnostics` object. Cloudflare Ray, OpenRouter request/trace, `x-request-id`, and `gen-` generation identifiers are classified into separate fields. A provider message is stored verbatim only when it passes secret and prompt-overlap screening; otherwise only a redacted marker, length, and SHA-256 hash are retained. Keys, authorization headers, prompts, raw telemetry, raw response bodies, raw model text, and hidden reasoning are never stored.
 
-`knowledge.py` contains twelve short, original notes: braking, brake release, trail braking, throttle, corner exit, consistency, controller, wheel, tyre, fuel, endurance mindset, and multiclass traffic. Retrieval is deterministic tag/text scoring with a three-result bound. The notes guide language; they cannot override telemetry evidence and contain no copied paid material or external passages.
+## Offline request verification
 
-## Consent and data boundary
+`build_openrouter_chat_request` constructs the preferred strict request. `build_openrouter_json_object_request` prepares an explicit compatibility candidate that still requires local Pydantic and evidence validation; the adapter never switches to it automatically. `summarize_chat_request` records only the endpoint, method, parameter names, requested model, streaming and structured-output modes, tool count, schema name/hash, token-budget fields, and routing field names. Tests send the exact serialized request only through `httpx.MockTransport`; they also confirm the body contains Chat Completions `response_format`, not Responses API `text.format`, and that unsupported `verbosity` is absent.
 
-AI is opt-in. Keep `OPENAI_API_KEY` server-side; the server requires both profile consent and the separate cloud-enable flag before entering the SDK path. Only derived evidence needed for a report may leave the machine. Do not add a raw-telemetry tool or place secrets in any `NEXT_PUBLIC_*` variable. SDK tracing must follow the same privacy boundary if enabled later.
+The adapter inspects the non-streaming HTTP response envelope before SDK parsing. This preserves OpenRouter errors returned inside HTTP 200 responses, then separately gates JSON parsing, Pydantic validation, exact-model matching, and evidence validation. Streaming is not enabled for coaching, but the diagnostic parser is tested against OpenRouter's documented SSE error envelope so a future streaming path cannot silently collapse `finish_reason: error`.
+
+## Provider verification status
+
+OpenRouter is not provider-verified. One authorized synthetic Silverstone request returned HTTP 400 before generation and invoked the deterministic fallback. The historical `error.message` and header provenance were not retained, so the exact cause remains unproven. Cloud AI remains disabled. The separately verified physical telemetry path does not constitute cloud-AI verification.

@@ -201,9 +201,7 @@ def seed_database(reset: bool = False) -> dict:
     return {
         "seeded": True,
         "sessions": len(sessions),
-        "samples": sum(
-            len(lap["telemetry"]) for session in sessions for lap in session["laps"]
-        ),
+        "samples": sum(len(lap["telemetry"]) for session in sessions for lap in session["laps"]),
     }
 
 

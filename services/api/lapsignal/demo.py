@@ -250,8 +250,12 @@ def build_fallback_report(session: dict) -> dict:
         "id": f"report-{session['id']}",
         "session_id": session["id"],
         "mode": "rule_based",
-        "label": "Rule-based coach",
-        "session_summary": f"{len(session['laps'])} laps analyzed; best clean lap {best} ms with a {consistency}/100 consistency score.",
+        "label": "Rule-based coaching",
+        "session_summary": (
+            f"{len(session['laps'])} completed laps were preserved, but none passed the clean-lap validity gate."
+            if best is None
+            else f"{len(session['laps'])} laps analyzed; best clean lap {best} ms with a {consistency}/100 consistency score."
+        ),
         "top_priorities": [
             {
                 "title": finding["title"],
@@ -296,7 +300,8 @@ def get_demo_sessions() -> list[dict]:
 
 
 def get_demo_session(session_id: str) -> dict | None:
-    return next((session for session in get_demo_sessions() if session["id"] == session_id), None)
+    session = next((item for item in _cached_sessions() if item["id"] == session_id), None)
+    return deepcopy(session) if session else None
 
 
 def get_demo_report(report_id: str) -> dict | None:

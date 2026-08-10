@@ -1,7 +1,7 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 import { mkdirSync } from "node:fs";
-import type { CollectorHeartbeat, TelemetrySample } from "@lapsignal/contracts";
+import type { CollectorHeartbeat, CollectorSessionEvent, TelemetrySample } from "@lapsignal/contracts";
 
 export interface DeliveryLogger {
   info(payload: object, message: string): void;
@@ -74,6 +74,16 @@ export class ApiDelivery {
     } catch {
       return false;
     }
+  }
+
+  async sessionEvent(payload: CollectorSessionEvent): Promise<boolean> {
+    try {
+      const response = await fetch(`${this.apiUrl}/v1/collector/session-events`, {
+        method: "POST", headers: { "content-type": "application/json" },
+        body: JSON.stringify(payload), signal: AbortSignal.timeout(5000)
+      });
+      return response.ok;
+    } catch { return false; }
   }
 
   persist(): void {

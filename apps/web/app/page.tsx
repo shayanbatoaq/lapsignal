@@ -6,7 +6,31 @@ import { getSessions } from "@/lib/data";
 import { formatLapTime } from "@lapsignal/telemetry-domain";
 import styles from "./landing.module.css";
 
-const CIRCUIT_PATH = "M72 63 C94 29 149 20 194 36 C233 50 239 85 274 90 C319 96 355 57 399 63 C448 70 466 116 440 149 C414 181 361 169 337 199 C316 227 344 260 318 286 C287 318 228 286 195 303 C160 320 164 357 127 366 C83 376 44 343 55 306 C65 274 104 267 105 233 C105 203 66 194 53 166 C38 134 49 91 72 63 Z";
+const TRACKS = {
+  spa: {
+    name: "Circuit de Spa-Francorchamps",
+    shortName: "SPA-FRANCORCHAMPS",
+    path: "M109.2 271.9 L39.5 318 L33.9 321.2 L28 321.1 L28.1 315 L54 263.3 L107.5 207.9 L117.8 191.6 L128.2 184.3 L146.7 179.2 L152.2 175.8 L193.4 145.1 L209.8 135 L360 77.7 L372.4 74.5 L378.4 76.4 L387.4 85.4 L393.6 86.7 L411.6 79.8 L417.9 78.6 L424.1 80 L466.8 127.9 L472 139.4 L469.5 145.2 L464.2 148.6 L457.8 148.9 L452.4 145.6 L432.1 120.7 L425.9 119.4 L396 131 L322.3 153.1 L314.1 162.7 L312.7 175.4 L313.9 188.2 L318.6 200 L334.1 211.3 L401.9 231.2 L412.5 238.1 L414.9 244 L410 262.5 L411.6 274.9 L421.6 282.8 L450.5 296.9 L459.9 305.3 L461.2 311.5 L459 317.5 L448.4 333.7 L439.6 342.9 L433.6 345.2 L420.8 344.7 L402.3 339.3 L385.3 330.3 L356.5 304.8 L330.8 268 L318.1 253.5 L295.4 241.5 L270.9 233.8 L258.3 231.5 L245.6 233.2 L199.5 255.7 L143 268.3 L137.8 265.6 L138.6 259.3 L135.5 254.2 L129.7 256.4 Z",
+    start: [109.2, 271.9],
+    marker: [372.4, 74.5],
+  },
+  "red-bull-ring": {
+    name: "Red Bull Ring",
+    shortName: "RED BULL RING",
+    path: "M432.8 297.6 L220 351 L207.6 351.8 L194.3 329.7 L160.1 282.8 L95.8 156.3 L32.2 83.3 L28.2 78.3 L28 72.2 L33.5 69.2 L91.6 67.5 L193.1 86.1 L231.6 90 L302.4 95.9 L308.5 97.6 L313.1 102.1 L314.1 108.3 L308.5 119.8 L295.7 134.2 L279.6 145 L267.6 149.5 L254.9 151.8 L242 151.6 L178.4 141.4 L165.8 143.7 L155.5 151.3 L149.2 162.5 L148.8 175.2 L178.2 232.5 L182.5 237.2 L194 242.9 L200.4 243.7 L212.9 240.8 L245.2 209.6 L256.7 203.8 L269.1 200.4 L443.3 200.8 L454.1 207.4 L457.2 213 L472 269.2 L471.4 275.5 L467.6 280.6 Z",
+    start: [432.8, 297.6],
+    marker: [40.7, 93.1],
+  },
+  monza: {
+    name: "Autodromo Nazionale Monza",
+    shortName: "MONZA",
+    path: "M321.4 315.5 L203.3 317.5 L198.8 316.8 L195.3 309 L163.7 318.3 L135.4 318.7 L116.8 316.1 L96.7 304 L87.2 293.5 L78.9 276.5 L72 249.1 L61.3 188.7 L53.4 184.4 L51.3 180.2 L29.8 133 L28.7 119.1 L39 109.9 L85.4 101.1 L89.9 101.9 L126 151.4 L150.9 179.7 L231.4 252.5 L250.1 251.3 L265.9 261 L275.2 262.1 L454.7 262.3 L463.9 264.3 L467.7 267 L471.6 275.5 L471.5 284.8 L467.2 293.1 L456.6 302.5 L443.7 308.2 L396.9 314 Z",
+    start: [321.4, 315.5],
+    marker: [42, 158.5],
+  },
+} as const;
+
+type TrackKey = keyof typeof TRACKS;
 
 export default async function MarketingPage() {
   const sessions = await getSessions();
@@ -56,7 +80,7 @@ export default async function MarketingPage() {
               </div>
               <TracePair />
             </div>
-            <Circuit className={styles.heroCircuit} label="Original illustrative circuit outline" />
+            <Circuit className={styles.heroCircuit} track="spa" />
           </div>
 
           <div className={styles.heroActions}>
@@ -81,9 +105,9 @@ export default async function MarketingPage() {
             <header><span>SEEDED RUN · {session.track_name.toUpperCase()}</span><strong><i /> ANALYSIS COMPLETE</strong></header>
             <div className={styles.analysisBody}>
               <figure className={styles.circuitPanel}>
-                <Circuit className={styles.analysisCircuit} label="Original illustrative sample circuit with an active telemetry point" />
-                <figcaption>Illustrative circuit · seeded telemetry values</figcaption>
-                <div className={styles.cornerFlag}><span>ACTIVE</span><strong>C06</strong><small>592 m · brake zone</small></div>
+                <Circuit className={styles.analysisCircuit} track="monza" />
+                <figcaption>Monza reference outline · Silverstone values remain separate</figcaption>
+                <div className={styles.cornerFlag}><span>REFERENCE TRACK</span><strong>MONZA</strong><small>RECOGNIZABLE OUTLINE</small></div>
               </figure>
               <div className={styles.analysisData}>
                 <div className={styles.lapReadout}><span>BEST CLEAN · LAP {bestLap.lap_number}</span><strong>{formatLapTime(pace.best_lap_ms)}</strong><small>{cleanLaps} clean laps · {pace.consistency_score} consistency</small></div>
@@ -110,7 +134,7 @@ export default async function MarketingPage() {
               <WorkflowStep index="04" title="Return" text="Take one precise call back on track." icon={<ArrowRight size={17} />} />
             </ol>
           </div>
-          <Circuit className={styles.workflowCircuit} label="Decorative original circuit line connecting the workflow" />
+          <Circuit className={styles.workflowCircuit} track="red-bull-ring" />
         </section>
 
         <section className={styles.setup} id="setup" aria-labelledby="setup-title">
@@ -128,7 +152,7 @@ export default async function MarketingPage() {
         </section>
 
         <section className={`${styles.finalCta} ${styles.carbon}`} aria-labelledby="cta-title">
-          <Circuit className={styles.ctaCircuit} label="Decorative original circuit outline" />
+          <Circuit className={styles.ctaCircuit} track="red-bull-ring" />
           <div>
             <p className={styles.eyebrow}>READY FOR THE NEXT RUN</p>
             <h2 id="cta-title">Your next lap <span>starts here.</span></h2>
@@ -161,14 +185,18 @@ function TracePair({ detailed = false }: { detailed?: boolean }) {
   );
 }
 
-function Circuit({ className, label }: { className: string | undefined; label: string }) {
+function Circuit({ className, track }: { className: string | undefined; track: TrackKey }) {
+  const trackData = TRACKS[track];
+
   return (
-    <svg className={className} viewBox="0 0 500 420" role="img" aria-label={label}>
-      <path className={styles.circuitShadow} d={CIRCUIT_PATH} />
-      <path className={styles.circuitLine} d={CIRCUIT_PATH} />
-      <circle className={styles.motionDot} data-motion-dot r="7"><animateMotion dur="7s" repeatCount="indefinite" path={CIRCUIT_PATH} /></circle>
-      <circle className={styles.motionDotStatic} cx="72" cy="63" r="7" />
-      <circle className={styles.cornerMarker} cx="337" cy="199" r="12" />
+    <svg className={className} viewBox="0 0 500 420" role="img" aria-label={`${trackData.name} circuit outline with animated telemetry marker`} data-track={track}>
+      <title>{`${trackData.name} circuit outline`}</title>
+      <path className={styles.circuitShadow} d={trackData.path} />
+      <path className={styles.circuitLine} d={trackData.path} />
+      <circle className={styles.motionDot} data-motion-dot r="7"><animateMotion dur="7s" repeatCount="indefinite" path={trackData.path} /></circle>
+      <circle className={styles.motionDotStatic} cx={trackData.start[0]} cy={trackData.start[1]} r="7" />
+      <circle className={styles.cornerMarker} cx={trackData.marker[0]} cy={trackData.marker[1]} r="12" />
+      <text className={styles.trackName} x="472" y="392" textAnchor="end">{trackData.shortName}</text>
     </svg>
   );
 }

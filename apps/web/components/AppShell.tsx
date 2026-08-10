@@ -15,6 +15,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { Logo } from "./Logo";
+import { useLiveStatus } from "./LiveStatus";
 
 const navigation = [
   { href: "/app", label: "Overview", icon: CircleGauge },
@@ -29,6 +30,7 @@ const navigation = [
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
+  const { status } = useLiveStatus();
   const title = navigation.find((item) => pathname === item.href || (item.href !== "/app" && pathname.startsWith(item.href)))?.label ?? "Session detail";
   return (
     <div className={`app-shell ${collapsed ? "nav-collapsed" : ""}`}>
@@ -51,7 +53,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           })}
         </nav>
         <div className="sidebar-foot">
-          <div className="collector-mini"><span className="status-dot idle" /> <span>Collector idle</span></div>
+          <div className="collector-mini"><span className={`status-dot ${status.online ? "live" : "idle"}`} /> <span>{status.state === "LIVE" ? "Collector live" : status.state === "REPLAY" ? "Replay active" : "Collector idle"}</span></div>
           <small>v0.1.0-alpha.3 · build 3</small>
         </div>
       </aside>
@@ -59,8 +61,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <header className="topbar">
           <div><p className="eyebrow">Pit-wall workspace</p><h1>{title}</h1></div>
           <div className="topbar-status">
-            <span className="status-chip"><Activity size={14} /> Demo data</span>
-            <span className="status-chip muted"><span className="status-dot idle" /> Collector offline</span>
+            <span className="status-chip"><Activity size={14} /> {status.source_label}</span>
+            <span className={`status-chip ${status.online ? "" : "muted"}`}><span className={`status-dot ${status.online ? "live" : "idle"}`} /> {status.online ? "Collector connected" : "Collector offline"}</span>
           </div>
         </header>
         <main className="app-main">{children}</main>

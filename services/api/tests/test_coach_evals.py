@@ -1,13 +1,12 @@
 from __future__ import annotations
 
 from copy import deepcopy
-from types import SimpleNamespace
 
 import pytest
 
-from lapsignal import coach
+from lapsignal.ai import generate_with_fallback
 from lapsignal.analytics import analyze_session
-from lapsignal.coach import generate_coach_report
+from lapsignal.database import SessionLocal
 from lapsignal.demo import build_fallback_report, get_demo_sessions
 
 SCENARIOS = [
@@ -27,15 +26,13 @@ SCENARIOS = [
 
 
 @pytest.mark.asyncio
-async def test_cloud_coach_requires_explicit_server_consent(monkeypatch):
-    monkeypatch.setattr(
-        coach,
-        "get_settings",
-        lambda: SimpleNamespace(openai_api_key="synthetic-test-key"),
-    )
-    report = await generate_coach_report(get_demo_sessions()[0], cloud_allowed=False)
-    assert report["label"] == "Rule-based coach"
-    assert report["provenance"]["fallback_used"] is True
+async def test_cloud_coach_requires_explicit_server_consent():
+    with SessionLocal() as db:
+        report = await generate_with_fallback(
+            db, get_demo_sessions()[0], {"ai_consent": False, "cloud_ai_enabled": True}
+        )
+    assert report["label"] == "Rule-based coaching"
+    assert report["provenance"]["provider"] == "rule_based"
 
 
 def _scenario(name: str) -> dict:

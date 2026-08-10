@@ -15,17 +15,16 @@ git --version
 Enable pnpm through Corepack and install both runtimes:
 
 ```powershell
-corepack enable
-pnpm setup
-pnpm seed
+corepack pnpm setup
+corepack pnpm seed
 ```
 
-`pnpm setup` installs the pnpm workspace and runs `uv sync --project services/api`. No administrator terminal, WSL, Docker, database server, steering wheel, or cloud account is needed.
+`corepack pnpm setup` installs the pnpm workspace and runs `uv sync --project services/api`. It does not write a global shim and does not require an Administrator terminal. If `corepack enable` returns EPERM under `C:\Program Files\nodejs`, skip it and keep using `corepack pnpm ...`.
 
 ## Start demo mode
 
 ```powershell
-pnpm dev:demo
+corepack pnpm dev:demo
 ```
 
 Open `http://localhost:3000`. Stop both processes with Ctrl+C. Local metadata is written to `data\local\lapsignal.db`; normalized demo artifacts are Parquet files under `data\demo`. Both are reproducible with `pnpm seed`.
@@ -39,11 +38,11 @@ Get-NetTCPConnection -State Listen | Where-Object LocalPort -In 3000,8000
 ## Validate the workspace
 
 ```powershell
-pnpm lint
-pnpm typecheck
-pnpm test
-pnpm build
-pnpm test:e2e
+corepack pnpm lint
+corepack pnpm typecheck
+corepack pnpm test
+corepack pnpm build
+corepack pnpm test:e2e
 ```
 
 Playwright may request its Chromium binary on a fresh machine. Install only that browser with `pnpm --filter @lapsignal/web exec playwright install chromium`.
@@ -53,11 +52,11 @@ Playwright may request its Chromium binary on a fresh machine. Install only that
 Run the collector directly in PowerShell:
 
 ```powershell
-pnpm --filter @lapsignal/collector start doctor
-pnpm collector:listen
+corepack pnpm --filter @lapsignal/collector start doctor
+corepack pnpm collector:listen
 ```
 
-Do not place the collector in WSL: a native Windows UDP socket avoids virtual-network and firewall ambiguity. Captures and the bounded retry queue stay under `data\local` and are gitignored.
+Do not place the collector in WSL: a native Windows UDP socket avoids virtual-network and firewall ambiguity. Captures and the bounded retry queue stay under `data\local` and are gitignored. `scripts\lapsignal.ps1` also exposes `setup`, `seed`, `demo`, `live`, `collector`, `replay`, and `verify` actions.
 
 ## Environment overrides
 

@@ -1,5 +1,5 @@
 import type { TelemetrySample } from "@lapsignal/contracts";
-import { trackName } from "./protocol/parser.js";
+import { trackValue, teamValue, sessionTypeValue, formulaValue, weatherValue, assistValue, gearboxAssistValue, racingLineValue } from "./protocol/catalogs.js";
 import type {
   CarDamageData,
   CarStatusData,
@@ -10,11 +10,6 @@ import type {
   ParticipantData,
   SessionData
 } from "./protocol/types.js";
-
-const SESSION_TYPES = [
-  "Unknown", "P1", "P2", "P3", "Short Practice", "Q1", "Q2", "Q3",
-  "Short Qualifying", "One-shot Qualifying", "Race", "Race 2", "Race 3", "Time Trial"
-] as const;
 
 export class F12021Adapter {
   private session: SessionData | null = null;
@@ -42,7 +37,8 @@ export class F12021Adapter {
     telemetry: Extract<ParsedPacket, { kind: "carTelemetry" }>["data"],
     receivedAtMs: number
   ): TelemetrySample {
-    const track = trackName(this.session?.trackId);
+    const track = this.session ? trackValue(this.session.trackId) : null;
+    const team = this.participant ? teamValue(this.participant.teamId) : null;
     const lap = this.lap;
     return {
       schema_version: 1,
@@ -54,10 +50,24 @@ export class F12021Adapter {
       session_uid: header.sessionUid,
       frame_id: header.frameIdentifier,
       player_index: header.playerCarIndex,
-      track_id: track?.toLowerCase().replaceAll(/[^a-z0-9]+/g, "-") ?? null,
-      car_id: this.participant ? `team-${this.participant.teamId}` : null,
-      car_class: this.session?.formula === 0 ? "Formula" : "Formula legacy",
-      session_type: this.session ? (SESSION_TYPES[this.session.sessionType] ?? "Unknown") : null,
+      track_id: track?.slug ?? null,
+      track_name: track?.name ?? null,
+      track_length_m: this.session?.trackLengthM ?? null,
+      weather: this.session ? weatherValue(this.session.weather).name : null,
+      car_id: team?.slug ?? null,
+      team_id: team?.id ?? null,
+      team_name: team?.name ?? null,
+      car_number: this.participant?.raceNumber ?? null,
+      formula: this.session ? formulaValue(this.session.formula).name : null,
+      car_class: this.session ? formulaValue(this.session.formula).name : null,
+      session_type: this.session ? sessionTypeValue(this.session.sessionType).name : null,
+      assist_profile: this.session ? {
+        steering: assistValue(this.session.assists.steering), braking: assistValue(this.session.assists.braking),
+        gearbox: gearboxAssistValue(this.session.assists.gearbox), pit: assistValue(this.session.assists.pit),
+        pit_release: assistValue(this.session.assists.pitRelease), ers: assistValue(this.session.assists.ers),
+        drs: assistValue(this.session.assists.drs), racing_line: racingLineValue(this.session.assists.racingLine),
+        racing_line_type: assistValue(this.session.assists.racingLineType)
+      } : null,
       input_device: "unknown",
       lap_number: lap?.currentLapNumber ?? 0,
       lap_distance_m: lap?.lapDistanceM ?? null,

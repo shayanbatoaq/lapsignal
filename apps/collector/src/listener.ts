@@ -1,7 +1,7 @@
 import dgram from "node:dgram";
 import { join } from "node:path";
 import pino from "pino";
-import type { CollectorHeartbeat } from "@lapsignal/contracts";
+import type { CollectorHeartbeat, CollectorSessionEvent } from "@lapsignal/contracts";
 import { F12021Adapter } from "./adapter.js";
 import { ApiDelivery } from "./delivery.js";
 import { parseF12021Packet, PacketParseError } from "./protocol/parser.js";
@@ -28,15 +28,15 @@ export class CollectorListener {
   private heartbeatTimer: NodeJS.Timeout | null = null;
   private lastPacketAt: string | null = null;
   private sessionUid: string | null = null;
+  private readonly collectorId = `collector-${process.pid}`;
   private stopped = false;
   private malformedPackets = 0;
 
   constructor(private readonly options: ListenOptions) {
-    const collectorId = `collector-${process.pid}`;
     this.recorder = new SessionRecorder(join(options.dataDirectory, "captures"));
     this.delivery = new ApiDelivery(
       options.apiUrl,
-      collectorId,
+      this.collectorId,
       join(options.dataDirectory, "local", "collector-queue.jsonl"),
       this.logger
     );
@@ -75,8 +75,10 @@ export class CollectorListener {
     this.recorder.recordRaw(packet, receivedAtMs);
     try {
       const parsed = parseF12021Packet(packet);
-      this.stats.observe(parsed.header.packetId, parsed.header.frameIdentifier);
+      const previousUid = this.sessionUid;
+      this.stats.observe(parsed.header.sessionUid, parsed.header.packetId, parsed.header.frameIdentifier, receivedAtMs);
       this.sessionUid = parsed.header.sessionUid;
+      if (previousUid && previousUid !== this.sessionUid) void this.finalize(previousUid, "session_changed", false);
       const sample = this.adapter.ingest(parsed, receivedAtMs);
       if (sample) {
         this.recorder.recordNormalized(sample);
@@ -84,6 +86,7 @@ export class CollectorListener {
       }
       if (parsed.kind === "event" && ["SSTA", "SEND", "CHQF"].includes(parsed.data.code)) {
         this.logger.info({ event: parsed.data.code, sessionUid: this.sessionUid }, "session event");
+        if (parsed.data.code === "SEND" && this.sessionUid) void this.finalize(this.sessionUid, "session_ended", false);
       }
       if (parsed.kind === "finalClassification") {
         this.logger.info({ classification: parsed.data }, "final classification received");
@@ -99,14 +102,14 @@ export class CollectorListener {
 
   private heartbeatPayload(): CollectorHeartbeat {
     return {
-      collector_id: `collector-${process.pid}`,
+      collector_id: this.collectorId,
       collector_version: "0.1.0-alpha.3",
       adapter_version: "0.1.0",
       telemetry_schema_version: 1,
       mode: "live",
       session_uid: this.sessionUid,
       packet_rate_hz: this.stats.packetRateHz(),
-      dropped_frames: this.stats.droppedFrames,
+      packet_loss_available: false,
       out_of_order_frames: this.stats.outOfOrderFrames,
       last_packet_at: this.lastPacketAt
     };
@@ -118,7 +121,7 @@ export class CollectorListener {
       {
         apiOnline: online,
         packetRateHz: this.stats.packetRateHz(),
-        droppedFrames: this.stats.droppedFrames,
+        packetLoss: "unavailable",
         outOfOrderFrames: this.stats.outOfOrderFrames,
         queued: this.delivery.queued(),
         lastPacketAt: this.lastPacketAt
@@ -135,7 +138,17 @@ export class CollectorListener {
     await this.delivery.flush(1000);
     this.delivery.persist();
     await this.recorder.close();
+    if (this.sessionUid) await this.finalize(this.sessionUid, "collector_shutdown", true);
     await new Promise<void>((resolve) => this.socket.close(() => resolve()));
     this.logger.info({ queued: this.delivery.queued(), rawCapture: this.recorder.rawPath, normalized: this.recorder.normalizedPath }, "collector stopped and files flushed");
+  }
+
+  private async finalize(sessionUid: string, event: CollectorSessionEvent["event"], interrupted: boolean): Promise<void> {
+    await this.delivery.flush(1000);
+    const accepted = await this.delivery.sessionEvent({
+      collector_id: this.collectorId, session_uid: sessionUid, event, interrupted,
+      raw_capture_path: this.recorder.rawPath, normalized_capture_path: this.recorder.normalizedPath
+    });
+    this.logger.info({ event, sessionUid, accepted, interrupted }, "session finalization requested");
   }
 }

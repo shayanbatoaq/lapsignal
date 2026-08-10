@@ -50,6 +50,10 @@ export interface Session {
   completed_at: string;
   demo_data: boolean;
   analysis_status: string;
+  performance_mode?: "equal" | "realistic" | "unknown";
+  performance_mode_source?: "user" | "imported" | "default" | "unknown";
+  context?: Record<string, unknown>;
+  interrupted?: boolean;
   laps: Lap[];
   metrics: {
     pace: {
@@ -94,6 +98,10 @@ export interface CoachReport {
   limitations: string[];
   evidence_references: string[];
   provenance: Record<string, unknown>;
+  summary?: string;
+  positive?: string;
+  priority_actions?: Array<{ priority: number; title: string; location: string; instruction: string; reason: string; evidence_ids: string[]; confidence: number; expected_gain_seconds: null }>;
+  explanation?: string | null;
 }
 
 export interface TelemetryPoint {

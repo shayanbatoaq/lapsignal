@@ -23,6 +23,8 @@ class DriverProfile(TimestampMixin, Base):
     units: Mapped[str] = mapped_column(String, default="metric")
     ai_consent: Mapped[bool] = mapped_column(Boolean, default=False)
     cloud_ai_enabled: Mapped[bool] = mapped_column(Boolean, default=False)
+    post_session_ai_enabled: Mapped[bool] = mapped_column(Boolean, default=False)
+    ai_live_lap_coaching: Mapped[bool] = mapped_column(Boolean, default=False)
 
 
 class Device(TimestampMixin, Base):
@@ -69,6 +71,11 @@ class RaceSession(TimestampMixin, Base):
     best_lap_ms: Mapped[int | None] = mapped_column(Integer, nullable=True)
     consistency_score: Mapped[float | None] = mapped_column(Float, nullable=True)
     provenance: Mapped[dict] = mapped_column(JSON, default=dict)
+    context_json: Mapped[dict] = mapped_column(JSON, default=dict)
+    performance_mode: Mapped[str] = mapped_column(String, default="unknown")
+    performance_mode_source: Mapped[str] = mapped_column(String, default="unknown")
+    last_packet_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    interrupted: Mapped[bool] = mapped_column(Boolean, default=False)
     stints: Mapped[list[Stint]] = relationship(back_populates="session", cascade="all, delete")
     laps: Mapped[list[Lap]] = relationship(back_populates="session", cascade="all, delete")
 
@@ -177,6 +184,32 @@ class ModelRun(TimestampMixin, Base):
     response_status: Mapped[str] = mapped_column(String)
     fallback_used: Mapped[bool] = mapped_column(Boolean, default=True)
     git_sha: Mapped[str] = mapped_column(String)
+
+
+class AIRun(TimestampMixin, Base):
+    __tablename__ = "ai_runs"
+    id: Mapped[str] = mapped_column(String, primary_key=True)
+    session_id: Mapped[str | None] = mapped_column(
+        ForeignKey("sessions.id"), nullable=True, index=True
+    )
+    provider: Mapped[str] = mapped_column(String, index=True)
+    requested_model: Mapped[str] = mapped_column(String)
+    resolved_model: Mapped[str | None] = mapped_column(String, nullable=True)
+    prompt_version: Mapped[str] = mapped_column(String)
+    output_schema_version: Mapped[str] = mapped_column(String)
+    evidence_hash: Mapped[str] = mapped_column(String, index=True)
+    cache_key: Mapped[str | None] = mapped_column(String, nullable=True, index=True)
+    started_at: Mapped[datetime] = mapped_column(DateTime)
+    ended_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    latency_ms: Mapped[int] = mapped_column(Integer, default=0)
+    input_tokens: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    output_tokens: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    cost_usd: Mapped[float | None] = mapped_column(Float, nullable=True)
+    status: Mapped[str] = mapped_column(String)
+    error_category: Mapped[str | None] = mapped_column(String, nullable=True)
+    cache_hit: Mapped[bool] = mapped_column(Boolean, default=False)
+    validation_result: Mapped[str] = mapped_column(String, default="not_run")
+    response_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
 
 
 class AppBuild(TimestampMixin, Base):

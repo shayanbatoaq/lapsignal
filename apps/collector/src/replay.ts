@@ -34,7 +34,7 @@ export async function replayFixture(
     mode: "replay",
     session_uid: samples[0]?.session_uid ?? null,
     packet_rate_hz: 20 * speed,
-    dropped_frames: 0,
+    packet_loss_available: false,
     out_of_order_frames: 0,
     last_packet_at: null
   };

@@ -21,6 +21,18 @@ describe("F1 2021 parser", () => {
     expect(parsed.kind === "carTelemetry" && parsed.data.rpm).toBe(11980);
   });
 
+  it("parses Spa, weather, length, formula and assists from the session packet", () => {
+    const buffer=packetBuffer(1,625,3);
+    buffer.writeUInt8(0,24);buffer.writeInt8(32,25);buffer.writeInt8(21,26);buffer.writeUInt16LE(7004,28);
+    buffer.writeUInt8(13,30);buffer.writeInt8(10,31);buffer.writeUInt8(0,32);
+    buffer.writeUInt8(1,616);buffer.writeUInt8(0,617);buffer.writeUInt8(3,618);buffer.writeUInt8(2,623);
+    const parsed=parseF12021Packet(buffer);
+    expect(parsed.kind).toBe("session");
+    if(parsed.kind!=="session")throw new Error("wrong packet kind");
+    expect(parsed.data).toMatchObject({trackId:10,trackLengthM:7004,sessionType:13,formula:0,weather:0});
+    expect(parsed.data.assists).toMatchObject({steering:1,braking:0,gearbox:3,racingLine:2});
+  });
+
   it("rejects a wrong packet format", () => {
     const buffer = packetBuffer();
     buffer.writeUInt16LE(2022, 0);

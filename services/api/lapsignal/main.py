@@ -6,7 +6,7 @@ import math
 import shutil
 import uuid
 from contextlib import asynccontextmanager
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
 from fastapi import (
     BackgroundTasks,
@@ -20,11 +20,28 @@ from fastapi import (
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from sqlalchemy import select
 
-from .coach import answer_question, generate_coach_report
+from .ai import ProviderFailure, generate_with_fallback, safe_status
+from .coach import answer_question
 from .config import REPO_ROOT, get_settings
+from .database import SessionLocal
 from .demo import get_demo_report, get_demo_session, get_demo_sessions
-from .schemas import CoachQuestion, CollectorHeartbeat, DriverProfilePayload, IngestBatch
+from .live_sessions import (
+    ensure_live_session,
+    finalize_live_session,
+    live_session_payload,
+    live_session_summaries,
+)
+from .models import DriverProfile, RaceSession
+from .schemas import (
+    CoachQuestion,
+    CollectorHeartbeat,
+    CollectorSessionEvent,
+    DriverProfilePayload,
+    IngestBatch,
+    PerformanceModePayload,
+)
 from .seed import seed_database
 from .storage import LocalStorage
 
@@ -42,11 +59,13 @@ LIVE_STATUS: dict = {
     "packet_format": 2021,
     "session_uid": None,
     "packet_rate_hz": 0.0,
-    "dropped_frames": 0,
+    "packet_loss_available": False,
     "out_of_order_frames": 0,
     "last_packet_at": None,
     "recording": False,
     "current_sample": None,
+    "state": "DEMO" if settings.demo_mode else "OFFLINE",
+    "context": {},
 }
 LIVE_SOCKETS: set[WebSocket] = set()
 LIVE_BUFFER: list[dict] = []
@@ -58,13 +77,19 @@ PROFILE: dict = {
     "units": "metric",
     "ai_consent": False,
     "cloud_ai_enabled": False,
+    "post_session_ai_enabled": False,
+    "ai_live_lap_coaching": False,
 }
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     seed_database(reset=False)
+    stop = asyncio.Event()
+    task = asyncio.create_task(_inactivity_monitor(stop))
     yield
+    stop.set()
+    await task
 
 
 app = FastAPI(
@@ -187,6 +212,60 @@ async def _broadcast(payload: dict) -> None:
         LIVE_SOCKETS.discard(socket)
 
 
+def _public_live_status() -> dict:
+    last = LIVE_STATUS.get("last_packet_at")
+    fresh = False
+    if last:
+        try:
+            fresh = datetime.now(UTC) - datetime.fromisoformat(last) < timedelta(seconds=5)
+        except (ValueError, TypeError):
+            pass
+    mode = LIVE_STATUS.get("mode")
+    state = (
+        "LIVE"
+        if fresh and mode == "live"
+        else "REPLAY"
+        if fresh and mode == "replay"
+        else "DEMO"
+        if settings.demo_mode
+        else "OFFLINE"
+    )
+    return {
+        **LIVE_STATUS,
+        "online": state in {"LIVE", "REPLAY"},
+        "state": state,
+        "source_label": {
+            "LIVE": "Live PS4",
+            "REPLAY": "Recorded replay",
+            "DEMO": "Demo data",
+            "OFFLINE": "Offline",
+        }[state],
+    }
+
+
+async def _inactivity_monitor(stop: asyncio.Event) -> None:
+    while not stop.is_set():
+        try:
+            await asyncio.wait_for(stop.wait(), timeout=2)
+        except TimeoutError:
+            pass
+        if stop.is_set():
+            break
+        uid = LIVE_STATUS.get("session_uid")
+        last = LIVE_STATUS.get("last_packet_at")
+        if uid and last and LIVE_STATUS.get("mode") == "live":
+            try:
+                stale = datetime.now(UTC) - datetime.fromisoformat(last) > timedelta(
+                    seconds=settings.live_session_inactivity_seconds
+                )
+            except (ValueError, TypeError):
+                stale = False
+            if stale:
+                with SessionLocal() as db:
+                    finalize_live_session(db, uid, interrupted=True)
+                LIVE_STATUS["recording"] = False
+
+
 async def _ingest(collector_id: str, samples: list[dict]) -> dict:
     if not samples:
         return {"accepted": 0}
@@ -194,6 +273,17 @@ async def _ingest(collector_id: str, samples: list[dict]) -> dict:
     if len(LIVE_BUFFER) > 1200:
         del LIVE_BUFFER[:-1200]
     current = samples[-1]
+    previous_uid = LIVE_STATUS.get("session_uid")
+    if (
+        previous_uid
+        and previous_uid != current.get("session_uid")
+        and LIVE_STATUS.get("mode") == "live"
+    ):
+        with SessionLocal() as db:
+            finalize_live_session(db, previous_uid, interrupted=False)
+    if collector_id != "demo-replay":
+        with SessionLocal() as db:
+            ensure_live_session(db, current)
     LIVE_STATUS.update(
         {
             "online": True,
@@ -201,10 +291,31 @@ async def _ingest(collector_id: str, samples: list[dict]) -> dict:
             "session_uid": current.get("session_uid"),
             "last_packet_at": datetime.now(UTC).isoformat(),
             "current_sample": current,
+            "recording": collector_id != "demo-replay",
+            "context": {
+                key: current.get(key)
+                for key in (
+                    "track_id",
+                    "track_name",
+                    "track_length_m",
+                    "weather",
+                    "formula",
+                    "team_id",
+                    "team_name",
+                    "car_number",
+                    "assist_profile",
+                    "session_type",
+                )
+            },
         }
     )
-    storage.append_jsonl(f"local/live/{collector_id}.jsonl", samples)
-    await _broadcast({"type": "telemetry_batch", "status": LIVE_STATUS, "samples": samples[-30:]})
+    if collector_id != "demo-replay":
+        storage.append_jsonl(f"local/live/sessions/{current['session_uid']}.jsonl", samples)
+    else:
+        storage.append_jsonl(f"local/live/{collector_id}.jsonl", samples)
+    await _broadcast(
+        {"type": "telemetry_batch", "status": _public_live_status(), "samples": samples[-30:]}
+    )
     return {"accepted": len(samples), "buffer_size": len(LIVE_BUFFER)}
 
 
@@ -230,7 +341,7 @@ def version():
 
 @app.get("/v1/collector/status")
 def collector_status():
-    return LIVE_STATUS
+    return _public_live_status()
 
 
 @app.post("/v1/collector/heartbeat")
@@ -245,20 +356,37 @@ async def collector_heartbeat(payload: CollectorHeartbeat):
             "mode": payload.mode,
             "session_uid": payload.session_uid,
             "packet_rate_hz": payload.packet_rate_hz,
-            "dropped_frames": payload.dropped_frames,
+            "packet_loss_available": False,
             "out_of_order_frames": payload.out_of_order_frames,
             "last_packet_at": payload.last_packet_at.isoformat()
             if payload.last_packet_at
             else None,
         }
     )
-    await _broadcast({"type": "collector_status", "status": LIVE_STATUS})
+    await _broadcast({"type": "collector_status", "status": _public_live_status()})
     return {"accepted": True, "compatibility": _versions()["compatibility"]}
 
 
 @app.post("/v1/ingest/batches")
 async def ingest_batch(payload: IngestBatch):
     return await _ingest(payload.collector_id, [sample.model_dump() for sample in payload.samples])
+
+
+@app.post("/v1/collector/session-events")
+async def collector_session_event(payload: CollectorSessionEvent):
+    with SessionLocal() as db:
+        result = finalize_live_session(
+            db,
+            payload.session_uid,
+            interrupted=payload.interrupted,
+            raw_capture_path=payload.raw_capture_path,
+            normalized_capture_path=payload.normalized_capture_path,
+        )
+    LIVE_STATUS["recording"] = False
+    await _broadcast(
+        {"type": "session_finalized", "status": _public_live_status(), "result": result}
+    )
+    return result
 
 
 @app.get("/v1/sessions")
@@ -273,7 +401,9 @@ def sessions(
     session_type: str | None = None,
     sort: str = "date_desc",
 ):
-    items = [_session_summary(session) for session in get_demo_sessions()]
+    with SessionLocal() as db:
+        items = live_session_summaries(db)
+    items += [_session_summary(session) for session in get_demo_sessions()]
     if search:
         needle = search.lower()
         items = [item for item in items if needle in json.dumps(item).lower()]
@@ -306,6 +436,10 @@ def sessions(
 
 @app.get("/v1/sessions/{session_id}")
 def session_detail(session_id: str):
+    with SessionLocal() as db:
+        row = db.get(RaceSession, session_id)
+        if row and not row.demo_data:
+            return live_session_payload(db, row)
     session = get_demo_session(session_id)
     if not session:
         raise HTTPException(404, "Session not found")
@@ -315,6 +449,10 @@ def session_detail(session_id: str):
 
 @app.get("/v1/sessions/{session_id}/laps")
 def session_laps(session_id: str):
+    with SessionLocal() as db:
+        row = db.get(RaceSession, session_id)
+        if row and not row.demo_data:
+            return {"items": live_session_payload(db, row)["laps"]}
     session = get_demo_session(session_id)
     if not session:
         raise HTTPException(404, "Session not found")
@@ -370,9 +508,18 @@ def session_telemetry(
 
 @app.post("/v1/sessions/{session_id}/finalize")
 def finalize_session(session_id: str):
+    with SessionLocal() as db:
+        row = db.get(RaceSession, session_id)
+        if row and not row.demo_data:
+            return finalize_live_session(db, row.session_uid, interrupted=True)
     if not get_demo_session(session_id):
         raise HTTPException(404, "Session not found")
-    return {"session_id": session_id, "status": "finalized", "analysis_ready": True}
+    return {
+        "session_id": session_id,
+        "status": "finalized",
+        "analysis_ready": True,
+        "idempotent": True,
+    }
 
 
 @app.post("/v1/sessions/{session_id}/analyze")
@@ -389,12 +536,46 @@ def analyze(session_id: str):
 
 
 @app.post("/v1/sessions/{session_id}/coach")
-async def coach(session_id: str):
-    session = get_demo_session(session_id)
-    if not session:
-        raise HTTPException(404, "Session not found")
-    cloud_allowed = bool(PROFILE["ai_consent"] and PROFILE["cloud_ai_enabled"])
-    return await generate_coach_report(session, cloud_allowed=cloud_allowed)
+async def coach(session_id: str, regenerate: bool = False):
+    with SessionLocal() as db:
+        row = db.get(RaceSession, session_id)
+        session = (
+            live_session_payload(db, row, include_telemetry=True)
+            if row and not row.demo_data
+            else get_demo_session(session_id)
+        )
+        if not session:
+            raise HTTPException(404, "Session not found")
+        return await generate_with_fallback(db, session, _profile_dict(db), regenerate=regenerate)
+
+
+@app.put("/v1/sessions/{session_id}/performance-mode")
+def set_performance_mode(session_id: str, payload: PerformanceModePayload):
+    with SessionLocal() as db:
+        row = db.get(RaceSession, session_id)
+        if not row:
+            raise HTTPException(404, "Session not found")
+        row.performance_mode = payload.performance_mode
+        row.performance_mode_source = payload.performance_mode_source
+        db.commit()
+        return {"session_id": session_id, **payload.model_dump()}
+
+
+@app.put("/v1/live/performance-mode")
+def set_live_performance_mode(payload: PerformanceModePayload):
+    uid = LIVE_STATUS.get("session_uid")
+    if not uid:
+        raise HTTPException(409, "No active live session")
+    with SessionLocal() as db:
+        row = db.scalar(select(RaceSession).where(RaceSession.session_uid == uid))
+        if not row:
+            raise HTTPException(404, "Live session not found")
+        row.performance_mode = payload.performance_mode
+        row.performance_mode_source = payload.performance_mode_source
+        db.commit()
+    LIVE_STATUS["performance_mode"] = payload.performance_mode
+    LIVE_STATUS["performance_mode_source"] = payload.performance_mode_source
+    return {"session_id": row.id, **payload.model_dump()}
 
 
 @app.post("/v1/sessions/{session_id}/coach/questions")
@@ -458,13 +639,84 @@ def report(report_id: str):
 
 @app.get("/v1/profile")
 def get_profile():
-    return PROFILE
+    with SessionLocal() as db:
+        return _profile_dict(db)
 
 
 @app.put("/v1/profile")
 def update_profile(payload: DriverProfilePayload):
-    PROFILE.update(payload.model_dump())
-    return PROFILE
+    with SessionLocal() as db:
+        row = db.get(DriverProfile, "demo-driver")
+        if not row:
+            raise HTTPException(500, "Local profile is unavailable")
+        for key, value in payload.model_dump().items():
+            setattr(row, key, value)
+        db.commit()
+        return _profile_dict(db)
+
+
+def _profile_dict(db) -> dict:
+    row = db.get(DriverProfile, "demo-driver")
+    if not row:
+        return PROFILE
+    return {
+        key: getattr(row, key)
+        for key in (
+            "experience_level",
+            "input_device",
+            "primary_interest",
+            "coaching_goal",
+            "units",
+            "ai_consent",
+            "cloud_ai_enabled",
+            "post_session_ai_enabled",
+            "ai_live_lap_coaching",
+        )
+    }
+
+
+@app.get("/v1/ai/status")
+async def ai_status(validate_model: bool = False):
+    status = safe_status()
+    if validate_model and status["configured"]:
+        with SessionLocal() as db:
+            profile = _profile_dict(db)
+        if not (profile["ai_consent"] and profile["cloud_ai_enabled"]):
+            status["model_validation_skipped"] = "cloud_ai_disabled"
+            return status
+        try:
+            status.update(
+                await __import__("lapsignal.ai", fromlist=["get_provider"])
+                .get_provider()
+                .health_check()
+            )
+        except ProviderFailure as failure:
+            status.update(reachable=False, last_error_category=failure.category)
+    return status
+
+
+@app.post("/v1/ai/test-connection")
+async def test_ai_connection():
+    with SessionLocal() as db:
+        profile = _profile_dict(db)
+        if not (profile["ai_consent"] and profile["cloud_ai_enabled"]):
+            raise HTTPException(409, "Enable AI consent and Cloud AI first")
+        result = await generate_with_fallback(
+            db, get_demo_sessions()[0], profile, regenerate=True, max_tokens=800
+        )
+        if result["mode"] != "openrouter":
+            raise HTTPException(503, result.get("explanation") or "OpenRouter test failed")
+        return {
+            "success": True,
+            "provider": "openrouter",
+            "requested_model": result["provenance"]["requested_model"],
+            "resolved_model": result["provenance"]["resolved_model"],
+            "latency_ms": None,
+            "validated": True,
+            "evidence_ids": [
+                eid for action in result["priority_actions"] for eid in action["evidence_ids"]
+            ],
+        }
 
 
 @app.get("/v1/export")
@@ -472,7 +724,7 @@ def export_data():
     return {
         "export_version": 1,
         "generated_at": datetime.now(UTC).isoformat(),
-        "profile": PROFILE,
+        "profile": get_profile(),
         "sessions": [_session_summary(session) for session in get_demo_sessions()],
         "note": "High-frequency raw telemetry is excluded from this summary export.",
     }
@@ -507,7 +759,7 @@ async def live(websocket: WebSocket):
     await websocket.accept()
     LIVE_SOCKETS.add(websocket)
     await websocket.send_json(
-        {"type": "snapshot", "status": LIVE_STATUS, "samples": LIVE_BUFFER[-60:]}
+        {"type": "snapshot", "status": _public_live_status(), "samples": LIVE_BUFFER[-60:]}
     )
     try:
         while True:

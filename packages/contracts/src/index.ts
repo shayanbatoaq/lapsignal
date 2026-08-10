@@ -18,6 +18,14 @@ export const telemetrySampleSchema = z.object({
   car_id: z.string().nullable(),
   car_class: z.string().nullable(),
   session_type: z.string().nullable(),
+  track_name: z.string().nullable().optional(),
+  track_length_m: nullableNumber.optional(),
+  weather: z.string().nullable().optional(),
+  formula: z.string().nullable().optional(),
+  team_id: z.number().int().nullable().optional(),
+  team_name: z.string().nullable().optional(),
+  car_number: z.number().int().nullable().optional(),
+  assist_profile: z.record(z.string(), z.string()).nullable().optional(),
   input_device: inputDeviceSchema,
   lap_number: z.number().int().nonnegative(),
   lap_distance_m: nullableNumber,
@@ -79,9 +87,16 @@ export const collectorHeartbeatSchema = z.object({
   mode: z.enum(["live", "replay"]),
   session_uid: z.string().nullable(),
   packet_rate_hz: z.number().nonnegative(),
-  dropped_frames: z.number().int().nonnegative(),
+  packet_loss_available: z.literal(false),
   out_of_order_frames: z.number().int().nonnegative(),
   last_packet_at: z.string().datetime().nullable()
+});
+
+export const collectorSessionEventSchema = z.object({
+  collector_id: z.string().min(1), session_uid: z.string().min(1),
+  event: z.enum(["session_ended", "session_changed", "collector_shutdown"]),
+  interrupted: z.boolean(), raw_capture_path: z.string().nullable(),
+  normalized_capture_path: z.string().nullable()
 });
 
 export const ingestBatchSchema = z.object({
@@ -92,4 +107,5 @@ export const ingestBatchSchema = z.object({
 export type TelemetrySample = z.infer<typeof telemetrySampleSchema>;
 export type Finding = z.infer<typeof findingSchema>;
 export type CollectorHeartbeat = z.infer<typeof collectorHeartbeatSchema>;
+export type CollectorSessionEvent = z.infer<typeof collectorSessionEventSchema>;
 export type IngestBatch = z.infer<typeof ingestBatchSchema>;

@@ -27,6 +27,20 @@ class Settings(BaseSettings):
     openai_api_key: str | None = None
     openai_coach_model: str = "gpt-5.6-luna"
     openai_deep_model: str = "gpt-5.6-terra"
+    ai_provider: str = "openrouter"
+    openrouter_api_key: str | None = None
+    openrouter_base_url: str = "https://openrouter.ai/api/v1"
+    openrouter_coach_model: str = "openai/gpt-5-mini"
+    openrouter_deep_model: str = "openai/gpt-5.2"
+    openrouter_app_url: str = "http://localhost:3000"
+    openrouter_app_title: str = "LapSignal"
+    openrouter_data_collection: str = "deny"
+    openrouter_zdr: bool = False
+    ai_request_timeout_seconds: float = 30
+    ai_max_retries: int = 0
+    ai_cache_enabled: bool = True
+    ai_live_lap_coaching: bool = False
+    live_session_inactivity_seconds: int = 30
     git_sha: str = "local"
     build_number: int = 3
 

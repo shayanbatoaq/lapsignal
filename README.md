@@ -17,10 +17,9 @@ This alpha runs locally on Windows without Docker, telemetry hardware, cloud cre
 From PowerShell in the repository root:
 
 ```powershell
-corepack enable
-pnpm setup
-pnpm seed
-pnpm dev:demo
+corepack pnpm setup
+corepack pnpm seed
+corepack pnpm dev:demo
 ```
 
 Open [http://localhost:3000](http://localhost:3000). The API and interactive OpenAPI document are at [http://localhost:8000](http://localhost:8000) and [http://localhost:8000/docs](http://localhost:8000/docs). `pnpm dev:demo` reseeds deterministic data, then starts both processes; the separate `pnpm seed` above is useful as an explicit setup check.
@@ -31,7 +30,7 @@ Copy `.env.example` to `.env` only when overriding defaults. No variable is requ
 
 - **Demo:** `pnpm dev:demo` serves 42 laps across F1-style controller, GT3 practice, and synthetic hypercar endurance sessions.
 - **Replay:** with the API running, use `pnpm collector:replay`. The fixture follows the same heartbeat and batch-ingestion path as live data and updates `/app/live`.
-- **Live F1 2021:** run `pnpm collector:listen`, then send PS4 telemetry to the laptop IPv4 address on UDP port `20777`. See [PS4 setup](docs/PS4_F1_2021_SETUP.md).
+- **Live F1 2021:** run `corepack pnpm dev:live` and `corepack pnpm collector:listen`, then send PS4 telemetry to the laptop IPv4 address on UDP port `20777`. See [PS4 setup](docs/PS4_F1_2021_SETUP.md).
 
 Useful collector diagnostics:
 
@@ -58,17 +57,20 @@ pnpm --filter @lapsignal/collector start listen --port 20777 --data-dir ..\..\da
 | `pnpm generate:client` | Generate route/schema types from FastAPI OpenAPI |
 | `pnpm check` | Lint, typecheck, test, and build |
 
-## Optional OpenAI coach
+If a global pnpm shim is available, the shorter `pnpm ...` forms remain valid. When `corepack enable` fails with EPERM under `C:\Program Files\nodejs`, use the Corepack-direct commands above or `powershell -ExecutionPolicy Bypass -File .\scripts\lapsignal.ps1 demo`; neither path requires Administrator access.
+
+## Optional cloud coach
 
 Fallback coaching is always available. To opt in to the hosted coach, set these server-only values in `.env`, then enable both **AI consent** and **Cloud AI** in Settings:
 
 ```dotenv
-OPENAI_API_KEY=your-key
-OPENAI_COACH_MODEL=gpt-5.6-luna
-OPENAI_DEEP_MODEL=gpt-5.6-terra
+AI_PROVIDER=openrouter
+OPENROUTER_API_KEY=your-key
+OPENROUTER_COACH_MODEL=openai/gpt-5-mini
+OPENROUTER_DEEP_MODEL=openai/gpt-5.2
 ```
 
-Raw captures and complete high-frequency traces are never provided to the model. Only compact metrics, findings, and evidence IDs are exposed through narrow tools. Model identifiers remain configurable because availability depends on the account.
+The canonical environment file is the repository-root `.env`. Raw captures and complete high-frequency traces are never provided to the model. Only a versioned compact evidence bundle of lap summaries, deterministic metrics, context, and evidence IDs may leave the machine. The server validates structured output and falls back to clearly labelled rule-based coaching on any provider or validation failure.
 
 ## Repository map
 
