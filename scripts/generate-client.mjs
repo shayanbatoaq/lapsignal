@@ -7,7 +7,7 @@ const apiDir = resolve(root, "services", "api");
 const result = spawnSync(
   "uv",
   ["run", "python", "-c", "import json; from lapsignal.main import app; print(json.dumps(app.openapi()))"],
-  { cwd: apiDir, encoding: "utf8" }
+  { cwd: apiDir, encoding: "utf8", windowsHide: true }
 );
 
 if (result.status !== 0) {

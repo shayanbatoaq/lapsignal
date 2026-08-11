@@ -4,6 +4,7 @@ import { resolve } from "node:path";
 
 const artifacts = resolve(process.cwd(), "../../artifacts/qa/brand-integration");
 const circuitArtifacts = resolve(process.cwd(), "../../artifacts/qa/circuit-map");
+const physicalSessionId = process.env.LAPSIGNAL_PHYSICAL_SESSION_ID;
 
 type MockLiveStatus = {
   state: string;
@@ -121,6 +122,32 @@ test("session detail, comparison, debrief and evidence archive", async ({ page }
   await expect(page.getByText("Deterministic analysis is the source of truth")).toBeVisible();
   await page.goto("/app/progress");
   await expect(page.getByText("Driver evidence archive")).toBeVisible();
+  expect(errors.filter((error) => !error.includes("favicon"))).toEqual([]);
+});
+
+test("repeated physical-session navigation stays collector-independent", async ({ page }) => {
+  const sessionId = physicalSessionId;
+  test.skip(!sessionId, "A local physical session ID is required for this regression.");
+  if (!sessionId) return;
+  test.setTimeout(150_000);
+  const errors: string[] = [];
+  page.on("console", (message) => { if (message.type() === "error") errors.push(message.text()); });
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    await page.goto("/app/sessions");
+    await page.locator(`a[href="/app/sessions/${sessionId}"]`).click();
+    await expect(page.getByText("Highest-value signals")).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByText("Saved telemetry", { exact: true })).toBeVisible();
+    await expect(page.getByText(/collector connection not required/i)).toBeVisible();
+    await expect(page.locator("canvas").first()).toBeVisible({ timeout: 20_000 });
+    await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  }
+  await page.getByRole("link", { name: "Compare laps" }).click();
+  await expect(page).toHaveURL(new RegExp(`/app/compare\\?session=${sessionId}$`));
+  await expect(page.getByText("Measured telemetry comparison", { exact: true })).toBeVisible({ timeout: 20_000 });
+  await page.goBack();
+  await page.getByRole("link", { name: "Open debrief" }).click();
+  await expect(page).toHaveURL(new RegExp(`/app/coach\\?session=${sessionId}$`));
+  await expect(page.getByText("Deterministic analysis is the source of truth", { exact: true })).toBeVisible({ timeout: 20_000 });
   expect(errors.filter((error) => !error.includes("favicon"))).toEqual([]);
 });
 

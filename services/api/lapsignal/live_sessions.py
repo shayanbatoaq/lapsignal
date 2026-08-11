@@ -407,6 +407,16 @@ def live_session_payload(db: Session, row: RaceSession, include_telemetry: bool 
     )
     report = db.scalar(select(CoachReport).where(CoachReport.session_id == row.id))
     context = row.context_json or {}
+    track_length = context.get("track_length_m")
+    if not isinstance(track_length, (int, float)) or track_length <= 0:
+        track_length = None
+    stored_provenance = row.provenance if isinstance(row.provenance, dict) else {}
+    public_provenance = {
+        key: value
+        for key, value in stored_provenance.items()
+        if key
+        not in {"raw_capture", "raw_capture_path", "normalized_capture", "normalized_capture_path"}
+    }
     return {
         "id": row.id,
         "title": f"{context.get('track_name', row.track_id)} · {row.session_type}",
@@ -415,6 +425,7 @@ def live_session_payload(db: Session, row: RaceSession, include_telemetry: bool 
         "game_label": "F1 2021",
         "track_id": row.track_id,
         "track_name": context.get("track_name", row.track_id),
+        "track_length_m": track_length,
         "car_id": row.car_id,
         "car_class": row.car_class,
         "session_type": row.session_type,
@@ -461,17 +472,22 @@ def live_session_payload(db: Session, row: RaceSession, include_telemetry: bool 
             }
             for item in findings
         ],
+        "provenance": public_provenance,
         "report": report.report_json
         if report
         else {
             "id": f"report-{row.id}",
+            "session_id": row.id,
+            "mode": "rule_based",
             "label": "Rule-based coaching",
             "session_summary": "Analysis is not ready.",
             "top_priorities": [],
             "what_improved": "",
             "what_regressed": "",
             "next_stint_plan": "",
+            "confidence_summary": "Analysis is not ready.",
             "limitations": [],
+            "evidence_references": [],
             "provenance": {"fallback_used": True},
         },
     }

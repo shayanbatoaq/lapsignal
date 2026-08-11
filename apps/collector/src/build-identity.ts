@@ -13,11 +13,13 @@ function gitCommit(): string {
   if (process.env.LAPSIGNAL_GIT_COMMIT) return process.env.LAPSIGNAL_GIT_COMMIT;
   try {
     execFileSync("git", ["-C", REPO_ROOT, "diff-index", "--quiet", "HEAD", "--"], {
-      stdio: "ignore"
+      stdio: "ignore",
+      windowsHide: true
     });
     return execFileSync("git", ["-C", REPO_ROOT, "rev-parse", "--short=12", "HEAD"], {
       encoding: "utf8",
-      stdio: ["ignore", "pipe", "ignore"]
+      stdio: ["ignore", "pipe", "ignore"],
+      windowsHide: true
     }).trim() || "uncommitted";
   } catch {
     return "uncommitted";

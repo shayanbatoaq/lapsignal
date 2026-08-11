@@ -46,6 +46,7 @@ from .schemas import (
     DriverProfilePayload,
     IngestBatch,
     PerformanceModePayload,
+    SessionDetailResponse,
 )
 from .seed import seed_database
 from .storage import LocalStorage
@@ -512,7 +513,7 @@ def sessions(
     }
 
 
-@app.get("/v1/sessions/{session_id}")
+@app.get("/v1/sessions/{session_id}", response_model=SessionDetailResponse)
 def session_detail(session_id: str):
     with SessionLocal() as db:
         row = db.get(RaceSession, session_id)

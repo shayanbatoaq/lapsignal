@@ -300,3 +300,53 @@ class PaginatedSessions(BaseModel):
     page_size: int
     total: int
     pages: int
+
+
+class SessionLapResponse(BaseModel):
+    id: str
+    lap_number: int
+    lap_time_ms: int | None
+    sector_times_ms: list[int]
+    valid: bool
+    classification: str
+    quality_score: float
+    tyre_wear_pct: float | None = None
+    coaching_available: bool | None = None
+    status_label: str | None = None
+
+
+class SessionMetricsResponse(BaseModel):
+    pace: dict | None
+    stint: dict | None
+    braking: list[dict] | None
+    throttle: dict | None
+    steering: dict | None
+
+
+class SessionDetailResponse(BaseModel):
+    id: str
+    title: str
+    session_uid: str
+    game_id: str
+    game_label: str
+    track_id: str
+    track_name: str
+    track_length_m: float | None
+    car_id: str
+    car_class: str
+    session_type: str
+    input_device: Literal["controller", "wheel", "unknown"]
+    started_at: datetime
+    completed_at: datetime | None
+    demo_data: bool
+    analysis_status: str
+    performance_mode: Literal["equal", "realistic", "unknown"] | None = None
+    performance_mode_source: Literal["user", "imported", "default", "unknown"] | None = None
+    context: dict | None = None
+    interrupted: bool | None = None
+    laps: list[SessionLapResponse]
+    metrics: SessionMetricsResponse
+    findings: list[dict]
+    provenance: dict
+    report: dict | None
+    analysis_version: str | None = None

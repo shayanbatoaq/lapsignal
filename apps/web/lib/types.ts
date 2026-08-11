@@ -31,8 +31,8 @@ export interface Lap {
   classification: string;
   quality_score: number;
   tyre_wear_pct: number | null;
-  coaching_available?: boolean;
-  status_label?: string;
+  coaching_available?: boolean | null;
+  status_label?: string | null;
 }
 
 export interface Session {
@@ -43,19 +43,19 @@ export interface Session {
   game_label: string;
   track_id: string;
   track_name: string;
-  track_length_m: number;
+  track_length_m: number | null;
   car_id: string;
   car_class: string;
   session_type: string;
   input_device: "controller" | "wheel" | "unknown";
   started_at: string;
-  completed_at: string;
+  completed_at: string | null;
   demo_data: boolean;
   analysis_status: string;
-  performance_mode?: "equal" | "realistic" | "unknown";
-  performance_mode_source?: "user" | "imported" | "default" | "unknown";
-  context?: Record<string, unknown>;
-  interrupted?: boolean;
+  performance_mode?: "equal" | "realistic" | "unknown" | null;
+  performance_mode_source?: "user" | "imported" | "default" | "unknown" | null;
+  context?: Record<string, unknown> | null;
+  interrupted?: boolean | null;
   laps: Lap[];
   metrics: {
     pace: {
@@ -82,9 +82,41 @@ export interface Session {
     steering: Record<string, number | string | null>;
   };
   findings: Finding[];
-  provenance: Record<string, string | number>;
+  provenance: Record<string, string | number | boolean | null>;
   report: CoachReport;
 }
+
+export interface SessionSummary {
+  id: string;
+  title: string;
+  game_id: string;
+  game_label: string;
+  track_id: string;
+  track_name: string;
+  car_id: string;
+  car_class: string;
+  session_type: string;
+  input_device: "controller" | "wheel" | "unknown";
+  started_at: string;
+  demo_data: boolean;
+  analysis_status: string;
+  lap_count: number;
+  clean_lap_count: number;
+  best_lap_ms: number | null;
+  consistency_score: number;
+}
+
+export type SessionDetail = Omit<Session, "metrics" | "provenance" | "report"> & {
+  metrics: {
+    pace: Session["metrics"]["pace"] | null;
+    stint: Session["metrics"]["stint"] | null;
+    braking: Session["metrics"]["braking"] | null;
+    throttle: Session["metrics"]["throttle"] | null;
+    steering: Session["metrics"]["steering"] | null;
+  };
+  provenance: Record<string, string | number | boolean | null>;
+  report: CoachReport | null;
+};
 
 export interface CoachReport {
   id: string;

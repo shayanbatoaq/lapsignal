@@ -252,6 +252,7 @@ def test_live_session_finalization_is_idempotent_and_performance_persists():
         team_name="Williams",
         formula="F1 Modern",
         session_type="Time Trial",
+        track_length_m=1000,
     )
     second.update(
         session_uid=uid,
@@ -264,6 +265,7 @@ def test_live_session_finalization_is_idempotent_and_performance_persists():
         team_name="Williams",
         formula="F1 Modern",
         session_type="Time Trial",
+        track_length_m=1000,
     )
     with TestClient(app) as client:
         assert (
@@ -313,6 +315,10 @@ def test_live_session_finalization_is_idempotent_and_performance_persists():
             detail["performance_mode"] == "realistic"
             and detail["performance_mode_source"] == "user"
         )
+        assert detail["track_length_m"] == first["track_length_m"]
+        assert detail["provenance"]["source"] == "physical_udp"
+        assert "raw_capture" not in detail["provenance"]
+        assert "normalized_capture" not in detail["provenance"]
         assert set(detail["metrics"]) == {
             "pace",
             "stint",
