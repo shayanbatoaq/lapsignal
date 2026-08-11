@@ -7,7 +7,7 @@ import { useMemo, useState } from "react";
 import type { TelemetryTrace } from "@/lib/types";
 
 const ReactECharts = dynamic(() => import("echarts-for-react"), { ssr: false, loading: () => <div className="chart-skeleton" aria-label="Loading telemetry chart" /> });
-const palette = ["#F4F1EA", "#A78BFA", "#D63B45", "#58C7F3"];
+const palette = ["#F4F1E8", "#A78BFA", "#F23849", "#58C7F3"];
 interface Channel {
   key: keyof TelemetryTrace["samples"][number];
   label: string;
@@ -69,9 +69,9 @@ function buildOption(traces: TelemetryTrace[], visible: Channel[], compact: bool
     color: palette,
     grid: grids,
     legend: { top: 0, textStyle: { color: "#9CA3AF", fontSize: 11 }, data: traces.map((trace, index) => ({ name: `Lap ${trace.lap_number} · ${visible[0]?.label ?? ""}`, itemStyle: { color: palette[index] } })) },
-    axisPointer: { link: [{ xAxisIndex: "all" }], lineStyle: { color: "#F4F1EA", width: 1, type: "dashed" }, label: { backgroundColor: "#181B20" } },
-    tooltip: { trigger: "axis", axisPointer: { type: "cross" }, confine: true, backgroundColor: "rgba(17,19,23,.98)", borderColor: "#2A2E35", textStyle: { color: "#F4F1EA", fontFamily: "var(--font-geist-mono)" }, valueFormatter: (value: unknown) => typeof value === "number" ? value.toFixed(2) : String(value) },
-    dataZoom: [{ type: "inside", xAxisIndex: visible.map((_, index) => index), filterMode: "none" }, { type: "slider", xAxisIndex: visible.map((_, index) => index), bottom: 4, height: 18, borderColor: "#2A2E35", fillerColor: "rgba(214,59,69,.2)", handleStyle: { color: "#D63B45" } }],
+    axisPointer: { link: [{ xAxisIndex: "all" }], lineStyle: { color: "#F4F1E8", width: 1, type: "dashed" }, label: { backgroundColor: "#181B20" } },
+    tooltip: { trigger: "axis", axisPointer: { type: "cross" }, confine: true, backgroundColor: "rgba(21,25,31,.98)", borderColor: "#2A2E35", textStyle: { color: "#F4F1E8", fontFamily: "var(--font-geist-mono)" }, valueFormatter: (value: unknown) => typeof value === "number" ? value.toFixed(2) : String(value) },
+    dataZoom: [{ type: "inside", xAxisIndex: visible.map((_, index) => index), filterMode: "none" }, { type: "slider", xAxisIndex: visible.map((_, index) => index), bottom: 4, height: 18, borderColor: "#2A2E35", fillerColor: "rgba(242,56,73,.2)", handleStyle: { color: "#F23849" } }],
     xAxis: visible.map((_, index) => ({ type: "value", gridIndex: index, name: index === visible.length - 1 ? "lap distance (m)" : "", axisLabel: { show: index === visible.length - 1, color: "#747B86" }, axisLine: { lineStyle: { color: "#2A2E35" } }, splitLine: { lineStyle: { color: "rgba(42,46,53,.55)" } }, min: "dataMin", max: "dataMax" })),
     yAxis: visible.map((channel, index) => ({ type: "value", gridIndex: index, name: `${channel.label}\n${channel.unit}`, nameTextStyle: { color: "#9CA3AF", fontSize: 10, align: "right" }, axisLabel: { color: "#747B86", fontSize: 10 }, axisLine: { show: false }, splitLine: { lineStyle: { color: "rgba(42,46,53,.55)" } }, min: channel.key === "steer_minus1_1" ? -1 : undefined, max: channel.scale === 100 ? 100 : undefined })),
     series

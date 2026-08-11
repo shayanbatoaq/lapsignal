@@ -12,6 +12,8 @@ __pycache__/
 !.env.example
 data/local/*
 !data/local/.gitkeep
+data/captures/
+*.lsraw
 apps/collector/captures/*
 !apps/collector/captures/.gitkeep
 test-results/

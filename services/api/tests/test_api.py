@@ -138,7 +138,28 @@ def test_ingestion_validation_and_live_snapshot():
         )
         assert response.status_code == 200
         assert response.json()["accepted"] == 1
-        assert client.get("/v1/collector/status").json()["collector_id"] == "test"
+        status = client.get("/v1/collector/status").json()
+        assert status["collector_id"] == "test"
+        assert status["circuit_map"]["state"] == "unavailable"
+
+
+def test_circuit_calibration_management_routes_are_safe():
+    with TestClient(app) as client:
+        response = client.get("/v1/circuit-calibrations")
+        assert response.status_code == 200
+        items = response.json()["items"]
+        assert items
+        assert any(item["built_in_seed_available"] for item in items)
+        assert all("session_uid" not in item for item in items)
+
+        missing_confirmation = client.delete("/v1/circuit-calibrations/local/f1_2021:2021:20:5994")
+        assert missing_confirmation.status_code == 400
+
+        invalid_fingerprint = client.delete(
+            "/v1/circuit-calibrations/local/not-a-layout",
+            params={"confirm": "RESET LOCAL REFINEMENT"},
+        )
+        assert invalid_fingerprint.status_code == 400
 
 
 def test_collector_heartbeat_exposes_safe_build_identity():
@@ -194,7 +215,9 @@ def test_progress_and_websocket_snapshot():
     with TestClient(app) as client:
         assert client.get("/v1/progress").json()["points"]
         with client.websocket_connect("/v1/live") as socket:
-            assert socket.receive_json()["type"] == "snapshot"
+            snapshot = socket.receive_json()
+            assert snapshot["type"] == "snapshot"
+            assert "circuit_map" in snapshot["status"]
 
 
 def test_live_replay_demo_offline_state_precedence(monkeypatch):
@@ -290,3 +313,16 @@ def test_live_session_finalization_is_idempotent_and_performance_persists():
             detail["performance_mode"] == "realistic"
             and detail["performance_mode_source"] == "user"
         )
+        assert set(detail["metrics"]) == {
+            "pace",
+            "stint",
+            "braking",
+            "throttle",
+            "steering",
+        }
+        telemetry = client.get(
+            f"/v1/sessions/{session_id}/telemetry",
+            params={"lap_numbers": "1", "channels": "speed_kph,brake_0_1"},
+        )
+        assert telemetry.status_code == 200
+        assert telemetry.json()["traces"][0]["samples"]

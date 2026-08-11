@@ -6,10 +6,18 @@ All notable changes follow [Keep a Changelog](https://keepachangelog.com/en/1.1.
 
 ### Changed
 
+- Extended the native collector replay path to accept ignored `.lsraw` captures, parse them through the F1 2021 adapter, drain normal API delivery, and request deterministic session finalization only after successful delivery.
+- Persisted the complete pace, consistency, braking, throttle, steering, and stint analysis contract for finalized live sessions, and made their stored lap traces available to the comparison workspace after restart.
+- Made desktop/mobile browser acceptance deterministic on Windows by serializing Playwright projects, creating a sanitized synthetic local session instead of depending on an operator database, and scoping duplicate status assertions.
+- Separated circuit geometry from marker positioning so complete F1 2021 maps load by numeric track ID before calibration, while accepted world transforms remain optional precision upgrades.
+- Made circuit maps beginner-first: matching seeds render before a valid lap, invalid and incomplete attempts refine geometry per sample, and invalid attempts remain coachable while official timing stays clean-only.
 - Replaced the landing page's fictional circuit outline with attributed, normalized Spa-Francorchamps, Red Bull Ring, and Monza centerlines while preserving the telemetry-marker animation and reduced-motion fallback.
 
 ### Added
 
+- Completed an offline acceptance replay from an existing ignored physical capture: 5,390 samples parsed with zero rejections, one session finalized with three laps, invalid laps remained coachable but timing-clean, rule-based coaching stayed operational, comparison traces survived restart, and the source capture hash remained unchanged.
+- Added the complete 24-track F1 2021 full-circuit map pack: eight existing telemetry seeds plus sixteen pinned, attributed, locally packaged static centrelines with deterministic manifest validation and contact-sheet QA.
+- Added eight privacy-sanitized F1 2021 circuit seeds, bounded progressive multi-session calibration, map management/reset controls, and deterministic calibration list/validate/promote commands.
 - Verified Windows development service management through `dev:status`, `dev:stop`, and `dev:clean-start`, with project PID manifests, guarded shutdown, duplicate detection, current-build health gates, and API/web/collector build identity.
 - Fail-before-network Cloud-AI preflight coverage for version, schema, guard, consent, enabled state, provider configuration, and explicit direct-versus-Azure token parameters.
 - LapSignal monorepo foundation and independently versioned contracts.

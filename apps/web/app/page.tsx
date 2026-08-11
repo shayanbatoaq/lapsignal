@@ -37,7 +37,7 @@ export default async function MarketingPage() {
   const session = sessions.find((item) => item.id === "f1-controller-silverstone") ?? sessions[0]!;
   const pace = session.metrics.pace;
   const bestLap = session.laps.find((lap) => lap.valid && lap.lap_time_ms === pace.best_lap_ms) ?? session.laps.find((lap) => lap.valid)!;
-  const available = pace.best_lap_ms - pace.theoretical_best_ms;
+  const available = (pace.best_lap_ms ?? 0) - (pace.theoretical_best_ms ?? 0);
   const finding = session.findings[0]!;
   const cleanLaps = `${pace.clean_laps}/${session.laps.length}`;
 
@@ -45,7 +45,7 @@ export default async function MarketingPage() {
     <div className={styles.shell}>
       <header className={styles.header}>
         <nav className={styles.nav} aria-label="Marketing navigation">
-          <Logo />
+          <Logo variant="dark" size={172} priority />
           <div className={styles.navLinks}>
             <a href="#decoded">Debrief</a>
             <a href="#workflow">How it works</a>
@@ -163,7 +163,7 @@ export default async function MarketingPage() {
       </main>
 
       <footer className={styles.footer}>
-        <Logo />
+        <Logo variant="dark" size={148} />
         <p>Local-first telemetry engineering. LapSignal is an independent prototype and is not affiliated with or endorsed by any game publisher, racing series, governing body, console manufacturer, or vehicle manufacturer.</p>
         <span>© 2026 LAPSIGNAL</span>
       </footer>

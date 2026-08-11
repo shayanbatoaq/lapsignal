@@ -19,6 +19,26 @@ def test_invalid_laps_are_excluded():
     assert len(clean_laps(session["laps"])) < len(session["laps"])
 
 
+def test_invalid_laps_keep_technique_coaching_but_never_set_personal_best():
+    session = deepcopy(get_demo_sessions()[0])
+    for lap in session["laps"]:
+        lap["valid"] = False
+        lap["classification"] = "invalid"
+        for sample in lap["telemetry"]:
+            sample["lap_invalid"] = True
+    result = analyze_session(session)
+    assert result["metrics"]["pace"]["best_lap_ms"] is None
+    assert result["metrics"]["pace"]["clean_laps"] == 0
+    assert result["metrics"]["braking"]
+    assert result["metrics"]["throttle"]
+    assert result["metrics"]["steering"]
+    assert result["findings"]
+    assert all(
+        "Invalid lap time is excluded" in " ".join(item["limitations"])
+        for item in result["findings"]
+    )
+
+
 def test_distance_alignment_preserves_channels():
     lap = get_demo_sessions()[0]["laps"][0]
     aligned, limitations = resample_by_distance(lap["telemetry"], points=100)

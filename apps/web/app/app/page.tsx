@@ -27,7 +27,7 @@ export default async function DashboardPage() {
         <div><div className="metric-detail"><span>Evidence confidence</span><span style={{marginLeft:"auto",color:"var(--positive)"}}>{Math.round(finding.confidence*100)}%</span></div><div className="progress-bar"><span style={{width:`${finding.confidence*100}%`}} /></div></div>
         <Link className="button small" href="/app/coach">Open full debrief <ArrowRight size={14}/></Link>
       </section>
-      <div className="span-3"><MetricCard icon={Timer} label="Theoretical best" value={formatLapTime(pace.theoretical_best_ms)} detail={`${((pace.best_lap_ms-pace.theoretical_best_ms)/1000).toFixed(3)} s available`} /></div>
+      <div className="span-3"><MetricCard icon={Timer} label="Theoretical best" value={formatLapTime(pace.theoretical_best_ms)} detail={pace.best_lap_ms!=null&&pace.theoretical_best_ms!=null?`${((pace.best_lap_ms-pace.theoretical_best_ms)/1000).toFixed(3)} s available`:"Clean timing unavailable"} /></div>
       <div className="span-3"><MetricCard icon={Activity} label="Consistency" value={`${pace.consistency_score}`} detail="stored clean-lap score" /></div>
       <div className="span-3"><MetricCard icon={Gauge} label="Long-run stability" value={`${latest.metrics.stint.long_run_stability_score}`} detail="stored stint score" /></div>
       <div className="span-3"><MetricCard icon={Gamepad2} label="Input contexts" value={`${inputContexts}`} detail="kept separate" /></div>

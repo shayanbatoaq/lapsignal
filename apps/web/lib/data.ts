@@ -89,7 +89,7 @@ export function telemetryForLaps(session: Session, lapNumbers: number[]): Teleme
         steer_minus1_1: Math.round(Math.max(-1, Math.min(1, steer)) * 1000) / 1000,
         gear,
         rpm: Math.round(6200 + gear * 620 + throttle * 3800),
-        current_lap_time_ms: Math.round(fraction * lap.lap_time_ms)
+        current_lap_time_ms: Math.round(fraction * (lap.lap_time_ms ?? 0))
       };
     });
     return { lap_number: lap.lap_number, lap_time_ms: lap.lap_time_ms, valid: lap.valid, quality_score: lap.quality_score, samples };

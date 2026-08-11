@@ -36,7 +36,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <div className={`app-shell ${collapsed ? "nav-collapsed" : ""}`}>
       <aside className="sidebar" aria-label="Primary navigation">
         <div className="sidebar-head">
-          <Logo compact={collapsed} href="/app" />
+          <Logo variant={collapsed ? "symbol" : "dark"} size={collapsed ? 46 : 142} priority href="/app" />
           <button className="icon-button collapse-button" onClick={() => setCollapsed((value) => !value)} aria-label={collapsed ? "Expand navigation" : "Collapse navigation"}>
             <ChevronLeft size={16} className={collapsed ? "rotate" : ""} />
           </button>
@@ -59,7 +59,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </aside>
       <div className="app-workspace">
         <header className="topbar">
-          <div><p className="eyebrow">Pit-wall workspace</p><h1>{title}</h1></div>
+          <Logo className="mobile-brand" variant="symbol" size={42} priority href="/app" />
+          <div className="topbar-heading"><p className="eyebrow">Pit-wall workspace</p><h1>{title}</h1></div>
           <div className="topbar-status">
             <span className="status-chip"><Activity size={14} /> {status.source_label}</span>
             <span className={`status-chip ${status.online ? "" : "muted"}`}><span className={`status-dot ${status.online ? "live" : "idle"}`} /> {status.online ? "Collector connected" : "Collector offline"}</span>

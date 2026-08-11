@@ -27,6 +27,7 @@ from sqlalchemy import select
 
 from .ai import ProviderFailure, coach_schema_hash, generate_with_fallback, safe_status
 from .build_identity import api_build_identity
+from .circuit_calibrations import CircuitCalibrationRepository
 from .coach import answer_question
 from .config import REPO_ROOT, get_settings
 from .database import SessionLocal
@@ -51,6 +52,7 @@ from .storage import LocalStorage
 
 settings = get_settings()
 storage = LocalStorage(settings.data_dir)
+calibration_repository = CircuitCalibrationRepository(settings.data_dir)
 
 LIVE_STATUS: dict = {
     "online": False,
@@ -190,7 +192,13 @@ def _build_identity() -> dict:
 
 
 def _lap_without_telemetry(lap: dict) -> dict:
-    return {key: value for key, value in lap.items() if key != "telemetry"}
+    payload = {key: value for key, value in lap.items() if key != "telemetry"}
+    payload.setdefault("coaching_available", True)
+    payload.setdefault(
+        "status_label",
+        "Clean lap" if lap.get("valid") else "Invalid lap · coaching available",
+    )
+    return payload
 
 
 def _session_summary(session: dict) -> dict:
@@ -250,6 +258,7 @@ def _public_live_status() -> dict:
     )
     return {
         **LIVE_STATUS,
+        "circuit_map": calibration_repository.status_for(LIVE_STATUS.get("current_sample")),
         "api_build_identity": _build_identity(),
         "online": state in {"LIVE", "REPLAY"},
         "state": state,
@@ -335,6 +344,9 @@ async def _ingest(collector_id: str, samples: list[dict]) -> dict:
             "context": {
                 key: current.get(key)
                 for key in (
+                    "game_id",
+                    "packet_format",
+                    "game_track_id",
                     "track_id",
                     "track_name",
                     "track_length_m",
@@ -387,6 +399,26 @@ def version():
 @app.get("/v1/collector/status")
 def collector_status():
     return _public_live_status()
+
+
+@app.get("/v1/circuit-calibrations/current")
+def current_circuit_calibration():
+    return calibration_repository.status_for(LIVE_STATUS.get("current_sample"))
+
+
+@app.get("/v1/circuit-calibrations")
+def circuit_calibrations():
+    return calibration_repository.list_calibrations()
+
+
+@app.delete("/v1/circuit-calibrations/local/{fingerprint}")
+def reset_local_circuit_calibration(fingerprint: str, confirm: str = ""):
+    if confirm != "RESET LOCAL REFINEMENT":
+        raise HTTPException(400, "Explicit local-refinement reset confirmation is required")
+    try:
+        return calibration_repository.reset_local(fingerprint)
+    except ValueError as error:
+        raise HTTPException(400, str(error)) from error
 
 
 @app.post("/v1/collector/heartbeat")
@@ -512,7 +544,13 @@ def session_telemetry(
     channels: str = "speed_kph,throttle_0_1,brake_0_1,steer_minus1_1,gear,rpm,current_lap_time_ms",
     max_points: int = Query(700, ge=50, le=2500),
 ):
-    session = get_demo_session(session_id)
+    with SessionLocal() as db:
+        row = db.get(RaceSession, session_id)
+        session = (
+            live_session_payload(db, row, include_telemetry=True)
+            if row and not row.demo_data
+            else get_demo_session(session_id)
+        )
     if not session:
         raise HTTPException(404, "Session not found")
     selected = {int(value) for value in lap_numbers.split(",")} if lap_numbers else {1}

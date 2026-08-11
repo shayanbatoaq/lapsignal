@@ -12,21 +12,32 @@ export const metadata: Metadata = {
   title: { default: "LapSignal — Every lap has a signal", template: "%s · LapSignal" },
   description: "Turn braking, throttle and steering telemetry into a faster next lap with a local-first AI race engineer.",
   applicationName: "LapSignal",
-  icons: { icon: "/favicon.svg", shortcut: "/favicon.svg" },
+  manifest: "/manifest.webmanifest",
+  icons: {
+    icon: [
+      { url: "/brand/lapsignal/favicon.ico", sizes: "any" },
+      { url: "/brand/lapsignal/favicon-16.png", type: "image/png", sizes: "16x16" },
+      { url: "/brand/lapsignal/favicon-32.png", type: "image/png", sizes: "32x32" },
+      { url: "/brand/lapsignal/favicon-48.png", type: "image/png", sizes: "48x48" }
+    ],
+    shortcut: "/brand/lapsignal/favicon.ico",
+    apple: [{ url: "/brand/lapsignal/apple-touch-icon-180.png", type: "image/png", sizes: "180x180" }]
+  },
+  appleWebApp: { capable: true, title: "LapSignal", statusBarStyle: "black-translucent" },
   openGraph: {
     title: "LapSignal — Every lap has a signal.",
     description: "Turn braking, throttle and steering telemetry into a faster next lap.",
-    images: [{ url: "/og.png", width: 1200, height: 630, alt: "LapSignal sim-racing telemetry campaign" }]
+    images: [{ url: "/brand/lapsignal/lapsignal-social-card-1200x630.png", width: 1200, height: 630, alt: "LapSignal — Every lap has a signal" }]
   },
   twitter: {
     card: "summary_large_image",
     title: "LapSignal — Every lap has a signal.",
     description: "Turn braking, throttle and steering telemetry into a faster next lap.",
-    images: ["/og.png"]
+    images: ["/brand/lapsignal/lapsignal-social-card-1200x630.png"]
   }
 };
 
-export const viewport: Viewport = { width: "device-width", initialScale: 1, colorScheme: "dark", themeColor: "#08090B" };
+export const viewport: Viewport = { width: "device-width", initialScale: 1, colorScheme: "dark", themeColor: "#080A0D" };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return <html lang="en" data-scroll-behavior="smooth" className={`${manrope.variable} ${barlowCondensed.variable} ${geistMono.variable}`}><body><a href="#main-content" className="skip-link">Skip to content</a><Providers>{children}</Providers></body></html>;

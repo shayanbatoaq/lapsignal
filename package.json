@@ -3,7 +3,9 @@
   "version": "0.1.0-alpha.3",
   "private": true,
   "packageManager": "pnpm@11.16.0",
-  "engines": { "node": ">=22.13.0" },
+  "engines": {
+    "node": ">=22.13.0"
+  },
   "scripts": {
     "setup": "corepack pnpm install && uv sync --project services/api",
     "seed": "uv run --project services/api python -m lapsignal.seed",
@@ -21,11 +23,18 @@
     "test:e2e": "corepack pnpm --filter @lapsignal/web test:e2e",
     "collector:listen": "corepack pnpm --filter @lapsignal/collector start listen --data-dir ../../data",
     "collector:replay": "corepack pnpm --filter @lapsignal/collector start replay ../../data/fixtures/f1-2021-replay.jsonl --data-dir ../../data",
+    "calibration:list": "corepack pnpm --filter @lapsignal/collector exec tsx src/calibration-admin.ts list --data-dir ../../data",
+    "calibration:validate": "corepack pnpm --filter @lapsignal/collector exec tsx src/calibration-admin.ts validate --data-dir ../../data",
+    "calibration:promote": "corepack pnpm --filter @lapsignal/collector exec tsx src/calibration-admin.ts promote --data-dir ../../data",
+    "circuits:build": "node scripts/build-circuit-map-pack.mjs",
+    "circuits:validate": "node scripts/validate-circuit-map-pack.mjs",
+    "circuits:contact-sheet": "node scripts/render-circuit-contact-sheet.mjs",
     "generate:client": "node scripts/generate-client.mjs",
     "check": "corepack pnpm lint && corepack pnpm typecheck && corepack pnpm test && corepack pnpm build"
   },
   "devDependencies": {
     "concurrently": "10.0.4",
+    "svg-path-properties": "2.0.2",
     "typescript": "5.9.3"
   }
 }

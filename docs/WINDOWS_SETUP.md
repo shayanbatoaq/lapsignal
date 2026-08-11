@@ -68,7 +68,15 @@ corepack pnpm --filter @lapsignal/collector start doctor
 corepack pnpm collector:listen
 ```
 
-Do not place the collector in WSL: a native Windows UDP socket avoids virtual-network and firewall ambiguity. Captures and the bounded retry queue stay under `data\local` and are gitignored. `scripts\lapsignal.ps1` also exposes `setup`, `seed`, `demo`, `live`, `collector`, `replay`, and `verify` actions.
+Do not place the collector in WSL: a native Windows UDP socket avoids virtual-network and firewall ambiguity. Captures stay under ignored `data\captures`; the bounded retry queue stays under ignored `data\local`. `scripts\lapsignal.ps1` also exposes `setup`, `seed`, `demo`, `live`, `collector`, `replay`, and `verify` actions.
+
+The replay command accepts either LapSignal normalized JSONL or a local `.lsraw` recording. Raw replay uses the production F1 2021 parser and adapter, sends through the normal bounded API queue, and requests session finalization only after the queue drains:
+
+```powershell
+pnpm --filter @lapsignal/collector start replay "data\captures\<capture>.lsraw" --data-dir data
+```
+
+Keep physical captures beneath ignored local storage. Replay reads the selected file without rewriting it; finalized normalized telemetry, laps, analytics, and rule-based debrief data are stored locally and remain available after `pnpm dev:clean-start`.
 
 ## Environment overrides
 

@@ -134,18 +134,26 @@ def _completed_laps(samples: list[dict]) -> list[dict]:
             ),
             None,
         )
-        if lap_time is None:
+        distances = [
+            float(row["lap_distance_m"])
+            for row in rows
+            if isinstance(row.get("lap_distance_m"), (int, float))
+        ]
+        if lap_time is None and (len(rows) < 20 or len(distances) < 2):
             continue
+        completed = lap_time is not None
+        invalid = any(bool(row.get("lap_invalid")) for row in rows)
+        valid = completed and not invalid
         laps.append(
             {
                 "id": f"{number}",
                 "lap_number": number,
                 "lap_time_ms": lap_time,
                 "sector_times_ms": [],
-                "valid": not any(bool(row.get("lap_invalid")) for row in rows),
-                "classification": "clean"
-                if not any(bool(row.get("lap_invalid")) for row in rows)
-                else "invalid",
+                "valid": valid,
+                "classification": "clean" if valid else "invalid" if completed else "incomplete",
+                "coaching_available": len(rows) >= 20,
+                "status_label": "Clean lap" if valid else "Invalid lap · coaching available",
                 "quality_score": 1.0 if len(rows) >= 20 else round(min(1.0, len(rows) / 20), 2),
                 "telemetry": rows,
                 "tyre_wear_pct": rows[-1].get("tyre_wear"),
@@ -274,6 +282,20 @@ def finalize_live_session(
                     )
                 )
         db.add(
+            DerivedMetric(
+                id=f"metric-{row.id}-analysis-contract",
+                session_id=row.id,
+                key="analysis_contract",
+                value=1.0,
+                unit="contract",
+                scope="session",
+                metadata_json={
+                    "analysis_version": analysis["analysis_version"],
+                    "metrics": analysis["metrics"],
+                },
+            )
+        )
+        db.add(
             CoachReport(
                 id=payload["report"]["id"],
                 session_id=row.id,
@@ -347,15 +369,42 @@ def finalize_live_session(
 
 def live_session_payload(db: Session, row: RaceSession, include_telemetry: bool = False) -> dict:
     laps = db.scalars(select(Lap).where(Lap.session_id == row.id).order_by(Lap.lap_number)).all()
+    telemetry_by_lap: dict[int, list[dict]] = defaultdict(list)
+    if include_telemetry:
+        for sample in _load_samples(row.session_uid):
+            lap_number = int(sample.get("lap_number") or 0)
+            if lap_number > 0:
+                telemetry_by_lap[lap_number].append(sample)
     findings = db.scalars(
         select(Finding).where(Finding.session_id == row.id).order_by(Finding.priority)
     ).all()
-    metrics = {
-        item.key: item.value
-        for item in db.scalars(
-            select(DerivedMetric).where(DerivedMetric.session_id == row.id)
-        ).all()
+    metric_rows = db.scalars(select(DerivedMetric).where(DerivedMetric.session_id == row.id)).all()
+    legacy_metrics = {
+        item.key: item.value for item in metric_rows if item.key != "analysis_contract"
     }
+    analysis_contract = next(
+        (
+            item.metadata_json.get("metrics")
+            for item in metric_rows
+            if item.key == "analysis_contract" and isinstance(item.metadata_json, dict)
+        ),
+        None,
+    )
+    metrics = (
+        analysis_contract
+        if isinstance(analysis_contract, dict)
+        else {
+            "pace": {
+                "best_lap_ms": row.best_lap_ms,
+                "consistency_score": row.consistency_score,
+                **legacy_metrics,
+            },
+            "stint": {"limitations": [], "phase_consistency": {}},
+            "braking": [],
+            "throttle": {},
+            "steering": {},
+        }
+    )
     report = db.scalar(select(CoachReport).where(CoachReport.session_id == row.id))
     context = row.context_json or {}
     return {
@@ -389,18 +438,13 @@ def live_session_payload(db: Session, row: RaceSession, include_telemetry: bool 
                 "valid": lap.valid,
                 "classification": lap.classification,
                 "quality_score": lap.quality_score,
-                **({"telemetry": []} if include_telemetry else {}),
+                "coaching_available": True,
+                "status_label": "Clean lap" if lap.valid else "Invalid lap · coaching available",
+                **({"telemetry": telemetry_by_lap[lap.lap_number]} if include_telemetry else {}),
             }
             for lap in laps
         ],
-        "metrics": {
-            "pace": {
-                "best_lap_ms": row.best_lap_ms,
-                "consistency_score": row.consistency_score,
-                **metrics,
-            },
-            "stint": {"limitations": [], "phase_consistency": {}},
-        },
+        "metrics": metrics,
         "findings": [
             {
                 "id": item.id,

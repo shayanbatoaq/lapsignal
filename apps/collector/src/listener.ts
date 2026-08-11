@@ -8,6 +8,7 @@ import { parseF12021Packet, PacketParseError } from "./protocol/parser.js";
 import { SessionRecorder } from "./recording.js";
 import { FrameTracker } from "./stats.js";
 import { collectorBuildIdentity } from "./build-identity.js";
+import { CircuitCalibrationManager } from "./calibration.js";
 
 export interface ListenOptions {
   bindAddress: string;
@@ -23,6 +24,7 @@ export class CollectorListener {
   private readonly adapter = new F12021Adapter();
   private readonly stats = new FrameTracker();
   private readonly recorder: SessionRecorder;
+  private readonly calibrations: CircuitCalibrationManager;
   private readonly delivery: ApiDelivery;
   private readonly socket = dgram.createSocket("udp4");
   private flushTimer: NodeJS.Timeout | null = null;
@@ -35,6 +37,7 @@ export class CollectorListener {
 
   constructor(private readonly options: ListenOptions) {
     this.recorder = new SessionRecorder(join(options.dataDirectory, "captures"));
+    this.calibrations = new CircuitCalibrationManager(options.dataDirectory);
     this.delivery = new ApiDelivery(
       options.apiUrl,
       this.collectorId,
@@ -83,6 +86,7 @@ export class CollectorListener {
       if (previousUid && previousUid !== this.sessionUid) void this.finalize(previousUid, "session_changed", false);
       const sample = this.adapter.ingest(parsed, receivedAtMs);
       if (sample) {
+        this.calibrations.ingest(sample, this.recorder.rawPath);
         this.recorder.recordNormalized(sample);
         this.delivery.enqueue(sample);
       }
@@ -140,6 +144,7 @@ export class CollectorListener {
     if (this.flushTimer) clearInterval(this.flushTimer);
     if (this.heartbeatTimer) clearInterval(this.heartbeatTimer);
     await this.delivery.flush(1000);
+    this.calibrations.finalize();
     this.delivery.persist();
     await this.recorder.close();
     if (this.sessionUid) await this.finalize(this.sessionUid, "collector_shutdown", true);

@@ -1,0 +1,947 @@
+{
+  "schema_version": 1,
+  "pack_id": "lapsignal-f1-2021-full-circuits",
+  "game_id": "f1_2021",
+  "packet_format": 2021,
+  "expected_track_count": 24,
+  "supported_track_ids": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    26,
+    27,
+    28,
+    29
+  ],
+  "excluded": [
+    {
+      "game_track_id": 8,
+      "track_name": "Hockenheim",
+      "reason": "not_in_full_f1_2021_track_pack"
+    },
+    {
+      "game_track_id": 21,
+      "track_name": "Sakhir Short",
+      "reason": "short_layout_excluded"
+    },
+    {
+      "game_track_id": 22,
+      "track_name": "Silverstone Short",
+      "reason": "short_layout_excluded"
+    },
+    {
+      "game_track_id": 23,
+      "track_name": "COTA Short",
+      "reason": "short_layout_excluded"
+    },
+    {
+      "game_track_id": 24,
+      "track_name": "Suzuka Short",
+      "reason": "short_layout_excluded"
+    },
+    {
+      "game_track_id": 25,
+      "track_name": "Hanoi",
+      "reason": "not_in_full_f1_2021_track_pack"
+    }
+  ],
+  "entries": [
+    {
+      "game_track_id": 0,
+      "track_id": "melbourne",
+      "track_name": "Melbourne",
+      "expected_track_length_m": 5303,
+      "track_length_tolerance_m": 35,
+      "layout_fingerprint": "f1_2021:2021:0:5303",
+      "layout_version": "1996-2019 / F1 2021 game layout",
+      "direction": "clockwise",
+      "path_direction": "racing_direction",
+      "start_finish_progress": 0,
+      "display_rotation_deg": 0,
+      "validation_status": "verified_against_secondary_reference",
+      "representation": "packaged_static",
+      "asset_path": "maps/00-melbourne.json",
+      "positioning_capabilities": [
+        "exact_local_world_transform",
+        "distance_projected",
+        "static_without_marker"
+      ],
+      "geometry_checksum": "c2cea890719db3b7cd31dee939a49afb6f600044517ea0370c4fc403ad06d61d",
+      "source": {
+        "type": "licensed_versioned_svg",
+        "project": "F1DB",
+        "author": "Jules Roy / F1DB contributors",
+        "license": "CC-BY-4.0",
+        "attribution": "Circuit geometry by Jules Roy and F1DB contributors, licensed CC BY 4.0; normalized by LapSignal.",
+        "repository_url": "https://github.com/f1db/f1db",
+        "asset_url": "https://github.com/f1db/f1db/blob/21d0bc8ae4a9dc1b26a0852bc0cd4ff12096adbf/src/assets/circuits/black/melbourne-1.svg",
+        "layout_metadata_url": "https://github.com/f1db/f1db/tree/21d0bc8ae4a9dc1b26a0852bc0cd4ff12096adbf/src/data/circuits",
+        "source_commit": "21d0bc8ae4a9dc1b26a0852bc0cd4ff12096adbf",
+        "source_svg_sha256": "0d8f6c3315dae276a656e0549385a7bf9a597b598145c69c0b995ece636f3da6",
+        "validation_references": [
+          "https://github.com/f1db/f1db/blob/21d0bc8ae4a9dc1b26a0852bc0cd4ff12096adbf/src/assets/circuits/black/melbourne-1.svg",
+          "https://commons.wikimedia.org/wiki/File:Circuit_Albert_Park.svg"
+        ],
+        "retrieved_at": "2026-08-11",
+        "transform": "arc-length sample 240 points; aspect-fit 1000x600; 48px padding",
+        "runtime_network_required": false
+      }
+    },
+    {
+      "game_track_id": 1,
+      "track_id": "paul-ricard",
+      "track_name": "Paul Ricard",
+      "expected_track_length_m": 5814,
+      "track_length_tolerance_m": 35,
+      "layout_fingerprint": "f1_2021:2021:1:5814",
+      "layout_version": "2018-2019, 2021-2022",
+      "direction": "clockwise",
+      "path_direction": "racing_direction",
+      "start_finish_progress": 0,
+      "display_rotation_deg": 0,
+      "validation_status": "verified_against_secondary_reference",
+      "representation": "packaged_static",
+      "asset_path": "maps/01-paul-ricard.json",
+      "positioning_capabilities": [
+        "exact_local_world_transform",
+        "distance_projected",
+        "static_without_marker"
+      ],
+      "geometry_checksum": "a235bea06ece60af797242404676aa797d7433360fd3aad20ace09daf5e2e9b1",
+      "source": {
+        "type": "licensed_versioned_svg",
+        "project": "F1DB",
+        "author": "Jules Roy / F1DB contributors",
+        "license": "CC-BY-4.0",
+        "attribution": "Circuit geometry by Jules Roy and F1DB contributors, licensed CC BY 4.0; normalized by LapSignal.",
+        "repository_url": "https://github.com/f1db/f1db",
+        "asset_url": "https://github.com/f1db/f1db/blob/21d0bc8ae4a9dc1b26a0852bc0cd4ff12096adbf/src/assets/circuits/black/paul-ricard-3.svg",
+        "layout_metadata_url": "https://github.com/f1db/f1db/tree/21d0bc8ae4a9dc1b26a0852bc0cd4ff12096adbf/src/data/circuits",
+        "source_commit": "21d0bc8ae4a9dc1b26a0852bc0cd4ff12096adbf",
+        "source_svg_sha256": "8c6229b6738662bcdc0fd27d3b0878d0ec3c0d2d1d5e8337b9b0b9d6ee5fb234",
+        "validation_references": [
+          "https://github.com/f1db/f1db/blob/21d0bc8ae4a9dc1b26a0852bc0cd4ff12096adbf/src/assets/circuits/black/paul-ricard-3.svg",
+          "https://commons.wikimedia.org/wiki/File:Circuit_Paul_Ricard_2020_layout_map.svg"
+        ],
+        "retrieved_at": "2026-08-11",
+        "transform": "arc-length sample 240 points; aspect-fit 1000x600; 48px padding",
+        "runtime_network_required": false
+      }
+    },
+    {
+      "game_track_id": 2,
+      "track_id": "shanghai",
+      "track_name": "Shanghai",
+      "expected_track_length_m": 5441,
+      "track_length_tolerance_m": 2,
+      "layout_fingerprint": "f1_2021:2021:2:5441",
+      "layout_version": "Shanghai Grand Prix layout",
+      "direction": "clockwise",
+      "path_direction": "racing_direction",
+      "start_finish_progress": 0,
+      "display_rotation_deg": 0,
+      "validation_status": "exact_game_telemetry_seed",
+      "representation": "telemetry_seed",
+      "asset_path": "../circuit-seeds/f1_2021-2021-2-5441.seed.json",
+      "positioning_capabilities": [
+        "exact_local_world_transform",
+        "seed_world_transform",
+        "distance_projected"
+      ],
+      "geometry_checksum": "ecc352b92aaf3fadab91288eda38326791d778eefc875b482f30aefc90699084",
+      "source": {
+        "type": "built_in_telemetry_seed",
+        "attribution": "LapSignal normalized non-personal F1 2021 telemetry seed",
+        "privacy": "normalized_non_personal",
+        "runtime_network_required": false
+      }
+    },
+    {
+      "game_track_id": 3,
+      "track_id": "sakhir",
+      "track_name": "Sakhir",
+      "expected_track_length_m": 5408,
+      "track_length_tolerance_m": 2,
+      "layout_fingerprint": "f1_2021:2021:3:5408",
+      "layout_version": "Bahrain Grand Prix layout",
+      "direction": "clockwise",
+      "path_direction": "racing_direction",
+      "start_finish_progress": 0,
+      "display_rotation_deg": 0,
+      "validation_status": "exact_game_telemetry_seed",
+      "representation": "telemetry_seed",
+      "asset_path": "../circuit-seeds/f1_2021-2021-3-5408.seed.json",
+      "positioning_capabilities": [
+        "exact_local_world_transform",
+        "seed_world_transform",
+        "distance_projected"
+      ],
+      "geometry_checksum": "7eec1cc21d31411723af06c1fac8b0417b9a4ea30bb67c0bc8d6dcb9768f0efd",
+      "source": {
+        "type": "built_in_telemetry_seed",
+        "attribution": "LapSignal normalized non-personal F1 2021 telemetry seed",
+        "privacy": "normalized_non_personal",
+        "runtime_network_required": false
+      }
+    },
+    {
+      "game_track_id": 4,
+      "track_id": "catalunya",
+      "track_name": "Catalunya",
+      "expected_track_length_m": 4650,
+      "track_length_tolerance_m": 2,
+      "layout_fingerprint": "f1_2021:2021:4:4650",
+      "layout_version": "F1 2021 game layout",
+      "direction": "clockwise",
+      "path_direction": "racing_direction",
+      "start_finish_progress": 0,
+      "display_rotation_deg": 0,
+      "validation_status": "exact_game_telemetry_seed",
+      "representation": "telemetry_seed",
+      "asset_path": "../circuit-seeds/f1_2021-2021-4-4650.seed.json",
+      "positioning_capabilities": [
+        "exact_local_world_transform",
+        "seed_world_transform",
+        "distance_projected"
+      ],
+      "geometry_checksum": "bfefa81da9b7528e982c7cd191864e652373419b872b5ed52f8e5b5a2957af6a",
+      "source": {
+        "type": "built_in_telemetry_seed",
+        "attribution": "LapSignal normalized non-personal F1 2021 telemetry seed",
+        "privacy": "normalized_non_personal",
+        "runtime_network_required": false
+      }
+    },
+    {
+      "game_track_id": 5,
+      "track_id": "monaco",
+      "track_name": "Monaco",
+      "expected_track_length_m": 3323,
+      "track_length_tolerance_m": 2,
+      "layout_fingerprint": "f1_2021:2021:5:3323",
+      "layout_version": "2003-present Grand Prix layout",
+      "direction": "clockwise",
+      "path_direction": "racing_direction",
+      "start_finish_progress": 0,
+      "display_rotation_deg": 0,
+      "validation_status": "exact_game_telemetry_seed",
+      "representation": "telemetry_seed",
+      "asset_path": "../circuit-seeds/f1_2021-2021-5-3323.seed.json",
+      "positioning_capabilities": [
+        "exact_local_world_transform",
+        "seed_world_transform",
+        "distance_projected"
+      ],
+      "geometry_checksum": "99f05fdba2f4489c34d35bfd594cc28bfeae3a7ce3600e86d893ac23e03c69d2",
+      "source": {
+        "type": "built_in_telemetry_seed",
+        "attribution": "LapSignal normalized non-personal F1 2021 telemetry seed",
+        "privacy": "normalized_non_personal",
+        "runtime_network_required": false
+      }
+    },
+    {
+      "game_track_id": 6,
+      "track_id": "montreal",
+      "track_name": "Montreal",
+      "expected_track_length_m": 4371,
+      "track_length_tolerance_m": 35,
+      "layout_fingerprint": "f1_2021:2021:6:4371",
+      "layout_version": "2002-2008, 2010-2019 / F1 2021 game layout",
+      "direction": "clockwise",
+      "path_direction": "racing_direction",
+      "start_finish_progress": 0,
+      "display_rotation_deg": 0,
+      "validation_status": "verified_against_secondary_reference",
+      "representation": "packaged_static",
+      "asset_path": "maps/06-montreal.json",
+      "positioning_capabilities": [
+        "exact_local_world_transform",
+        "distance_projected",
+        "static_without_marker"
+      ],
+      "geometry_checksum": "89370c51b9530032901af8bcc884aa46dbe3eb3a20e7ee096fc8d9c396c4e86c",
+      "source": {
+        "type": "licensed_versioned_svg",
+        "project": "F1DB",
+        "author": "Jules Roy / F1DB contributors",
+        "license": "CC-BY-4.0",
+        "attribution": "Circuit geometry by Jules Roy and F1DB contributors, licensed CC BY 4.0; normalized by LapSignal.",
+        "repository_url": "https://github.com/f1db/f1db",
+        "asset_url": "https://github.com/f1db/f1db/blob/21d0bc8ae4a9dc1b26a0852bc0cd4ff12096adbf/src/assets/circuits/black/montreal-6.svg",
+        "layout_metadata_url": "https://github.com/f1db/f1db/tree/21d0bc8ae4a9dc1b26a0852bc0cd4ff12096adbf/src/data/circuits",
+        "source_commit": "21d0bc8ae4a9dc1b26a0852bc0cd4ff12096adbf",
+        "source_svg_sha256": "00482a06496986fba237267c49701e7a63bcfbde981cd755a1a3fd92ef4df938",
+        "validation_references": [
+          "https://github.com/f1db/f1db/blob/21d0bc8ae4a9dc1b26a0852bc0cd4ff12096adbf/src/assets/circuits/black/montreal-6.svg",
+          "https://github.com/bacinger/f1-circuits/blob/394d8fbe70ef2c0b0c8d23ff7bee61fa09606055/circuits/ca-1978.geojson"
+        ],
+        "retrieved_at": "2026-08-11",
+        "transform": "arc-length sample 240 points; aspect-fit 1000x600; 48px padding",
+        "runtime_network_required": false
+      }
+    },
+    {
+      "game_track_id": 7,
+      "track_id": "silverstone",
+      "track_name": "Silverstone",
+      "expected_track_length_m": 5896,
+      "track_length_tolerance_m": 35,
+      "layout_fingerprint": "f1_2021:2021:7:5896",
+      "layout_version": "2010-present Grand Prix layout",
+      "direction": "clockwise",
+      "path_direction": "racing_direction",
+      "start_finish_progress": 0,
+      "display_rotation_deg": 0,
+      "validation_status": "verified_against_secondary_reference",
+      "representation": "packaged_static",
+      "asset_path": "maps/07-silverstone.json",
+      "positioning_capabilities": [
+        "exact_local_world_transform",
+        "distance_projected",
+        "static_without_marker"
+      ],
+      "geometry_checksum": "7c3e54b13fd3a6c964f8d154c86e06b89c4b58c983391a8ef46beabd9aa4e876",
+      "source": {
+        "type": "licensed_versioned_svg",
+        "project": "F1DB",
+        "author": "Jules Roy / F1DB contributors",
+        "license": "CC-BY-4.0",
+        "attribution": "Circuit geometry by Jules Roy and F1DB contributors, licensed CC BY 4.0; normalized by LapSignal.",
+        "repository_url": "https://github.com/f1db/f1db",
+        "asset_url": "https://github.com/f1db/f1db/blob/21d0bc8ae4a9dc1b26a0852bc0cd4ff12096adbf/src/assets/circuits/black/silverstone-8.svg",
+        "layout_metadata_url": "https://github.com/f1db/f1db/tree/21d0bc8ae4a9dc1b26a0852bc0cd4ff12096adbf/src/data/circuits",
+        "source_commit": "21d0bc8ae4a9dc1b26a0852bc0cd4ff12096adbf",
+        "source_svg_sha256": "fce1b32f8d50943d41bf15d248ae4184dc5f378dcfcf4dd7d6940357c7107e60",
+        "validation_references": [
+          "https://github.com/f1db/f1db/blob/21d0bc8ae4a9dc1b26a0852bc0cd4ff12096adbf/src/assets/circuits/black/silverstone-8.svg",
+          "https://github.com/bacinger/f1-circuits/blob/394d8fbe70ef2c0b0c8d23ff7bee61fa09606055/circuits/gb-1948.geojson"
+        ],
+        "retrieved_at": "2026-08-11",
+        "transform": "arc-length sample 240 points; aspect-fit 1000x600; 48px padding",
+        "runtime_network_required": false
+      }
+    },
+    {
+      "game_track_id": 9,
+      "track_id": "hungaroring",
+      "track_name": "Hungaroring",
+      "expected_track_length_m": 4381,
+      "track_length_tolerance_m": 35,
+      "layout_fingerprint": "f1_2021:2021:9:4381",
+      "layout_version": "2003-present",
+      "direction": "clockwise",
+      "path_direction": "racing_direction",
+      "start_finish_progress": 0,
+      "display_rotation_deg": 0,
+      "validation_status": "verified_against_secondary_reference",
+      "representation": "packaged_static",
+      "asset_path": "maps/09-hungaroring.json",
+      "positioning_capabilities": [
+        "exact_local_world_transform",
+        "distance_projected",
+        "static_without_marker"
+      ],
+      "geometry_checksum": "2a7d1238213b27f697f0eb81c276cd8c8cf7a5514d3f2ecf369da931d3479edd",
+      "source": {
+        "type": "licensed_versioned_svg",
+        "project": "F1DB",
+        "author": "Jules Roy / F1DB contributors",
+        "license": "CC-BY-4.0",
+        "attribution": "Circuit geometry by Jules Roy and F1DB contributors, licensed CC BY 4.0; normalized by LapSignal.",
+        "repository_url": "https://github.com/f1db/f1db",
+        "asset_url": "https://github.com/f1db/f1db/blob/21d0bc8ae4a9dc1b26a0852bc0cd4ff12096adbf/src/assets/circuits/black/hungaroring-3.svg",
+        "layout_metadata_url": "https://github.com/f1db/f1db/tree/21d0bc8ae4a9dc1b26a0852bc0cd4ff12096adbf/src/data/circuits",
+        "source_commit": "21d0bc8ae4a9dc1b26a0852bc0cd4ff12096adbf",
+        "source_svg_sha256": "e3397c965700d1ea3f1d3a851def06b5b86aea191e62f5f5c71fd3fed43bbe12",
+        "validation_references": [
+          "https://github.com/f1db/f1db/blob/21d0bc8ae4a9dc1b26a0852bc0cd4ff12096adbf/src/assets/circuits/black/hungaroring-3.svg",
+          "https://github.com/bacinger/f1-circuits/blob/394d8fbe70ef2c0b0c8d23ff7bee61fa09606055/circuits/hu-1986.geojson"
+        ],
+        "retrieved_at": "2026-08-11",
+        "transform": "arc-length sample 240 points; aspect-fit 1000x600; 48px padding",
+        "runtime_network_required": false
+      }
+    },
+    {
+      "game_track_id": 10,
+      "track_id": "spa-francorchamps",
+      "track_name": "Spa-Francorchamps",
+      "expected_track_length_m": 7003,
+      "track_length_tolerance_m": 35,
+      "layout_fingerprint": "f1_2021:2021:10:7003",
+      "layout_version": "2007-present Grand Prix layout",
+      "direction": "clockwise",
+      "path_direction": "racing_direction",
+      "start_finish_progress": 0,
+      "display_rotation_deg": 0,
+      "validation_status": "verified_against_secondary_reference",
+      "representation": "packaged_static",
+      "asset_path": "maps/10-spa-francorchamps.json",
+      "positioning_capabilities": [
+        "exact_local_world_transform",
+        "distance_projected",
+        "static_without_marker"
+      ],
+      "geometry_checksum": "7454c723317274a7fa2c5d8da14090869754b8c627e2a9ceeb1644b20287d47c",
+      "source": {
+        "type": "licensed_versioned_svg",
+        "project": "F1DB",
+        "author": "Jules Roy / F1DB contributors",
+        "license": "CC-BY-4.0",
+        "attribution": "Circuit geometry by Jules Roy and F1DB contributors, licensed CC BY 4.0; normalized by LapSignal.",
+        "repository_url": "https://github.com/f1db/f1db",
+        "asset_url": "https://github.com/f1db/f1db/blob/21d0bc8ae4a9dc1b26a0852bc0cd4ff12096adbf/src/assets/circuits/black/spa-francorchamps-4.svg",
+        "layout_metadata_url": "https://github.com/f1db/f1db/tree/21d0bc8ae4a9dc1b26a0852bc0cd4ff12096adbf/src/data/circuits",
+        "source_commit": "21d0bc8ae4a9dc1b26a0852bc0cd4ff12096adbf",
+        "source_svg_sha256": "65a367511e03254cc1e97e0eb1fe8abb42f2de4f9d8bb6638050a02b483f2261",
+        "validation_references": [
+          "https://github.com/f1db/f1db/blob/21d0bc8ae4a9dc1b26a0852bc0cd4ff12096adbf/src/assets/circuits/black/spa-francorchamps-4.svg",
+          "https://commons.wikimedia.org/wiki/File:Spa-Francorchamps_of_Belgium.svg"
+        ],
+        "retrieved_at": "2026-08-11",
+        "transform": "arc-length sample 240 points; aspect-fit 1000x600; 48px padding",
+        "runtime_network_required": false
+      }
+    },
+    {
+      "game_track_id": 11,
+      "track_id": "monza",
+      "track_name": "Monza",
+      "expected_track_length_m": 5793,
+      "track_length_tolerance_m": 35,
+      "layout_fingerprint": "f1_2021:2021:11:5793",
+      "layout_version": "2000-present Grand Prix layout",
+      "direction": "clockwise",
+      "path_direction": "racing_direction",
+      "start_finish_progress": 0,
+      "display_rotation_deg": 0,
+      "validation_status": "verified_against_secondary_reference",
+      "representation": "packaged_static",
+      "asset_path": "maps/11-monza.json",
+      "positioning_capabilities": [
+        "exact_local_world_transform",
+        "distance_projected",
+        "static_without_marker"
+      ],
+      "geometry_checksum": "0f28b4e809303cd2a1ac540184c0c0177c158641a346a7e4909b3878e0a6bc6b",
+      "source": {
+        "type": "licensed_versioned_svg",
+        "project": "F1DB",
+        "author": "Jules Roy / F1DB contributors",
+        "license": "CC-BY-4.0",
+        "attribution": "Circuit geometry by Jules Roy and F1DB contributors, licensed CC BY 4.0; normalized by LapSignal.",
+        "repository_url": "https://github.com/f1db/f1db",
+        "asset_url": "https://github.com/f1db/f1db/blob/21d0bc8ae4a9dc1b26a0852bc0cd4ff12096adbf/src/assets/circuits/black/monza-7.svg",
+        "layout_metadata_url": "https://github.com/f1db/f1db/tree/21d0bc8ae4a9dc1b26a0852bc0cd4ff12096adbf/src/data/circuits",
+        "source_commit": "21d0bc8ae4a9dc1b26a0852bc0cd4ff12096adbf",
+        "source_svg_sha256": "1674c9b93882b0587a15bd0d470445273f4bc5f20e819064b35f2e9d1936b481",
+        "validation_references": [
+          "https://github.com/f1db/f1db/blob/21d0bc8ae4a9dc1b26a0852bc0cd4ff12096adbf/src/assets/circuits/black/monza-7.svg",
+          "https://commons.wikimedia.org/wiki/File:Monza_track_map.svg"
+        ],
+        "retrieved_at": "2026-08-11",
+        "transform": "arc-length sample 240 points; aspect-fit 1000x600; 48px padding",
+        "runtime_network_required": false
+      }
+    },
+    {
+      "game_track_id": 12,
+      "track_id": "singapore",
+      "track_name": "Singapore",
+      "expected_track_length_m": 5063,
+      "track_length_tolerance_m": 35,
+      "layout_fingerprint": "f1_2021:2021:12:5063",
+      "layout_version": "2015-2019, 2022 / pre-2023 layout",
+      "direction": "anticlockwise",
+      "path_direction": "racing_direction",
+      "start_finish_progress": 0,
+      "display_rotation_deg": 0,
+      "validation_status": "verified_against_secondary_reference",
+      "representation": "packaged_static",
+      "asset_path": "maps/12-singapore.json",
+      "positioning_capabilities": [
+        "exact_local_world_transform",
+        "distance_projected",
+        "static_without_marker"
+      ],
+      "geometry_checksum": "96ae47ccf66ddcabe4f009e35077fcc8c2705dd37c239fb42cfd5018cc39d3a4",
+      "source": {
+        "type": "licensed_versioned_svg",
+        "project": "F1DB",
+        "author": "Jules Roy / F1DB contributors",
+        "license": "CC-BY-4.0",
+        "attribution": "Circuit geometry by Jules Roy and F1DB contributors, licensed CC BY 4.0; normalized by LapSignal.",
+        "repository_url": "https://github.com/f1db/f1db",
+        "asset_url": "https://github.com/f1db/f1db/blob/21d0bc8ae4a9dc1b26a0852bc0cd4ff12096adbf/src/assets/circuits/black/marina-bay-3.svg",
+        "layout_metadata_url": "https://github.com/f1db/f1db/tree/21d0bc8ae4a9dc1b26a0852bc0cd4ff12096adbf/src/data/circuits",
+        "source_commit": "21d0bc8ae4a9dc1b26a0852bc0cd4ff12096adbf",
+        "source_svg_sha256": "80414bfd02e2b2a7424fe4f3acc7105ea142bf75846fa1f2484e97dc35247b75",
+        "validation_references": [
+          "https://github.com/f1db/f1db/blob/21d0bc8ae4a9dc1b26a0852bc0cd4ff12096adbf/src/assets/circuits/black/marina-bay-3.svg",
+          "https://commons.wikimedia.org/wiki/File:Singapore_Street_Circuit_2015.svg"
+        ],
+        "retrieved_at": "2026-08-11",
+        "transform": "arc-length sample 240 points; aspect-fit 1000x600; 48px padding",
+        "runtime_network_required": false
+      }
+    },
+    {
+      "game_track_id": 13,
+      "track_id": "suzuka",
+      "track_name": "Suzuka",
+      "expected_track_length_m": 5807,
+      "track_length_tolerance_m": 35,
+      "layout_fingerprint": "f1_2021:2021:13:5807",
+      "layout_version": "2003-2006, 2009-2019 / F1 2021 game layout",
+      "direction": "clockwise",
+      "path_direction": "racing_direction",
+      "start_finish_progress": 0,
+      "display_rotation_deg": 0,
+      "validation_status": "verified_against_secondary_reference",
+      "representation": "packaged_static",
+      "asset_path": "maps/13-suzuka.json",
+      "positioning_capabilities": [
+        "exact_local_world_transform",
+        "distance_projected",
+        "static_without_marker"
+      ],
+      "geometry_checksum": "ff8bb8961a7d98294de76fda2aa951de292da0cb540e60b7fcad636512d940e9",
+      "source": {
+        "type": "licensed_versioned_svg",
+        "project": "F1DB",
+        "author": "Jules Roy / F1DB contributors",
+        "license": "CC-BY-4.0",
+        "attribution": "Circuit geometry by Jules Roy and F1DB contributors, licensed CC BY 4.0; normalized by LapSignal.",
+        "repository_url": "https://github.com/f1db/f1db",
+        "asset_url": "https://github.com/f1db/f1db/blob/21d0bc8ae4a9dc1b26a0852bc0cd4ff12096adbf/src/assets/circuits/black/suzuka-2.svg",
+        "layout_metadata_url": "https://github.com/f1db/f1db/tree/21d0bc8ae4a9dc1b26a0852bc0cd4ff12096adbf/src/data/circuits",
+        "source_commit": "21d0bc8ae4a9dc1b26a0852bc0cd4ff12096adbf",
+        "source_svg_sha256": "112c931817ba8b2595e26bbd4cb699614ad928a63e7b68d395b9186f85638805",
+        "validation_references": [
+          "https://github.com/f1db/f1db/blob/21d0bc8ae4a9dc1b26a0852bc0cd4ff12096adbf/src/assets/circuits/black/suzuka-2.svg",
+          "https://github.com/bacinger/f1-circuits/blob/394d8fbe70ef2c0b0c8d23ff7bee61fa09606055/circuits/jp-1962.geojson"
+        ],
+        "retrieved_at": "2026-08-11",
+        "transform": "arc-length sample 240 points; aspect-fit 1000x600; 48px padding",
+        "runtime_network_required": false
+      }
+    },
+    {
+      "game_track_id": 14,
+      "track_id": "abu-dhabi",
+      "track_name": "Abu Dhabi",
+      "expected_track_length_m": 5547,
+      "track_length_tolerance_m": 35,
+      "layout_fingerprint": "f1_2021:2021:14:5547",
+      "layout_version": "2009-2020 / pre-redesign F1 2021 game layout",
+      "direction": "anticlockwise",
+      "path_direction": "racing_direction",
+      "start_finish_progress": 0,
+      "display_rotation_deg": 0,
+      "validation_status": "verified_against_secondary_reference",
+      "representation": "packaged_static",
+      "asset_path": "maps/14-abu-dhabi.json",
+      "positioning_capabilities": [
+        "exact_local_world_transform",
+        "distance_projected",
+        "static_without_marker"
+      ],
+      "geometry_checksum": "4ea787b698a77d63d12d06e351e7726cc13f0b9caf8209088f9827b6f6bb8a2e",
+      "source": {
+        "type": "licensed_versioned_svg",
+        "project": "F1DB",
+        "author": "Jules Roy / F1DB contributors",
+        "license": "CC-BY-4.0",
+        "attribution": "Circuit geometry by Jules Roy and F1DB contributors, licensed CC BY 4.0; normalized by LapSignal.",
+        "repository_url": "https://github.com/f1db/f1db",
+        "asset_url": "https://github.com/f1db/f1db/blob/21d0bc8ae4a9dc1b26a0852bc0cd4ff12096adbf/src/assets/circuits/black/yas-marina-1.svg",
+        "layout_metadata_url": "https://github.com/f1db/f1db/tree/21d0bc8ae4a9dc1b26a0852bc0cd4ff12096adbf/src/data/circuits",
+        "source_commit": "21d0bc8ae4a9dc1b26a0852bc0cd4ff12096adbf",
+        "source_svg_sha256": "9fd1e6e91f1a0dfe556893124c7e0b87d9cc8bf2b7990e1dbb3ca42abfcaa3ae",
+        "validation_references": [
+          "https://github.com/f1db/f1db/blob/21d0bc8ae4a9dc1b26a0852bc0cd4ff12096adbf/src/assets/circuits/black/yas-marina-1.svg",
+          "https://commons.wikimedia.org/wiki/File:Circuit_Yas-Island.svg"
+        ],
+        "retrieved_at": "2026-08-11",
+        "transform": "arc-length sample 240 points; aspect-fit 1000x600; 48px padding; reversed to declared racing direction",
+        "runtime_network_required": false
+      }
+    },
+    {
+      "game_track_id": 15,
+      "track_id": "circuit-of-the-americas",
+      "track_name": "Circuit of the Americas",
+      "expected_track_length_m": 5514,
+      "track_length_tolerance_m": 2,
+      "layout_fingerprint": "f1_2021:2021:15:5514",
+      "layout_version": "Grand Prix layout",
+      "direction": "anticlockwise",
+      "path_direction": "racing_direction",
+      "start_finish_progress": 0,
+      "display_rotation_deg": 0,
+      "validation_status": "exact_game_telemetry_seed",
+      "representation": "telemetry_seed",
+      "asset_path": "../circuit-seeds/f1_2021-2021-15-5514.seed.json",
+      "positioning_capabilities": [
+        "exact_local_world_transform",
+        "seed_world_transform",
+        "distance_projected"
+      ],
+      "geometry_checksum": "500daa0c6e5bb0266f3672560c8bffa3b04e7d9233d6b783aa6457e19f6c07f7",
+      "source": {
+        "type": "built_in_telemetry_seed",
+        "attribution": "LapSignal normalized non-personal F1 2021 telemetry seed",
+        "privacy": "normalized_non_personal",
+        "runtime_network_required": false
+      }
+    },
+    {
+      "game_track_id": 16,
+      "track_id": "interlagos",
+      "track_name": "Interlagos",
+      "expected_track_length_m": 4309,
+      "track_length_tolerance_m": 35,
+      "layout_fingerprint": "f1_2021:2021:16:4309",
+      "layout_version": "1990-present Grand Prix layout",
+      "direction": "anticlockwise",
+      "path_direction": "racing_direction",
+      "start_finish_progress": 0,
+      "display_rotation_deg": 0,
+      "validation_status": "verified_against_secondary_reference",
+      "representation": "packaged_static",
+      "asset_path": "maps/16-interlagos.json",
+      "positioning_capabilities": [
+        "exact_local_world_transform",
+        "distance_projected",
+        "static_without_marker"
+      ],
+      "geometry_checksum": "4dbeae4132c5104bcdde30e63b78bef503cb6a341fcb6afd3242e0e2bec0d150",
+      "source": {
+        "type": "licensed_versioned_svg",
+        "project": "F1DB",
+        "author": "Jules Roy / F1DB contributors",
+        "license": "CC-BY-4.0",
+        "attribution": "Circuit geometry by Jules Roy and F1DB contributors, licensed CC BY 4.0; normalized by LapSignal.",
+        "repository_url": "https://github.com/f1db/f1db",
+        "asset_url": "https://github.com/f1db/f1db/blob/21d0bc8ae4a9dc1b26a0852bc0cd4ff12096adbf/src/assets/circuits/black/interlagos-2.svg",
+        "layout_metadata_url": "https://github.com/f1db/f1db/tree/21d0bc8ae4a9dc1b26a0852bc0cd4ff12096adbf/src/data/circuits",
+        "source_commit": "21d0bc8ae4a9dc1b26a0852bc0cd4ff12096adbf",
+        "source_svg_sha256": "07c5e001052677d0b4610832d6097be84a9e71000df195c3f2ac3ab3a51c784c",
+        "validation_references": [
+          "https://github.com/f1db/f1db/blob/21d0bc8ae4a9dc1b26a0852bc0cd4ff12096adbf/src/assets/circuits/black/interlagos-2.svg",
+          "https://github.com/bacinger/f1-circuits/blob/394d8fbe70ef2c0b0c8d23ff7bee61fa09606055/circuits/br-1940.geojson"
+        ],
+        "retrieved_at": "2026-08-11",
+        "transform": "arc-length sample 240 points; aspect-fit 1000x600; 48px padding",
+        "runtime_network_required": false
+      }
+    },
+    {
+      "game_track_id": 17,
+      "track_id": "red-bull-ring",
+      "track_name": "Red Bull Ring",
+      "expected_track_length_m": 4318,
+      "track_length_tolerance_m": 35,
+      "layout_fingerprint": "f1_2021:2021:17:4318",
+      "layout_version": "1997-2003, 2014-2026 Grand Prix layout",
+      "direction": "clockwise",
+      "path_direction": "racing_direction",
+      "start_finish_progress": 0,
+      "display_rotation_deg": 0,
+      "validation_status": "verified_against_secondary_reference",
+      "representation": "packaged_static",
+      "asset_path": "maps/17-red-bull-ring.json",
+      "positioning_capabilities": [
+        "exact_local_world_transform",
+        "distance_projected",
+        "static_without_marker"
+      ],
+      "geometry_checksum": "78dba58b927b82b4d26e691a5138469b300d70890fc814c9aa4e2b98227ade01",
+      "source": {
+        "type": "licensed_versioned_svg",
+        "project": "F1DB",
+        "author": "Jules Roy / F1DB contributors",
+        "license": "CC-BY-4.0",
+        "attribution": "Circuit geometry by Jules Roy and F1DB contributors, licensed CC BY 4.0; normalized by LapSignal.",
+        "repository_url": "https://github.com/f1db/f1db",
+        "asset_url": "https://github.com/f1db/f1db/blob/21d0bc8ae4a9dc1b26a0852bc0cd4ff12096adbf/src/assets/circuits/black/spielberg-3.svg",
+        "layout_metadata_url": "https://github.com/f1db/f1db/tree/21d0bc8ae4a9dc1b26a0852bc0cd4ff12096adbf/src/data/circuits",
+        "source_commit": "21d0bc8ae4a9dc1b26a0852bc0cd4ff12096adbf",
+        "source_svg_sha256": "bf9158c7a975c9e5b1c238b7eab7ad158d5bcbb667b1a59863d798394d1a5ba9",
+        "validation_references": [
+          "https://github.com/f1db/f1db/blob/21d0bc8ae4a9dc1b26a0852bc0cd4ff12096adbf/src/assets/circuits/black/spielberg-3.svg",
+          "https://commons.wikimedia.org/wiki/File:Circuit_Red_Bull_Ring.svg"
+        ],
+        "retrieved_at": "2026-08-11",
+        "transform": "arc-length sample 240 points; aspect-fit 1000x600; 48px padding; reversed to declared racing direction",
+        "runtime_network_required": false
+      }
+    },
+    {
+      "game_track_id": 18,
+      "track_id": "sochi",
+      "track_name": "Sochi",
+      "expected_track_length_m": 5848,
+      "track_length_tolerance_m": 35,
+      "layout_fingerprint": "f1_2021:2021:18:5848",
+      "layout_version": "2014-2021 Grand Prix layout",
+      "direction": "clockwise",
+      "path_direction": "racing_direction",
+      "start_finish_progress": 0,
+      "display_rotation_deg": 0,
+      "validation_status": "verified_against_secondary_reference",
+      "representation": "packaged_static",
+      "asset_path": "maps/18-sochi.json",
+      "positioning_capabilities": [
+        "exact_local_world_transform",
+        "distance_projected",
+        "static_without_marker"
+      ],
+      "geometry_checksum": "6ecdfc40b31a7591982caccf883e927a3312e95d1249e8cdc79ebddfa6747ed5",
+      "source": {
+        "type": "licensed_versioned_svg",
+        "project": "F1DB",
+        "author": "Jules Roy / F1DB contributors",
+        "license": "CC-BY-4.0",
+        "attribution": "Circuit geometry by Jules Roy and F1DB contributors, licensed CC BY 4.0; normalized by LapSignal.",
+        "repository_url": "https://github.com/f1db/f1db",
+        "asset_url": "https://github.com/f1db/f1db/blob/21d0bc8ae4a9dc1b26a0852bc0cd4ff12096adbf/src/assets/circuits/black/sochi-1.svg",
+        "layout_metadata_url": "https://github.com/f1db/f1db/tree/21d0bc8ae4a9dc1b26a0852bc0cd4ff12096adbf/src/data/circuits",
+        "source_commit": "21d0bc8ae4a9dc1b26a0852bc0cd4ff12096adbf",
+        "source_svg_sha256": "af9ffd9961b0b90685a93246e71796c9e185b3062b6315411d68f3a0c8791105",
+        "validation_references": [
+          "https://github.com/f1db/f1db/blob/21d0bc8ae4a9dc1b26a0852bc0cd4ff12096adbf/src/assets/circuits/black/sochi-1.svg",
+          "https://github.com/bacinger/f1-circuits/blob/394d8fbe70ef2c0b0c8d23ff7bee61fa09606055/circuits/ru-2014.geojson"
+        ],
+        "retrieved_at": "2026-08-11",
+        "transform": "arc-length sample 240 points; aspect-fit 1000x600; 48px padding; reversed to declared racing direction",
+        "runtime_network_required": false
+      }
+    },
+    {
+      "game_track_id": 19,
+      "track_id": "mexico-city",
+      "track_name": "Mexico City",
+      "expected_track_length_m": 4304,
+      "track_length_tolerance_m": 35,
+      "layout_fingerprint": "f1_2021:2021:19:4304",
+      "layout_version": "2015-2019, 2021-present Grand Prix layout",
+      "direction": "clockwise",
+      "path_direction": "racing_direction",
+      "start_finish_progress": 0,
+      "display_rotation_deg": 0,
+      "validation_status": "verified_against_secondary_reference",
+      "representation": "packaged_static",
+      "asset_path": "maps/19-mexico-city.json",
+      "positioning_capabilities": [
+        "exact_local_world_transform",
+        "distance_projected",
+        "static_without_marker"
+      ],
+      "geometry_checksum": "35e71f3769c6f04b9b3ebcb7096a80632e66a15a5a805a5c43b5b3f40f8fa87a",
+      "source": {
+        "type": "licensed_versioned_svg",
+        "project": "F1DB",
+        "author": "Jules Roy / F1DB contributors",
+        "license": "CC-BY-4.0",
+        "attribution": "Circuit geometry by Jules Roy and F1DB contributors, licensed CC BY 4.0; normalized by LapSignal.",
+        "repository_url": "https://github.com/f1db/f1db",
+        "asset_url": "https://github.com/f1db/f1db/blob/21d0bc8ae4a9dc1b26a0852bc0cd4ff12096adbf/src/assets/circuits/black/mexico-city-3.svg",
+        "layout_metadata_url": "https://github.com/f1db/f1db/tree/21d0bc8ae4a9dc1b26a0852bc0cd4ff12096adbf/src/data/circuits",
+        "source_commit": "21d0bc8ae4a9dc1b26a0852bc0cd4ff12096adbf",
+        "source_svg_sha256": "7739650af3fb54d4f4527ef1eeeb669d027c7919e488a1a56d1a91ef4ac2e874",
+        "validation_references": [
+          "https://github.com/f1db/f1db/blob/21d0bc8ae4a9dc1b26a0852bc0cd4ff12096adbf/src/assets/circuits/black/mexico-city-3.svg",
+          "https://github.com/bacinger/f1-circuits/blob/394d8fbe70ef2c0b0c8d23ff7bee61fa09606055/circuits/mx-1962.geojson"
+        ],
+        "retrieved_at": "2026-08-11",
+        "transform": "arc-length sample 240 points; aspect-fit 1000x600; 48px padding",
+        "runtime_network_required": false
+      }
+    },
+    {
+      "game_track_id": 20,
+      "track_id": "baku",
+      "track_name": "Baku",
+      "expected_track_length_m": 5994,
+      "track_length_tolerance_m": 2,
+      "layout_fingerprint": "f1_2021:2021:20:5994",
+      "layout_version": "Baku City Circuit Grand Prix layout",
+      "direction": "anticlockwise",
+      "path_direction": "racing_direction",
+      "start_finish_progress": 0,
+      "display_rotation_deg": 0,
+      "validation_status": "exact_game_telemetry_seed",
+      "representation": "telemetry_seed",
+      "asset_path": "../circuit-seeds/f1_2021-2021-20-5994.seed.json",
+      "positioning_capabilities": [
+        "exact_local_world_transform",
+        "seed_world_transform",
+        "distance_projected"
+      ],
+      "geometry_checksum": "1ddc12dd8ab425b954feb2e1060dabf397f7032584be75bf98380eb0c1450e97",
+      "source": {
+        "type": "built_in_telemetry_seed",
+        "attribution": "LapSignal normalized non-personal F1 2021 telemetry seed",
+        "privacy": "normalized_non_personal",
+        "runtime_network_required": false
+      }
+    },
+    {
+      "game_track_id": 26,
+      "track_id": "zandvoort",
+      "track_name": "Zandvoort",
+      "expected_track_length_m": 4259,
+      "track_length_tolerance_m": 35,
+      "layout_fingerprint": "f1_2021:2021:26:4259",
+      "layout_version": "2021-present Grand Prix layout",
+      "direction": "clockwise",
+      "path_direction": "racing_direction",
+      "start_finish_progress": 0,
+      "display_rotation_deg": 0,
+      "validation_status": "verified_against_secondary_reference",
+      "representation": "packaged_static",
+      "asset_path": "maps/26-zandvoort.json",
+      "positioning_capabilities": [
+        "exact_local_world_transform",
+        "distance_projected",
+        "static_without_marker"
+      ],
+      "geometry_checksum": "0bed194f95665877a2985e30f55219fbef28b1962578a2a9f6902091e9d53942",
+      "source": {
+        "type": "licensed_versioned_svg",
+        "project": "F1DB",
+        "author": "Jules Roy / F1DB contributors",
+        "license": "CC-BY-4.0",
+        "attribution": "Circuit geometry by Jules Roy and F1DB contributors, licensed CC BY 4.0; normalized by LapSignal.",
+        "repository_url": "https://github.com/f1db/f1db",
+        "asset_url": "https://github.com/f1db/f1db/blob/21d0bc8ae4a9dc1b26a0852bc0cd4ff12096adbf/src/assets/circuits/black/zandvoort-5.svg",
+        "layout_metadata_url": "https://github.com/f1db/f1db/tree/21d0bc8ae4a9dc1b26a0852bc0cd4ff12096adbf/src/data/circuits",
+        "source_commit": "21d0bc8ae4a9dc1b26a0852bc0cd4ff12096adbf",
+        "source_svg_sha256": "99b5d358b4d455a01ffbfa2eab6b36a7fa7c35e6b5437111d02dca3ba8d8747a",
+        "validation_references": [
+          "https://github.com/f1db/f1db/blob/21d0bc8ae4a9dc1b26a0852bc0cd4ff12096adbf/src/assets/circuits/black/zandvoort-5.svg",
+          "https://github.com/bacinger/f1-circuits/blob/394d8fbe70ef2c0b0c8d23ff7bee61fa09606055/circuits/nl-1948.geojson"
+        ],
+        "retrieved_at": "2026-08-11",
+        "transform": "arc-length sample 240 points; aspect-fit 1000x600; 48px padding",
+        "runtime_network_required": false
+      }
+    },
+    {
+      "game_track_id": 27,
+      "track_id": "imola",
+      "track_name": "Imola",
+      "expected_track_length_m": 4910,
+      "track_length_tolerance_m": 2,
+      "layout_fingerprint": "f1_2021:2021:27:4910",
+      "layout_version": "2020-2021 Grand Prix layout",
+      "direction": "anticlockwise",
+      "path_direction": "racing_direction",
+      "start_finish_progress": 0,
+      "display_rotation_deg": 0,
+      "validation_status": "exact_game_telemetry_seed",
+      "representation": "telemetry_seed",
+      "asset_path": "../circuit-seeds/f1_2021-2021-27-4910.seed.json",
+      "positioning_capabilities": [
+        "exact_local_world_transform",
+        "seed_world_transform",
+        "distance_projected"
+      ],
+      "geometry_checksum": "fb90221b3cc88f0c2465ec5939eda0904816de26060f9bb6beb221b17a3c30f9",
+      "source": {
+        "type": "built_in_telemetry_seed",
+        "attribution": "LapSignal normalized non-personal F1 2021 telemetry seed",
+        "privacy": "normalized_non_personal",
+        "runtime_network_required": false
+      }
+    },
+    {
+      "game_track_id": 28,
+      "track_id": "portimao",
+      "track_name": "Portimão",
+      "expected_track_length_m": 4650,
+      "track_length_tolerance_m": 2,
+      "layout_fingerprint": "f1_2021:2021:28:4650",
+      "layout_version": "Grand Prix layout",
+      "direction": "clockwise",
+      "path_direction": "racing_direction",
+      "start_finish_progress": 0,
+      "display_rotation_deg": 0,
+      "validation_status": "exact_game_telemetry_seed",
+      "representation": "telemetry_seed",
+      "asset_path": "../circuit-seeds/f1_2021-2021-28-4650.seed.json",
+      "positioning_capabilities": [
+        "exact_local_world_transform",
+        "seed_world_transform",
+        "distance_projected"
+      ],
+      "geometry_checksum": "1b93c0fe14e5eeeafdf493d3474b995b0db3552623297c6ee42d3c11b5ce1c1e",
+      "source": {
+        "type": "built_in_telemetry_seed",
+        "attribution": "LapSignal normalized non-personal F1 2021 telemetry seed",
+        "privacy": "normalized_non_personal",
+        "runtime_network_required": false
+      }
+    },
+    {
+      "game_track_id": 29,
+      "track_id": "jeddah",
+      "track_name": "Jeddah",
+      "expected_track_length_m": 6176,
+      "track_length_tolerance_m": 35,
+      "layout_fingerprint": "f1_2021:2021:29:6176",
+      "layout_version": "2021 inaugural Grand Prix layout",
+      "direction": "anticlockwise",
+      "path_direction": "racing_direction",
+      "start_finish_progress": 0,
+      "display_rotation_deg": 0,
+      "validation_status": "verified_against_secondary_reference",
+      "representation": "packaged_static",
+      "asset_path": "maps/29-jeddah.json",
+      "positioning_capabilities": [
+        "exact_local_world_transform",
+        "distance_projected",
+        "static_without_marker"
+      ],
+      "geometry_checksum": "46d340c87f381f4f8d13a5fdf4c550e9e2799f7cd99911f647f205e6fd212d53",
+      "source": {
+        "type": "licensed_versioned_svg",
+        "project": "F1DB",
+        "author": "Jules Roy / F1DB contributors",
+        "license": "CC-BY-4.0",
+        "attribution": "Circuit geometry by Jules Roy and F1DB contributors, licensed CC BY 4.0; normalized by LapSignal.",
+        "repository_url": "https://github.com/f1db/f1db",
+        "asset_url": "https://github.com/f1db/f1db/blob/21d0bc8ae4a9dc1b26a0852bc0cd4ff12096adbf/src/assets/circuits/black/jeddah-1.svg",
+        "layout_metadata_url": "https://github.com/f1db/f1db/tree/21d0bc8ae4a9dc1b26a0852bc0cd4ff12096adbf/src/data/circuits",
+        "source_commit": "21d0bc8ae4a9dc1b26a0852bc0cd4ff12096adbf",
+        "source_svg_sha256": "d41ad6d0444aa74607f15a87c4b57b88b61990522a6b9af1ffb8b422c0755e74",
+        "validation_references": [
+          "https://github.com/f1db/f1db/blob/21d0bc8ae4a9dc1b26a0852bc0cd4ff12096adbf/src/assets/circuits/black/jeddah-1.svg",
+          "https://github.com/bacinger/f1-circuits/blob/394d8fbe70ef2c0b0c8d23ff7bee61fa09606055/circuits/sa-2021.geojson"
+        ],
+        "retrieved_at": "2026-08-11",
+        "transform": "arc-length sample 240 points; aspect-fit 1000x600; 48px padding",
+        "runtime_network_required": false
+      }
+    }
+  ]
+}

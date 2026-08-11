@@ -4,8 +4,8 @@
   min-height: 100vh;
   overflow: hidden;
   background:
-    radial-gradient(circle at 78% 8%, rgba(214, 59, 69, .12), transparent 24%),
-    #07080a;
+    radial-gradient(circle at 78% 8%, rgba(242, 56, 73, .12), transparent 24%),
+    var(--bg);
 }
 
 .shell::before {
@@ -26,7 +26,7 @@
   background:
     linear-gradient(135deg, rgba(255, 255, 255, .025) 25%, transparent 25%) 0 0 / 8px 8px,
     linear-gradient(315deg, rgba(255, 255, 255, .018) 25%, transparent 25%) 0 0 / 8px 8px,
-    rgba(9, 10, 12, .93);
+    rgba(8, 10, 13, .93);
   backdrop-filter: blur(18px);
 }
 
@@ -74,7 +74,7 @@
   overflow: hidden;
   border: 1px solid #3a3f47;
   border-radius: 9px 9px 46px 9px;
-  background: #111317;
+  background: var(--carbon);
   box-shadow: 0 42px 100px rgba(0, 0, 0, .52);
   clip-path: polygon(0 0, 100% 0, 100% 93%, 95% 100%, 0 100%);
 }
@@ -84,7 +84,7 @@
 .mediaShade { position: absolute; z-index: 1; inset: 0; background: linear-gradient(180deg, transparent 20%, rgba(5, 6, 8, .2) 46%, rgba(5, 6, 8, .96) 100%); }
 
 .carbon {
-  background-color: #111317;
+  background-color: var(--carbon);
   background-image:
     linear-gradient(135deg, rgba(255, 255, 255, .026) 25%, transparent 25%),
     linear-gradient(315deg, rgba(255, 255, 255, .019) 25%, transparent 25%);
@@ -126,7 +126,7 @@
 .circuitLine { fill: none; stroke: currentColor; stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
 .motionDot { fill: var(--crimson); stroke: #fff; stroke-width: 2; filter: drop-shadow(0 0 7px var(--crimson)); }
 .motionDotStatic { display: none; fill: var(--crimson); stroke: #fff; stroke-width: 2; }
-.cornerMarker { fill: rgba(214, 59, 69, .17); stroke: var(--crimson); stroke-width: 2; }
+.cornerMarker { fill: rgba(242, 56, 73, .17); stroke: var(--crimson); stroke-width: 2; }
 .trackName { fill: currentColor; font: 650 16px var(--font-race); letter-spacing: .08em; }
 .heroCircuit { position: absolute; z-index: 2; top: 26px; right: 8px; width: 280px; color: rgba(255, 255, 255, .13); transform: rotate(8deg); }
 
@@ -154,7 +154,7 @@
 .analysisFrame > header strong { display: flex; align-items: center; gap: 7px; color: var(--positive); }
 .analysisFrame > header i { width: 7px; height: 7px; border-radius: 50%; background: var(--positive); }
 .analysisBody { display: grid; grid-template-columns: 1.02fr .98fr; min-height: 540px; }
-.circuitPanel { position: relative; display: grid; place-items: center; min-width: 0; margin: 0; overflow: hidden; border-right: 1px solid var(--border); background: radial-gradient(circle at 50% 50%, rgba(214, 59, 69, .07), transparent 54%), #090a0c; }
+.circuitPanel { position: relative; display: grid; place-items: center; min-width: 0; margin: 0; overflow: hidden; border-right: 1px solid var(--border); background: radial-gradient(circle at 50% 50%, rgba(242, 56, 73, .07), transparent 54%), var(--bg); }
 .circuitPanel::before { content: ""; position: absolute; inset: 0; background-image: linear-gradient(rgba(69, 74, 83, .2) 1px, transparent 1px), linear-gradient(90deg, rgba(69, 74, 83, .17) 1px, transparent 1px); background-size: 38px 38px; }
 .analysisCircuit { position: relative; z-index: 1; width: 90%; color: #b7bbc2; transform: rotate(-7deg); }
 .circuitPanel figcaption { position: absolute; z-index: 2; left: 14px; bottom: 12px; color: var(--dim); font: .49rem var(--font-mono); text-transform: uppercase; }
@@ -204,7 +204,7 @@
 .setupPromise { color: var(--text) !important; font-size: 1.08rem; font-weight: 750; }
 .deviceChips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 26px; }
 .deviceChips span { display: inline-flex; align-items: center; gap: 7px; min-height: 37px; padding: 0 12px; border: 1px solid var(--border); border-radius: 4px; color: var(--muted); font: 600 .65rem var(--font-race); letter-spacing: .05em; text-transform: uppercase; }
-.deviceChips .activeChip { border-color: var(--crimson); background: rgba(214, 59, 69, .09); color: var(--text); }
+.deviceChips .activeChip { border-color: var(--crimson); background: rgba(242, 56, 73, .09); color: var(--text); }
 .setupVisual { position: relative; min-height: 570px; overflow: hidden; border: 1px solid #363b43; border-radius: 8px 44px 8px 8px; clip-path: polygon(0 0, 93% 0, 100% 7%, 100% 100%, 0 100%); }
 .setupVisual > img { object-fit: cover; }
 .setupVisual::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 48%, rgba(6, 7, 9, .82)); }
@@ -214,7 +214,7 @@
 .profileCard i { position: absolute; top: 18px; right: 17px; width: 8px; height: 8px; border-radius: 50%; background: var(--positive); box-shadow: 0 0 0 4px rgba(50, 213, 131, .13); }
 
 .finalCta { position: relative; display: grid; place-items: center; width: min(calc(100% - 64px), 1240px); min-height: 530px; margin: 0 auto 100px; overflow: hidden; border: 1px solid #3b4048; border-radius: 9px 9px 60px 9px; text-align: center; clip-path: polygon(0 0, 100% 0, 100% 88%, 95% 100%, 0 100%); }
-.finalCta::before { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at center, rgba(214, 59, 69, .15), transparent 47%); }
+.finalCta::before { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at center, rgba(242, 56, 73, .15), transparent 47%); }
 .finalCta > div { position: relative; z-index: 2; max-width: 820px; padding: 44px 24px 70px; }
 .finalCta h2 { font-size: clamp(3.5rem, 7.2vw, 7.3rem); }
 .finalCta p:not(.eyebrow) { max-width: 620px; margin: 21px auto 26px; color: var(--muted); line-height: 1.65; }

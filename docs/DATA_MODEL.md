@@ -18,6 +18,8 @@ SQLite is the zero-configuration default; SQLAlchemy models remain PostgreSQL-co
 
 Raw sample streams are not relational rows. Demo telemetry is stored as Zstandard-compressed Parquet; native collection also records a length-prefixed `.lsraw` capture and normalized JSONL. Storage paths are resolved beneath `DATA_DIR`; traversal outside that root is rejected.
 
+Finalized physical or replay sessions persist lap validity, the complete nested analysis contract (pace, stint, braking, throttle, and steering), evidence-backed findings, a rule-based coach report, and normalized Parquet telemetry. The session telemetry endpoint reloads the local normalized stream for bounded, downsampled multi-lap comparison after a process restart. Invalid and incomplete attempts remain available as technique evidence, but only clean completed laps can set personal-best, benchmark, or theoretical-best timing.
+
 ## Canonical sample v1
 
 The game-independent contract is validated in both `packages/contracts` (Zod) and `services/api/lapsignal/schemas.py` (Pydantic). It includes identity/provenance, lap position, pose, controls, drivetrain, fuel/tyre data, invalidity, and source packet ID. Units are explicit in names:

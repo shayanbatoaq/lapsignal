@@ -2,7 +2,7 @@
 
 **Every lap has a signal.** LapSignal is an evidence-backed AI race engineer prototype for sim racers. A deterministic analytics pipeline calculates pace, consistency, technique, and stint findings; the optional AI coach may explain only that stored evidence.
 
-This alpha runs locally on Windows without Docker, telemetry hardware, cloud credentials, or an OpenAI key. It includes three reproducible demo sessions, a fixture replay, a native F1 2021 UDP listener, and a responsive web application.
+This alpha runs locally on Windows without Docker, telemetry hardware, cloud credentials, or an OpenAI key. It includes three reproducible demo sessions, normalized and raw-capture replay, a native F1 2021 UDP listener, a local 24-circuit F1 2021 map pack, and a responsive web application.
 
 > LapSignal is an independent telemetry analysis prototype and is not affiliated with or endorsed by any game publisher, racing series, governing body, console manufacturer, or vehicle manufacturer.
 
@@ -31,7 +31,7 @@ Copy `.env.example` to `.env` only when overriding defaults. No variable is requ
 ## Working modes
 
 - **Demo:** `pnpm dev:demo` serves 42 laps across F1-style controller, GT3 practice, and synthetic hypercar endurance sessions.
-- **Replay:** with the API running, use `pnpm collector:replay`. The fixture follows the same heartbeat and batch-ingestion path as live data and updates `/app/live`.
+- **Replay:** with the API running, use `pnpm collector:replay` for the sanitized fixture. To reprocess an existing ignored physical recording without changing it, run `pnpm --filter @lapsignal/collector start replay "data\captures\<capture>.lsraw" --data-dir data`. Both paths use the collector heartbeat, bounded delivery queue, API ingestion, and session-finalization endpoints.
 - **Live F1 2021:** run `corepack pnpm dev:live`, then send PS4 telemetry to the laptop IPv4 address on UDP port `20777`. The managed development stack includes the collector. See [PS4 setup](docs/PS4_F1_2021_SETUP.md).
 
 Useful collector diagnostics:
@@ -58,7 +58,7 @@ pnpm --filter @lapsignal/collector start listen --port 20777 --data-dir ..\..\da
 | `pnpm test:e2e` | Run Playwright desktop/mobile flows |
 | `pnpm seed` | Recreate deterministic SQLite/Parquet demo data |
 | `pnpm collector:listen` | Listen on native Windows UDP 20777 |
-| `pnpm collector:replay` | Replay the bundled normalized fixture |
+| `pnpm collector:replay` | Replay and finalize the bundled normalized fixture |
 | `pnpm generate:client` | Generate route/schema types from FastAPI OpenAPI |
 | `pnpm check` | Lint, typecheck, test, and build |
 

@@ -252,7 +252,7 @@ def build_fallback_report(session: dict) -> dict:
         "mode": "rule_based",
         "label": "Rule-based coaching",
         "session_summary": (
-            f"{len(session['laps'])} completed laps were preserved, but none passed the clean-lap validity gate."
+            f"{len(session['laps'])} attempts were preserved. Invalid lap times remain excluded from personal-best timing, while usable braking, throttle, and steering evidence remains available for coaching."
             if best is None
             else f"{len(session['laps'])} laps analyzed; best clean lap {best} ms with a {consistency}/100 consistency score."
         ),
@@ -265,12 +265,20 @@ def build_fallback_report(session: dict) -> dict:
             }
             for finding in findings
         ],
-        "what_improved": "The most repeatable clean laps preserve progressive control inputs after minimum speed.",
+        "what_improved": (
+            "Technique evidence from invalid attempts remains usable even though official lap timing is excluded."
+            if best is None
+            else "The most repeatable clean laps preserve progressive control inputs after minimum speed."
+        ),
         "what_regressed": "The closing phase shows more variation."
         if session["metrics"]["stint"]["increasing_error_frequency"]
         else "No material regression is supported by this stint.",
         "next_stint_plan": "Complete five controlled laps: repeat the same initial brake markers, release progressively, and review only after the stint.",
-        "confidence_summary": "High confidence in recorded lap-time metrics; technique findings use only comparable clean laps.",
+        "confidence_summary": (
+            "Official timing confidence is intentionally withheld; technique findings use only directly measured control evidence."
+            if best is None
+            else "High confidence in recorded lap-time metrics; technique findings use comparable clean laps and explicitly labelled attempts."
+        ),
         "limitations": session["metrics"]["pace"]["limitations"]
         + session["metrics"]["stint"]["limitations"],
         "evidence_references": [finding["id"] for finding in findings],

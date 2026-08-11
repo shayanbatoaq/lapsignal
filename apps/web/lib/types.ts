@@ -25,12 +25,14 @@ export interface Finding {
 export interface Lap {
   id: string;
   lap_number: number;
-  lap_time_ms: number;
+  lap_time_ms: number | null;
   sector_times_ms: number[];
   valid: boolean;
   classification: string;
   quality_score: number;
   tyre_wear_pct: number | null;
+  coaching_available?: boolean;
+  status_label?: string;
 }
 
 export interface Session {
@@ -58,12 +60,12 @@ export interface Session {
   metrics: {
     pace: {
       clean_laps: number;
-      best_lap_ms: number;
-      median_lap_ms: number;
-      mean_lap_ms: number;
-      std_dev_ms: number;
+      best_lap_ms: number | null;
+      median_lap_ms: number | null;
+      mean_lap_ms: number | null;
+      std_dev_ms: number | null;
       consistency_score: number;
-      theoretical_best_ms: number;
+      theoretical_best_ms: number | null;
       pace_degradation_ms_per_lap: number | null;
       limitations: string[];
     };
@@ -117,7 +119,7 @@ export interface TelemetryPoint {
 
 export interface TelemetryTrace {
   lap_number: number;
-  lap_time_ms: number;
+  lap_time_ms: number | null;
   valid: boolean;
   quality_score: number;
   samples: TelemetryPoint[];

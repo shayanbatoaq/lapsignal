@@ -19,3 +19,5 @@ export function downsampleIndices(length: number, maxPoints: number): number[] {
   const step = (length - 1) / (maxPoints - 1);
   return Array.from({ length: maxPoints }, (_, index) => Math.round(index * step));
 }
+
+export * from "./calibration";

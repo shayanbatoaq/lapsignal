@@ -62,6 +62,25 @@ def clean_laps(laps: Iterable[dict]) -> list[dict]:
     ]
 
 
+def coachable_laps(laps: Iterable[dict]) -> list[dict]:
+    """Return attempts with enough reliable channels for technique analysis, regardless of timing validity."""
+    return [
+        lap
+        for lap in laps
+        if lap.get("classification") not in {"pit", "out", "in", "corrupted"}
+        and len(lap.get("telemetry", [])) >= 20
+        and sum(
+            sample.get("lap_distance_m") is not None
+            and any(
+                sample.get(channel) is not None
+                for channel in ("brake_0_1", "throttle_0_1", "steer_minus1_1")
+            )
+            for sample in lap.get("telemetry", [])
+        )
+        >= 15
+    ]
+
+
 def robust_consistency_score(lap_times_ms: list[float]) -> float:
     if len(lap_times_ms) < 2:
         return 0.0
@@ -217,12 +236,18 @@ def stint_metrics(laps: list[dict]) -> dict:
 
 def build_findings(session: dict, metrics: dict) -> list[dict]:
     clean = clean_laps(session["laps"])
-    if not clean:
+    coachable = coachable_laps(session["laps"])
+    if not coachable:
         return []
-    best = min(clean, key=lambda lap: lap["lap_time_ms"])
-    representative = sorted(clean, key=lambda lap: lap["lap_time_ms"])[len(clean) // 2]
+    invalid_attempts = [lap for lap in coachable if not lap.get("valid")]
+    best = min(clean, key=lambda lap: lap["lap_time_ms"]) if clean else coachable[0]
+    representative = (
+        invalid_attempts[-1]
+        if invalid_attempts
+        else sorted(clean, key=lambda lap: lap["lap_time_ms"])[len(clean) // 2]
+    )
     findings: list[dict] = []
-    if metrics["pace"]["consistency_score"] < 98.5:
+    if clean and metrics["pace"]["consistency_score"] < 98.5:
         findings.append(
             {
                 "id": f"{session['id']}-consistency",
@@ -312,6 +337,90 @@ def build_findings(session: dict, metrics: dict) -> list[dict]:
                     "analysis_version": ANALYSIS_VERSION,
                 }
             )
+    if not representative.get("valid"):
+        invalid_limitation = (
+            "Invalid lap time is excluded from personal-best and clean benchmark comparisons."
+        )
+        if best_zones and not any(finding["type"].startswith("braking") for finding in findings):
+            zone = best_zones[0]
+            findings.append(
+                {
+                    "id": f"{session['id']}-invalid-braking",
+                    "type": "invalid_attempt_braking",
+                    "priority": len(findings) + 1,
+                    "severity": "low",
+                    "confidence": 0.82,
+                    "title": "Keep the braking reference from this attempt",
+                    "plain_language": "This lap will not count as a personal best, but its braking trace is still usable for coaching.",
+                    "recommended_action": "Repeat the same initial brake reference and focus on a progressive release before adding pace.",
+                    "evidence": [
+                        {
+                            "metric": "invalid_attempt_peak_brake",
+                            "value": zone["peak_pressure"],
+                            "unit": "ratio_0_1",
+                            "reference_value": None,
+                            "delta": None,
+                            "lap_numbers": [representative["lap_number"]],
+                            "zone_id": zone["zone_id"],
+                        }
+                    ],
+                    "limitations": [invalid_limitation],
+                    "analysis_version": ANALYSIS_VERSION,
+                }
+            )
+        if len(findings) < 3 and throttle.get("modulation") is not None:
+            findings.append(
+                {
+                    "id": f"{session['id']}-invalid-throttle",
+                    "type": "invalid_attempt_throttle",
+                    "priority": len(findings) + 1,
+                    "severity": "low",
+                    "confidence": 0.79,
+                    "title": "Use the throttle trace even though timing is excluded",
+                    "plain_language": "The lap was invalidated, so its final time is excluded. Throttle application can still be analysed.",
+                    "recommended_action": "Aim for one progressive application after minimum speed and reduce avoidable second lifts.",
+                    "evidence": [
+                        {
+                            "metric": "invalid_attempt_throttle_modulation",
+                            "value": throttle["modulation"],
+                            "unit": "absolute_input_change",
+                            "reference_value": None,
+                            "delta": None,
+                            "lap_numbers": [representative["lap_number"]],
+                            "zone_id": None,
+                        }
+                    ],
+                    "limitations": [invalid_limitation],
+                    "analysis_version": ANALYSIS_VERSION,
+                }
+            )
+        steering = steering_metrics(representative, session["input_device"])
+        if len(findings) < 3 and steering.get("smoothness") is not None:
+            findings.append(
+                {
+                    "id": f"{session['id']}-invalid-steering",
+                    "type": "invalid_attempt_steering",
+                    "priority": len(findings) + 1,
+                    "severity": "low",
+                    "confidence": 0.78,
+                    "title": "Preserve the useful steering evidence",
+                    "plain_language": "Official timing is excluded, but steering smoothness remains measurable on this attempt.",
+                    "recommended_action": "Repeat the corner with one deliberate steering input and unwind progressively on exit.",
+                    "evidence": [
+                        {
+                            "metric": "invalid_attempt_steering_smoothness",
+                            "value": steering["smoothness"],
+                            "unit": "score_0_1",
+                            "reference_value": None,
+                            "delta": None,
+                            "lap_numbers": [representative["lap_number"]],
+                            "zone_id": None,
+                        }
+                    ],
+                    "limitations": [invalid_limitation, steering["limitation"]],
+                    "analysis_version": ANALYSIS_VERSION,
+                }
+            )
     degradation = metrics["stint"]["pace_degradation_ms_per_lap"]
     if degradation and degradation > 70 and len(findings) < 3:
         findings.append(
@@ -345,8 +454,13 @@ def build_findings(session: dict, metrics: dict) -> list[dict]:
 
 
 def analyze_session(session: dict) -> dict:
-    clean = clean_laps(session["laps"])
-    representative = clean[len(clean) // 2] if clean else None
+    coachable = coachable_laps(session["laps"])
+    invalid_attempts = [lap for lap in coachable if not lap.get("valid")]
+    representative = (
+        invalid_attempts[-1]
+        if invalid_attempts
+        else (coachable[len(coachable) // 2] if coachable else None)
+    )
     pace = pace_metrics(session["laps"])
     metrics = {
         "pace": pace,

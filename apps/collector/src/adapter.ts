@@ -12,6 +12,7 @@ import type {
 } from "./protocol/types.js";
 
 export class F12021Adapter {
+  private sessionUid: string | null = null;
   private session: SessionData | null = null;
   private lap: LapData | null = null;
   private status: CarStatusData | null = null;
@@ -20,6 +21,15 @@ export class F12021Adapter {
   private participant: ParticipantData | null = null;
 
   ingest(packet: ParsedPacket, receivedAtMs: number): TelemetrySample | null {
+    if (this.sessionUid !== packet.header.sessionUid) {
+      this.sessionUid = packet.header.sessionUid;
+      this.session = null;
+      this.lap = null;
+      this.status = null;
+      this.damage = null;
+      this.motion = null;
+      this.participant = null;
+    }
     switch (packet.kind) {
       case "session": this.session = packet.data; return null;
       case "lapData": this.lap = packet.data; return null;
@@ -46,10 +56,12 @@ export class F12021Adapter {
       received_at_ms: receivedAtMs,
       game_id: "f1_2021",
       game_version: `${header.gameMajorVersion}.${header.gameMinorVersion}`,
+      packet_format: header.packetFormat,
       adapter_version: "0.1.0",
       session_uid: header.sessionUid,
       frame_id: header.frameIdentifier,
       player_index: header.playerCarIndex,
+      game_track_id: this.session?.trackId ?? null,
       track_id: track?.slug ?? null,
       track_name: track?.name ?? null,
       track_length_m: this.session?.trackLengthM ?? null,
@@ -94,6 +106,8 @@ export class F12021Adapter {
       tyre_temperatures: telemetry.tyreTemperatures,
       surface_type: telemetry.surfaceType,
       lap_invalid: lap?.currentLapInvalid ?? false,
+      pit_status: lap?.pitStatus ?? null,
+      driver_status: lap?.driverStatus ?? null,
       packet_id: header.packetId
     };
   }

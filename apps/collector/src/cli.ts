@@ -6,6 +6,7 @@ import { runDoctor } from "./doctor.js";
 import { inspectCapture } from "./inspect.js";
 import { CollectorListener } from "./listener.js";
 import { replayFixture } from "./replay.js";
+import { calibrateCapture } from "./calibration-import.js";
 
 const program = new Command();
 program.name("lapsignal-collector").description("LapSignal native Windows F1 2021 UDP collector").version("0.1.0-alpha.3");
@@ -48,13 +49,13 @@ program.command("listen")
   });
 
 program.command("replay")
-  .description("Replay a normalized telemetry fixture through the API ingestion path")
-  .argument("<fixture>")
+  .description("Replay a LapSignal raw capture or normalized fixture through API ingestion and finalization")
+  .argument("<capture>")
   .option("--api-url <url>", "LapSignal API URL", process.env.COLLECTOR_API_URL ?? "http://localhost:8000")
   .option("--data-dir <path>", "local data directory", "data")
   .option("--speed <multiplier>", "replay speed", "6")
-  .action(async (fixture, options) => {
-    const result = await replayFixture(resolve(fixture), options.apiUrl, resolve(options.dataDir), Number(options.speed));
+  .action(async (capture, options) => {
+    const result = await replayFixture(resolve(capture), options.apiUrl, resolve(options.dataDir), Number(options.speed));
     console.log(JSON.stringify(result, null, 2));
   });
 
@@ -62,6 +63,15 @@ program.command("inspect")
   .description("Inspect a LapSignal raw capture or normalized JSONL file")
   .argument("<capture>")
   .action(async (capture) => console.log(JSON.stringify(await inspectCapture(resolve(capture)), null, 2)));
+
+program.command("calibrate")
+  .description("Derive persistent circuit geometry from a local LapSignal raw capture")
+  .argument("<capture>")
+  .option("--data-dir <path>", "local data directory", "data")
+  .action(async (capture, options) => {
+    const result = await calibrateCapture(resolve(capture), resolve(options.dataDir));
+    console.log(JSON.stringify(result, null, 2));
+  });
 
 program.command("doctor")
   .description("Check the UDP port, local IPv4 addresses, and API connection")

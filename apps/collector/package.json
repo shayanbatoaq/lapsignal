@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "@lapsignal/contracts": "workspace:*",
+    "@lapsignal/telemetry-domain": "workspace:*",
     "commander": "15.0.0",
     "pino": "10.3.1"
   },

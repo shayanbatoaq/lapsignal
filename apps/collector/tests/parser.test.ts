@@ -33,6 +33,14 @@ describe("F1 2021 parser", () => {
     expect(parsed.data.assists).toMatchObject({steering:1,braking:0,gearbox:3,racingLine:2});
   });
 
+  it("reads Baku from the documented F1 2021 Session track ID", () => {
+    const buffer=packetBuffer(1,625,0);
+    buffer.writeUInt16LE(5994,28);
+    buffer.writeInt8(20,31);
+    const parsed=parseF12021Packet(buffer);
+    expect(parsed.kind === "session" && parsed.data).toMatchObject({trackId:20,trackLengthM:5994});
+  });
+
   it("rejects a wrong packet format", () => {
     const buffer = packetBuffer();
     buffer.writeUInt16LE(2022, 0);
