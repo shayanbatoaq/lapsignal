@@ -1,10 +1,10 @@
 import { createHash } from "node:crypto";
 import { resolve } from "node:path";
 
-export const APPLICATION_VERSION = "0.1.0-alpha.3";
-export const BUILD_NUMBER = 3;
-export const AI_SCHEMA_HASH = "5e1d18d4a757a6ac2f145710f4cff0d231daa02e00772900a5ce0abf5f41bc6c";
-export const DIAGNOSTICS_CONTRACT_VERSION = "2";
+export const APPLICATION_VERSION = "0.1.0-alpha.4";
+export const BUILD_NUMBER = 4;
+export const AI_SCHEMA_HASH = "1f7791fed1421e1d0810f9155a273a8807980145649caf89deb3494e3bd3f715";
+export const DIAGNOSTICS_CONTRACT_VERSION = "3";
 
 function comparablePath(value) {
   return resolve(String(value)).replaceAll("/", "\\").toLowerCase();

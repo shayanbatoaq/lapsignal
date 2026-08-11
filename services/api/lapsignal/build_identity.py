@@ -8,9 +8,9 @@ from typing import Any
 
 from .config import REPO_ROOT, get_settings
 
-APPLICATION_VERSION = "0.1.0-alpha.3"
-BUILD_NUMBER = 3
-DIAGNOSTICS_CONTRACT_VERSION = "2"
+APPLICATION_VERSION = "0.1.0-alpha.4"
+BUILD_NUMBER = 4
+DIAGNOSTICS_CONTRACT_VERSION = "3"
 CLOUD_AI_GUARD_ACTIVE = True
 PROCESS_START_TIME = datetime.now(UTC).isoformat()
 

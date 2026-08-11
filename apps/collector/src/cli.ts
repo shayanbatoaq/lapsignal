@@ -9,7 +9,7 @@ import { replayFixture } from "./replay.js";
 import { calibrateCapture } from "./calibration-import.js";
 
 const program = new Command();
-program.name("lapsignal-collector").description("LapSignal native Windows F1 2021 UDP collector").version("0.1.0-alpha.3");
+program.name("lapsignal-collector").description("LapSignal native Windows F1 2021 UDP collector").version("0.1.0-alpha.4");
 
 program.command("listen")
   .description("Listen for F1 2021 UDP telemetry")

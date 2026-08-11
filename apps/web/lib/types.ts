@@ -134,7 +134,30 @@ export interface CoachReport {
   provenance: Record<string, unknown>;
   summary?: string;
   positive?: string;
-  priority_actions?: Array<{ priority: number; title: string; location: string; instruction: string; reason: string; evidence_ids: string[]; confidence: number; expected_gain_seconds: null }>;
+  priority_actions?: Array<{
+    priority: number;
+    category: "pace" | "consistency" | "braking" | "throttle" | "steering";
+    title: string;
+    location: string;
+    observation?: string | null;
+    instruction: string;
+    reason: string;
+    evidence_ids: string[];
+    evidence_context?: Array<{
+      evidence_id: string;
+      location: string;
+      sector: number | null;
+      lap_numbers: number[];
+      sample_range: Record<string, number> | null;
+      metric: string;
+      value: number | string | boolean | null;
+      unit: string | null;
+      reference_value: number | string | boolean | null;
+      delta: number | null;
+    }>;
+    confidence: number | null;
+    expected_gain_seconds: number | null;
+  }>;
   explanation?: string | null;
 }
 

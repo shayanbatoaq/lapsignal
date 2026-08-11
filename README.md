@@ -24,7 +24,7 @@ corepack pnpm dev:demo
 
 Open [http://localhost:3000](http://localhost:3000). The API and interactive OpenAPI document are at [http://localhost:8000](http://localhost:8000) and [http://localhost:8000/docs](http://localhost:8000/docs). `pnpm dev:demo` reseeds deterministic data, then safely starts the API, web app, and collector; the separate `pnpm seed` above is useful as an explicit setup check.
 
-Use `pnpm dev:status`, `pnpm dev:stop`, and `pnpm dev:clean-start` for PID-verified Windows process management. Clean start proves the current alpha.3/build 3 identity for all three services and never stops an unrelated process merely because it owns an expected port.
+Use `pnpm dev:status`, `pnpm dev:stop`, and `pnpm dev:clean-start` for PID-verified Windows process management. Clean start proves the current alpha.4/build 4 identity for all three services and never stops an unrelated process merely because it owns an expected port. Use `pnpm dev:app-start` when the API and web app should run while the collector stays off.
 
 Copy `.env.example` to `.env` only when overriding defaults. No variable is required for demo or replay mode.
 

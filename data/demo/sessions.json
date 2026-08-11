@@ -17,13 +17,13 @@
     "demo_data": true,
     "analysis_status": "analyzed",
     "provenance": {
-      "product_version": "0.1.0-alpha.3",
+      "product_version": "0.1.0-alpha.4",
       "build": 2,
       "telemetry_schema_version": 1,
       "adapter_version": "0.1.0",
-      "collector_version": "0.1.0-alpha.3",
+      "collector_version": "0.1.0-alpha.4",
       "analysis_version": "0.1.0",
-      "prompt_version": "coach-v1",
+      "prompt_version": "race-engineer-v3",
       "git_sha": "local",
       "generated_at": "2026-08-09T00:00:00Z",
       "demo_seed": 20210809
@@ -58,71 +58,71 @@
           "brake_onset_distance_m": 592.4,
           "initial_pressure": 0.776,
           "peak_pressure": 0.98,
-          "duration_s": 1.007,
+          "duration_s": 1.014,
           "release_smoothness": 0.5,
           "trail_braking_proxy": 0.859,
-          "minimum_speed_kph": 268.2
+          "minimum_speed_kph": 270.0
         },
         {
           "zone_id": "zone-2",
           "brake_onset_distance_m": 1513.9,
           "initial_pressure": 0.467,
           "peak_pressure": 0.941,
-          "duration_s": 1.51,
+          "duration_s": 1.521,
           "release_smoothness": 0.5,
           "trail_braking_proxy": 0.753,
-          "minimum_speed_kph": 237.3
+          "minimum_speed_kph": 233.7
         },
         {
           "zone_id": "zone-3",
           "brake_onset_distance_m": 2599.9,
           "initial_pressure": 0.829,
           "peak_pressure": 0.972,
-          "duration_s": 1.007,
+          "duration_s": 1.014,
           "release_smoothness": 0.5,
           "trail_braking_proxy": 0.824,
-          "minimum_speed_kph": 242.5
+          "minimum_speed_kph": 240.8
         },
         {
           "zone_id": "zone-4",
           "brake_onset_distance_m": 3653.1,
           "initial_pressure": 0.743,
           "peak_pressure": 0.98,
-          "duration_s": 1.007,
+          "duration_s": 1.014,
           "release_smoothness": 0.5,
           "trail_braking_proxy": 0.875,
-          "minimum_speed_kph": 260.4
+          "minimum_speed_kph": 263.6
         },
         {
           "zone_id": "zone-5",
           "brake_onset_distance_m": 4706.2,
           "initial_pressure": 0.642,
           "peak_pressure": 0.965,
-          "duration_s": 1.51,
+          "duration_s": 1.521,
           "release_smoothness": 0.5,
           "trail_braking_proxy": 0.619,
-          "minimum_speed_kph": 237.3
+          "minimum_speed_kph": 232.4
         },
         {
           "zone_id": "zone-6",
           "brake_onset_distance_m": 5397.3,
           "initial_pressure": 0.391,
           "peak_pressure": 0.963,
-          "duration_s": 1.51,
+          "duration_s": 1.521,
           "release_smoothness": 0.5,
           "trail_braking_proxy": 0.8,
-          "minimum_speed_kph": 225.4
+          "minimum_speed_kph": 228.0
         }
       ],
       "throttle": {
         "pickup_distance_m": 5561.89,
-        "time_to_full_s": 1.006,
-        "modulation": 1.1
+        "time_to_full_s": 1.014,
+        "modulation": 1.003
       },
       "steering": {
-        "smoothness": 0.429,
-        "correction_count": 113,
-        "abrupt_changes": 27,
+        "smoothness": 0.435,
+        "correction_count": 107,
+        "abrupt_changes": 26,
         "limitation": "Input smoothness is device-aware and is not a vehicle-balance diagnosis."
       }
     },
@@ -161,6 +161,61 @@
         ],
         "limitations": [],
         "analysis_version": "0.1.0"
+      },
+      {
+        "id": "f1-controller-silverstone-braking-zone-1",
+        "type": "braking_earlier",
+        "priority": 2,
+        "severity": "medium",
+        "confidence": 0.86,
+        "title": "Make Zone 1 braking more repeatable",
+        "plain_language": "The representative lap begins braking 32.9 m earlier than your best clean lap.",
+        "recommended_action": "Hold the initial application near the best-lap marker, then preserve the same peak pressure.",
+        "evidence": [
+          {
+            "metric": "brake_onset_distance",
+            "value": 592.4,
+            "unit": "lap_distance_m",
+            "reference_value": 559.5,
+            "delta": 32.9,
+            "lap_numbers": [
+              3,
+              4
+            ],
+            "zone_id": "zone-1"
+          }
+        ],
+        "limitations": [
+          "The comparison uses the personal-best clean lap, not an external ideal lap."
+        ],
+        "analysis_version": "0.1.0"
+      },
+      {
+        "id": "f1-controller-silverstone-invalid-throttle",
+        "type": "invalid_attempt_throttle",
+        "priority": 3,
+        "severity": "low",
+        "confidence": 0.79,
+        "title": "Use the throttle trace even though timing is excluded",
+        "plain_language": "The lap was invalidated, so its final time is excluded. Throttle application can still be analysed.",
+        "recommended_action": "Aim for one progressive application after minimum speed and reduce avoidable second lifts.",
+        "evidence": [
+          {
+            "metric": "invalid_attempt_throttle_modulation",
+            "value": 1.003,
+            "unit": "absolute_input_change",
+            "reference_value": null,
+            "delta": null,
+            "lap_numbers": [
+              3
+            ],
+            "zone_id": null
+          }
+        ],
+        "limitations": [
+          "Invalid lap time is excluded from personal-best and clean benchmark comparisons."
+        ],
+        "analysis_version": "0.1.0"
       }
     ],
     "analysis_version": "0.1.0",
@@ -178,23 +233,43 @@
           "evidence_ids": [
             "f1-controller-silverstone-consistency"
           ]
+        },
+        {
+          "title": "Make Zone 1 braking more repeatable",
+          "action": "Hold the initial application near the best-lap marker, then preserve the same peak pressure.",
+          "confidence": 0.86,
+          "evidence_ids": [
+            "f1-controller-silverstone-braking-zone-1"
+          ]
+        },
+        {
+          "title": "Use the throttle trace even though timing is excluded",
+          "action": "Aim for one progressive application after minimum speed and reduce avoidable second lifts.",
+          "confidence": 0.79,
+          "evidence_ids": [
+            "f1-controller-silverstone-invalid-throttle"
+          ]
         }
       ],
       "what_improved": "The most repeatable clean laps preserve progressive control inputs after minimum speed.",
       "what_regressed": "No material regression is supported by this stint.",
       "next_stint_plan": "Complete five controlled laps: repeat the same initial brake markers, release progressively, and review only after the stint.",
-      "confidence_summary": "High confidence in recorded lap-time metrics; technique findings use only comparable clean laps.",
+      "confidence_summary": "High confidence in recorded lap-time metrics; technique findings use comparable clean laps and explicitly labelled attempts.",
       "limitations": [],
       "evidence_references": [
-        "f1-controller-silverstone-consistency"
+        "f1-controller-silverstone-consistency",
+        "f1-controller-silverstone-braking-zone-1",
+        "f1-controller-silverstone-invalid-throttle"
       ],
       "provenance": {
         "fallback_used": true,
         "model_id": null,
-        "prompt_version": "coach-v1",
+        "prompt_version": "race-engineer-v3",
         "analysis_version": "0.1.0",
         "finding_ids": [
-          "f1-controller-silverstone-consistency"
+          "f1-controller-silverstone-consistency",
+          "f1-controller-silverstone-braking-zone-1",
+          "f1-controller-silverstone-invalid-throttle"
         ],
         "tool_calls": [],
         "token_usage": null,
@@ -393,13 +468,13 @@
     "demo_data": true,
     "analysis_status": "analyzed",
     "provenance": {
-      "product_version": "0.1.0-alpha.3",
+      "product_version": "0.1.0-alpha.4",
       "build": 2,
       "telemetry_schema_version": 1,
       "adapter_version": "0.1.0",
-      "collector_version": "0.1.0-alpha.3",
+      "collector_version": "0.1.0-alpha.4",
       "analysis_version": "0.1.0",
-      "prompt_version": "coach-v1",
+      "prompt_version": "race-engineer-v3",
       "git_sha": "local",
       "generated_at": "2026-08-09T00:00:00Z",
       "demo_seed": 20210810
@@ -434,72 +509,72 @@
         {
           "zone_id": "zone-1",
           "brake_onset_distance_m": 665.2,
-          "initial_pressure": 0.498,
-          "peak_pressure": 0.966,
-          "duration_s": 2.326,
+          "initial_pressure": 0.416,
+          "peak_pressure": 0.973,
+          "duration_s": 2.342,
           "release_smoothness": 0.5,
-          "trail_braking_proxy": 0.833,
-          "minimum_speed_kph": 269.9
+          "trail_braking_proxy": 0.843,
+          "minimum_speed_kph": 267.1
         },
         {
           "zone_id": "zone-2",
           "brake_onset_distance_m": 1799.9,
-          "initial_pressure": 0.661,
-          "peak_pressure": 0.955,
-          "duration_s": 2.326,
+          "initial_pressure": 0.592,
+          "peak_pressure": 0.938,
+          "duration_s": 2.342,
           "release_smoothness": 0.5,
-          "trail_braking_proxy": 0.725,
-          "minimum_speed_kph": 236.3
+          "trail_braking_proxy": 0.737,
+          "minimum_speed_kph": 235.7
         },
         {
           "zone_id": "zone-3",
           "brake_onset_distance_m": 3052.0,
-          "initial_pressure": 0.564,
-          "peak_pressure": 0.948,
-          "duration_s": 2.326,
+          "initial_pressure": 0.486,
+          "peak_pressure": 0.959,
+          "duration_s": 2.342,
           "release_smoothness": 0.5,
-          "trail_braking_proxy": 0.795,
-          "minimum_speed_kph": 241.9
+          "trail_braking_proxy": 0.806,
+          "minimum_speed_kph": 242.0
         },
         {
           "zone_id": "zone-4",
           "brake_onset_distance_m": 4304.1,
-          "initial_pressure": 0.46,
-          "peak_pressure": 0.973,
-          "duration_s": 2.325,
+          "initial_pressure": 0.375,
+          "peak_pressure": 0.978,
+          "duration_s": 2.342,
           "release_smoothness": 0.5,
-          "trail_braking_proxy": 0.853,
-          "minimum_speed_kph": 262.8
+          "trail_braking_proxy": 0.863,
+          "minimum_speed_kph": 263.6
         },
         {
           "zone_id": "zone-5",
-          "brake_onset_distance_m": 5556.2,
-          "initial_pressure": 0.354,
-          "peak_pressure": 0.98,
-          "duration_s": 3.1,
-          "release_smoothness": 0.434,
-          "trail_braking_proxy": 0.596,
-          "minimum_speed_kph": 235.2
+          "brake_onset_distance_m": 5595.4,
+          "initial_pressure": 0.741,
+          "peak_pressure": 0.977,
+          "duration_s": 2.342,
+          "release_smoothness": 0.5,
+          "trail_braking_proxy": 0.605,
+          "minimum_speed_kph": 234.2
         },
         {
           "zone_id": "zone-6",
           "brake_onset_distance_m": 6417.1,
-          "initial_pressure": 0.6,
-          "peak_pressure": 0.935,
-          "duration_s": 2.326,
+          "initial_pressure": 0.525,
+          "peak_pressure": 0.947,
+          "duration_s": 2.342,
           "release_smoothness": 0.5,
-          "trail_braking_proxy": 0.771,
-          "minimum_speed_kph": 227.0
+          "trail_braking_proxy": 0.782,
+          "minimum_speed_kph": 225.3
         }
       ],
       "throttle": {
-        "pickup_distance_m": 6612.72,
-        "time_to_full_s": 1.551,
-        "modulation": 1.01
+        "pickup_distance_m": 3247.66,
+        "time_to_full_s": 1.561,
+        "modulation": 7.364
       },
       "steering": {
-        "smoothness": 0.434,
-        "correction_count": 109,
+        "smoothness": 0.435,
+        "correction_count": 115,
         "abrupt_changes": 29,
         "limitation": "Input smoothness is device-aware and is not a vehicle-balance diagnosis."
       }
@@ -541,6 +616,60 @@
         ],
         "limitations": [],
         "analysis_version": "0.1.0"
+      },
+      {
+        "id": "gt3-spa-practice-invalid-braking",
+        "type": "invalid_attempt_braking",
+        "priority": 2,
+        "severity": "low",
+        "confidence": 0.82,
+        "title": "Keep the braking reference from this attempt",
+        "plain_language": "This lap will not count as a personal best, but its braking trace is still usable for coaching.",
+        "recommended_action": "Repeat the same initial brake reference and focus on a progressive release before adding pace.",
+        "evidence": [
+          {
+            "metric": "invalid_attempt_peak_brake",
+            "value": 0.966,
+            "unit": "ratio_0_1",
+            "reference_value": null,
+            "delta": null,
+            "lap_numbers": [
+              6
+            ],
+            "zone_id": "zone-1"
+          }
+        ],
+        "limitations": [
+          "Invalid lap time is excluded from personal-best and clean benchmark comparisons."
+        ],
+        "analysis_version": "0.1.0"
+      },
+      {
+        "id": "gt3-spa-practice-invalid-throttle",
+        "type": "invalid_attempt_throttle",
+        "priority": 3,
+        "severity": "low",
+        "confidence": 0.79,
+        "title": "Use the throttle trace even though timing is excluded",
+        "plain_language": "The lap was invalidated, so its final time is excluded. Throttle application can still be analysed.",
+        "recommended_action": "Aim for one progressive application after minimum speed and reduce avoidable second lifts.",
+        "evidence": [
+          {
+            "metric": "invalid_attempt_throttle_modulation",
+            "value": 7.364,
+            "unit": "absolute_input_change",
+            "reference_value": null,
+            "delta": null,
+            "lap_numbers": [
+              6
+            ],
+            "zone_id": null
+          }
+        ],
+        "limitations": [
+          "Invalid lap time is excluded from personal-best and clean benchmark comparisons."
+        ],
+        "analysis_version": "0.1.0"
       }
     ],
     "analysis_version": "0.1.0",
@@ -558,25 +687,45 @@
           "evidence_ids": [
             "gt3-spa-practice-consistency"
           ]
+        },
+        {
+          "title": "Keep the braking reference from this attempt",
+          "action": "Repeat the same initial brake reference and focus on a progressive release before adding pace.",
+          "confidence": 0.82,
+          "evidence_ids": [
+            "gt3-spa-practice-invalid-braking"
+          ]
+        },
+        {
+          "title": "Use the throttle trace even though timing is excluded",
+          "action": "Aim for one progressive application after minimum speed and reduce avoidable second lifts.",
+          "confidence": 0.79,
+          "evidence_ids": [
+            "gt3-spa-practice-invalid-throttle"
+          ]
         }
       ],
       "what_improved": "The most repeatable clean laps preserve progressive control inputs after minimum speed.",
       "what_regressed": "No material regression is supported by this stint.",
       "next_stint_plan": "Complete five controlled laps: repeat the same initial brake markers, release progressively, and review only after the stint.",
-      "confidence_summary": "High confidence in recorded lap-time metrics; technique findings use only comparable clean laps.",
+      "confidence_summary": "High confidence in recorded lap-time metrics; technique findings use comparable clean laps and explicitly labelled attempts.",
       "limitations": [
         "Tyre-wear correlation is unavailable because the channel is missing or sparse."
       ],
       "evidence_references": [
-        "gt3-spa-practice-consistency"
+        "gt3-spa-practice-consistency",
+        "gt3-spa-practice-invalid-braking",
+        "gt3-spa-practice-invalid-throttle"
       ],
       "provenance": {
         "fallback_used": true,
         "model_id": null,
-        "prompt_version": "coach-v1",
+        "prompt_version": "race-engineer-v3",
         "analysis_version": "0.1.0",
         "finding_ids": [
-          "gt3-spa-practice-consistency"
+          "gt3-spa-practice-consistency",
+          "gt3-spa-practice-invalid-braking",
+          "gt3-spa-practice-invalid-throttle"
         ],
         "tool_calls": [],
         "token_usage": null,
@@ -803,13 +952,13 @@
     "demo_data": true,
     "analysis_status": "analyzed",
     "provenance": {
-      "product_version": "0.1.0-alpha.3",
+      "product_version": "0.1.0-alpha.4",
       "build": 2,
       "telemetry_schema_version": 1,
       "adapter_version": "0.1.0",
-      "collector_version": "0.1.0-alpha.3",
+      "collector_version": "0.1.0-alpha.4",
       "analysis_version": "0.1.0",
-      "prompt_version": "coach-v1",
+      "prompt_version": "race-engineer-v3",
       "git_sha": "local",
       "generated_at": "2026-08-09T00:00:00Z",
       "demo_seed": 20210811
@@ -844,70 +993,70 @@
           "brake_onset_distance_m": 1294.1,
           "initial_pressure": 0.459,
           "peak_pressure": 0.97,
-          "duration_s": 3.558,
+          "duration_s": 3.591,
           "release_smoothness": 0.5,
           "trail_braking_proxy": 0.839,
-          "minimum_speed_kph": 270.1
+          "minimum_speed_kph": 268.5
         },
         {
           "zone_id": "zone-2",
           "brake_onset_distance_m": 3501.7,
           "initial_pressure": 0.628,
           "peak_pressure": 0.947,
-          "duration_s": 3.557,
+          "duration_s": 3.591,
           "release_smoothness": 0.5,
           "trail_braking_proxy": 0.73,
-          "minimum_speed_kph": 238.3
+          "minimum_speed_kph": 236.1
         },
         {
           "zone_id": "zone-3",
           "brake_onset_distance_m": 5937.6,
           "initial_pressure": 0.526,
           "peak_pressure": 0.954,
-          "duration_s": 3.558,
+          "duration_s": 3.591,
           "release_smoothness": 0.5,
           "trail_braking_proxy": 0.801,
-          "minimum_speed_kph": 240.0
+          "minimum_speed_kph": 241.5
         },
         {
           "zone_id": "zone-4",
           "brake_onset_distance_m": 8373.5,
           "initial_pressure": 0.419,
           "peak_pressure": 0.976,
-          "duration_s": 3.558,
+          "duration_s": 3.592,
           "release_smoothness": 0.5,
           "trail_braking_proxy": 0.857,
-          "minimum_speed_kph": 261.3
+          "minimum_speed_kph": 259.6
         },
         {
           "zone_id": "zone-5",
           "brake_onset_distance_m": 10885.6,
           "initial_pressure": 0.768,
           "peak_pressure": 0.979,
-          "duration_s": 3.558,
+          "duration_s": 3.591,
           "release_smoothness": 0.5,
           "trail_braking_proxy": 0.601,
-          "minimum_speed_kph": 232.8
+          "minimum_speed_kph": 234.4
         },
         {
           "zone_id": "zone-6",
           "brake_onset_distance_m": 12484.2,
           "initial_pressure": 0.564,
           "peak_pressure": 0.941,
-          "duration_s": 3.558,
+          "duration_s": 3.592,
           "release_smoothness": 0.5,
           "trail_braking_proxy": 0.776,
-          "minimum_speed_kph": 226.9
+          "minimum_speed_kph": 226.6
         }
       ],
       "throttle": {
-        "pickup_distance_m": 6318.2,
-        "time_to_full_s": 2.372,
-        "modulation": 7.77
+        "pickup_distance_m": 12864.77,
+        "time_to_full_s": 2.394,
+        "modulation": 1.114
       },
       "steering": {
-        "smoothness": 0.425,
-        "correction_count": 111,
+        "smoothness": 0.436,
+        "correction_count": 106,
         "abrupt_changes": 25,
         "limitation": "Input smoothness is device-aware and is not a vehicle-balance diagnosis."
       }
@@ -952,42 +1101,56 @@
         "analysis_version": "0.1.0"
       },
       {
-        "id": "hypercar-endurance-stint-degradation",
-        "type": "stint_degradation",
+        "id": "hypercar-endurance-stint-invalid-braking",
+        "type": "invalid_attempt_braking",
         "priority": 2,
-        "severity": "medium",
-        "confidence": 0.84,
-        "title": "Protect closing-stint execution",
-        "plain_language": "Clean-lap pace trends slower through this stint.",
-        "recommended_action": "Target stable inputs for the final third and compare the same corners after the run.",
+        "severity": "low",
+        "confidence": 0.82,
+        "title": "Keep the braking reference from this attempt",
+        "plain_language": "This lap will not count as a personal best, but its braking trace is still usable for coaching.",
+        "recommended_action": "Repeat the same initial brake reference and focus on a progressive release before adding pace.",
         "evidence": [
           {
-            "metric": "pace_degradation_slope",
-            "value": 146.5,
-            "unit": "ms_per_lap",
-            "reference_value": 0,
-            "delta": 146.5,
+            "metric": "invalid_attempt_peak_brake",
+            "value": 0.976,
+            "unit": "ratio_0_1",
+            "reference_value": null,
+            "delta": null,
             "lap_numbers": [
-              1,
-              2,
-              3,
-              4,
-              6,
-              7,
-              8,
-              9,
-              10,
-              11,
-              12,
-              14,
-              15,
-              16
+              13
+            ],
+            "zone_id": "zone-1"
+          }
+        ],
+        "limitations": [
+          "Invalid lap time is excluded from personal-best and clean benchmark comparisons."
+        ],
+        "analysis_version": "0.1.0"
+      },
+      {
+        "id": "hypercar-endurance-stint-invalid-throttle",
+        "type": "invalid_attempt_throttle",
+        "priority": 3,
+        "severity": "low",
+        "confidence": 0.79,
+        "title": "Use the throttle trace even though timing is excluded",
+        "plain_language": "The lap was invalidated, so its final time is excluded. Throttle application can still be analysed.",
+        "recommended_action": "Aim for one progressive application after minimum speed and reduce avoidable second lifts.",
+        "evidence": [
+          {
+            "metric": "invalid_attempt_throttle_modulation",
+            "value": 1.114,
+            "unit": "absolute_input_change",
+            "reference_value": null,
+            "delta": null,
+            "lap_numbers": [
+              13
             ],
             "zone_id": null
           }
         ],
         "limitations": [
-          "This is a descriptive performance pattern, not a medical fatigue conclusion."
+          "Invalid lap time is excluded from personal-best and clean benchmark comparisons."
         ],
         "analysis_version": "0.1.0"
       }
@@ -1009,31 +1172,41 @@
           ]
         },
         {
-          "title": "Protect closing-stint execution",
-          "action": "Target stable inputs for the final third and compare the same corners after the run.",
-          "confidence": 0.84,
+          "title": "Keep the braking reference from this attempt",
+          "action": "Repeat the same initial brake reference and focus on a progressive release before adding pace.",
+          "confidence": 0.82,
           "evidence_ids": [
-            "hypercar-endurance-stint-degradation"
+            "hypercar-endurance-stint-invalid-braking"
+          ]
+        },
+        {
+          "title": "Use the throttle trace even though timing is excluded",
+          "action": "Aim for one progressive application after minimum speed and reduce avoidable second lifts.",
+          "confidence": 0.79,
+          "evidence_ids": [
+            "hypercar-endurance-stint-invalid-throttle"
           ]
         }
       ],
       "what_improved": "The most repeatable clean laps preserve progressive control inputs after minimum speed.",
       "what_regressed": "No material regression is supported by this stint.",
       "next_stint_plan": "Complete five controlled laps: repeat the same initial brake markers, release progressively, and review only after the stint.",
-      "confidence_summary": "High confidence in recorded lap-time metrics; technique findings use only comparable clean laps.",
+      "confidence_summary": "High confidence in recorded lap-time metrics; technique findings use comparable clean laps and explicitly labelled attempts.",
       "limitations": [],
       "evidence_references": [
         "hypercar-endurance-stint-consistency",
-        "hypercar-endurance-stint-degradation"
+        "hypercar-endurance-stint-invalid-braking",
+        "hypercar-endurance-stint-invalid-throttle"
       ],
       "provenance": {
         "fallback_used": true,
         "model_id": null,
-        "prompt_version": "coach-v1",
+        "prompt_version": "race-engineer-v3",
         "analysis_version": "0.1.0",
         "finding_ids": [
           "hypercar-endurance-stint-consistency",
-          "hypercar-endurance-stint-degradation"
+          "hypercar-endurance-stint-invalid-braking",
+          "hypercar-endurance-stint-invalid-throttle"
         ],
         "tool_calls": [],
         "token_usage": null,

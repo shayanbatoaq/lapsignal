@@ -54,7 +54,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </nav>
         <div className="sidebar-foot">
           <div className="collector-mini"><span className={`status-dot ${status.online ? "live" : "idle"}`} /> <span>{status.state === "LIVE" ? "Collector live" : status.state === "REPLAY" ? "Replay active" : "Collector idle"}</span></div>
-          <small>v0.1.0-alpha.3 · build 3</small>
+          <small>v0.1.0-alpha.4 · build 4</small>
         </div>
       </aside>
       <div className="app-workspace">

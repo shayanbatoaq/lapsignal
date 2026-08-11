@@ -1,6 +1,6 @@
 # Landing and brand asset sources
 
-This register covers the visual assets used by the LapSignal public landing page in `v0.1.0-alpha.3`. No stock photography, publisher artwork, game logos, racing-series marks, sponsor graphics, manufacturer marks, or recognizable vehicle liveries are used.
+This register covers the visual assets used by the LapSignal public landing page in `v0.1.0-alpha.4`. No stock photography, publisher artwork, game logos, racing-series marks, sponsor graphics, manufacturer marks, or recognizable vehicle liveries are used.
 
 ## Approved LapSignal identity
 

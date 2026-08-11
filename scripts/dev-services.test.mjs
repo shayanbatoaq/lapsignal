@@ -100,7 +100,7 @@ test("a verified Windows venv child may own the API port without becoming a seco
 });
 
 test("old builds, schema mismatches, and missing Cloud-AI guards fail identity verification", () => {
-  const base = { component: "api", application_version: APPLICATION_VERSION, build_number: BUILD_NUMBER, git_commit: "abc", process_id: 100, ai_contract_schema_hash: AI_SCHEMA_HASH, cloud_ai_guard_active: true, cloud_ai_enabled: false, ai_provider: "openrouter", ai_provider_configured: true, ai_endpoint_family: "direct_openai", diagnostics_contract_version: "2" };
+  const base = { component: "api", application_version: APPLICATION_VERSION, build_number: BUILD_NUMBER, git_commit: "abc", process_id: 100, ai_contract_schema_hash: AI_SCHEMA_HASH, cloud_ai_guard_active: true, cloud_ai_enabled: false, ai_provider: "openrouter", ai_provider_configured: true, ai_endpoint_family: "direct_openai", diagnostics_contract_version: "3" };
   assert.deepEqual(buildIdentityFailures(base, { component: "api", gitCommit: "abc", processId: 100 }), []);
   assert.ok(buildIdentityFailures({ ...base, application_version: "0.1.0-alpha.2" }, { component: "api", gitCommit: "abc", processId: 100 }).includes("application_version_mismatch"));
   assert.ok(buildIdentityFailures({ ...base, ai_contract_schema_hash: "old" }, { component: "api", gitCommit: "abc", processId: 100 }).includes("schema_hash_mismatch"));

@@ -1,113 +1,53 @@
-# LapSignal v0.1.0-alpha.3 handoff
+# LapSignal v0.1.0-alpha.4 handoff
 
-Local demo, replay, analytics, collector, fallback-coach, sim-racing landing identity, pit-wall product UI, documentation, and build acceptance paths were verified on Windows 11 on 2026-08-10. A real OpenAI request and physical PS4 packet stream were not executed because the environment supplied neither an API key nor console hardware; their boundaries, native socket, binary fixtures, fallback, and setup path are implemented and documented.
+LapSignal alpha.4 closes the AI reliability milestone while preserving the verified physical telemetry, session detail/comparison, circuit-map, collector, deterministic analytics, and responsive product paths.
 
-## 1. What was built
+## Release identity
 
-- Distinctive public sim-racing landing page plus graphite/crimson pit-wall product UI for overview, onboarding, live telemetry, sessions, detail, two-to-four-lap comparison, debrief, context-separated progress, settings, and shareable reports.
-- Five-section, 302-word landing narrative with original unbranded racing imagery, structural carbon surfaces, code-native illustrative circuits, moving telemetry markers, compact traces, device-aware context, and refreshed social metadata/assets.
-- Three fixed-seed synthetic sessions: F1-style controller, GT3 wheel practice, and hypercar endurance; 42 laps and 7,560 normalized samples total.
-- FastAPI REST/WebSocket service, SQLite/Alembic metadata model, Parquet artifacts, bounded live buffer, export/delete flows, error envelopes, validation, CORS, and version compatibility response.
-- Deterministic pace, consistency, distance alignment, braking, throttle, steering, and stint analytics with evidence/limitations.
-- Native Windows Node UDP collector with verified F1 2021 headers/layout lengths, player detection, recording, frame statistics, bounded retry queue, heartbeat, inspect/doctor/listen/replay commands, and graceful shutdown.
-- Maximum-three-priority fallback coach and optional one-agent OpenAI Agents SDK path with narrow tools, structured output, evidence validation, provenance, and an original twelve-topic knowledge base.
+- Product/web/API/collector: `v0.1.0-alpha.4 · build 4`
+- Provider contract: `race-engineer-v3`
+- Base AI schema: `1f7791fed1421e1d0810f9155a273a8807980145649caf89deb3494e3bd3f715`
+- Diagnostics contract: `3`
+- Cloud AI and consent: default off and restored off after verification
 
-## 2. Architecture
+## AI verification
 
-`F1 2021 or replay → Node collector → bounded HTTP batches/heartbeat → FastAPI → SQLite summaries + Parquet/JSONL/captures → deterministic findings → fallback or optional AI explanation → Next.js REST/WebSocket UI`.
+One authorized OpenRouter generation was made on 2026-08-12 with the deterministic synthetic Silverstone fixture and `openai/gpt-5-mini`. The pinned OpenAI route returned HTTP 200, exact model identity, `finish_reason=stop`, valid strict structured output, and usage. LapSignal rejected an unsupported factual phrase and displayed three deterministic fallback actions without retrying.
 
-Analytics is authoritative. AI receives compact findings, never raw UDP or complete telemetry. The canonical telemetry schema is game-independent/versioned, and browser traces are bounded/downsampled.
+- Provider transport verified: yes
+- Structured output verified: yes
+- Grounded provider output accepted: no
+- Safe fallback verified: yes
+- Usage: 857 prompt, 490 completion, 128 reasoning, 1,347 total tokens
+- Reported cost: `$0.00119425`
+- Further generation or metadata requests: none
 
-## 3. Fresh setup
+This is successful Outcome B safety behavior. It verifies the cloud transport/contract once with synthetic evidence, not cloud coaching over a physical PS4 session. The separately verified physical telemetry path remains documented in `docs/HANDOFF.md` and `docs/AI_COACH.md`.
+
+## Architecture boundary
+
+Provider output is untrusted and limited to category, priority, exact request-enumerated evidence IDs, and short coaching language. LapSignal derives locations, metric context, confidence, and expected gain locally. Unsupported factual or numerical provider text is never rendered. Sanitized transport usage and validation diagnostics survive downstream rejection; raw prompts, responses, telemetry, secrets, and rejected model text do not persist.
+
+## Local use
 
 ```powershell
-corepack enable
 pnpm setup
 pnpm seed
-pnpm dev:demo
+pnpm dev:app-start
 ```
 
-Open `http://localhost:3000`; OpenAPI is at `http://localhost:8000/docs`.
+Open the product at `http://localhost:3000`, API health at `http://localhost:8000/health`, and OpenAPI at `http://localhost:8000/docs`.
 
-## 4. Demo
+The collector intentionally stays off with `dev:app-start`. For later PS4 use:
 
 ```powershell
-pnpm dev:demo
+pnpm collector:listen
 ```
 
-No environment variables, Docker, wheel, live telemetry, database server, or paid service is required.
+Use `pnpm dev:status` to inspect verified processes and `pnpm dev:stop` to stop only manifest-verified LapSignal processes. Use `pnpm dev:clean-start` when API, web, and collector should all run.
 
-## 5. Collector replay
+## Verification and privacy
 
-With the API running:
+The alpha.4 gate passed 207 unit/API/process tests plus 31 final Playwright flows (one intentional duplicate responsive-matrix skip), complete lint/type/build checks, schema audit, secret audit, capture inventory, and runtime health checks. `.env`, raw captures, databases, Parquet/telemetry recordings, logs, PID files, caches, and QA artifacts remain ignored and excluded from the release.
 
-```powershell
-pnpm collector:replay
-```
-
-Verified result: 120 accepted fixture samples, 0 rejected, 0 queued; API reported replay/online, session `demo-f1-controller-silverstone`, frame 357, lap 2, and wrote a 103,068-byte live JSONL artifact.
-
-## 6. Live PS4 setup
-
-Put PS4 and laptop on the same private LAN; run `ipconfig`; start `pnpm dev` and `pnpm collector:listen`; in F1 2021 choose **Game Options → Settings → Telemetry Settings**, turn **UDP Telemetry** on, leave **UDP Broadcast Mode** off, set **UDP IP Address** to the laptop IPv4 address, **UDP Port** to `20777`, **UDP Send Rate** to `20Hz`, and **UDP Format** to `2021`. Permit inbound UDP 20777 on the Windows Private firewall profile if needed. Full troubleshooting is in `docs/PS4_F1_2021_SETUP.md`.
-
-## 7. Optional OpenAI environment
-
-```dotenv
-OPENAI_API_KEY=your-key
-OPENAI_COACH_MODEL=gpt-5.6-luna
-OPENAI_DEEP_MODEL=gpt-5.6-terra
-```
-
-Keep all values server-side and enable both **AI consent** and **Cloud AI** in Settings. The server enforces both flags. Model access is account-dependent. Without the key or either flag, every flow uses the labeled rule-based coach.
-
-## 8. Verification results
-
-- `pnpm generate:client`: 21 operations and 7 schema names generated.
-- `pnpm seed`: 3 sessions and 7,560 samples.
-- `pnpm check`: pass.
-- TypeScript/React/collector/Python lint: pass.
-- Strict TypeScript type checking: pass across contracts, domain, collector, and web.
-- Unit/API/evaluation tests: 51 pass (contracts 1, telemetry domain 3, collector 10, web 7, Python 30).
-- Coach evaluation cases: all 12 pass.
-- Next.js 16.3 production build: pass; all 11 application routes generated.
-- Playwright: 13 pass and 1 intentionally skipped duplicate across 1440×900 desktop and 390×844 mobile, including landing contracts, console-error, chart, replay, keyboard, reduced-motion, and horizontal-overflow checks; an additional matrix covers 1280×800, 768×900, and 360×844.
-- API process startup and `/health`: pass.
-- Native UDP bind/start/stop and recording flush: pass.
-- One non-failing dependency warning remains: Starlette's current TestClient adapter warns about a future `httpx2` migration.
-
-## 9. QA captures
-
-- `artifacts/qa/v0.1.0-alpha.3/landing-hero-desktop.png` and `landing-full-desktop.png` — 1440×900 hero and full landing page.
-- `artifacts/qa/v0.1.0-alpha.3/landing-hero-mobile.png` and `landing-full-mobile.png` — 390×844 hero and full landing page.
-- `artifacts/qa/v0.1.0-alpha.3/landing-laptop-1280.png` and `landing-reduced-motion.png` — laptop first viewport and reduced-motion full page.
-- `artifacts/qa/v0.1.0-alpha.3/dashboard-desktop.png` and `dashboard-mobile.png` — full dashboard captures.
-
-These generated QA artifacts are intentionally gitignored.
-
-## 10. Version
-
-Product/web/API/collector: `v0.1.0-alpha.3`; build `3`; telemetry schema `1`; F1 2021 adapter `0.1.0`; analytics `0.1.0`; prompt `coach-v1`; local Git SHA defaults to `local` until a release build supplies `GIT_SHA`.
-
-## 11. Known limitations
-
-- No real OpenAI request was possible without credentials; the SDK path is implemented, typed, failure-safe, and not claimed as cloud-executed.
-- No physical PS4 packet stream was available; native UDP binding, protocol fixtures, player indexes, malformed packets, recording, shutdown, and actual replay-to-API were executed.
-- Live ingress is bounded in memory and appended to JSONL, but automatic durable conversion of every live run into the full relational/Parquet session lifecycle is phase two.
-- Demo reads are intentionally backed by the deterministic fixture snapshot even though SQLite metadata is seeded; this keeps portfolio/demo startup resilient.
-- This is a trusted-local, single-user alpha without hosted auth, TLS, tenant isolation, or production object storage.
-- Fuel correction, robust traffic classification, and tyre conclusions stay unavailable when required measured channels are sparse.
-
-## 12. Phase two
-
-Durable live-session finalization, authenticated PostgreSQL/object storage, signed collector enrollment, background analysis, newer game adapters, richer measured endurance/traffic/energy analysis, gated real-model evaluations, and thin Tauri/mobile clients after contracts stabilize.
-
-## 13. Manual review
-
-- `apps/collector/src/protocol/parser.ts` and `docs/F1_2021_UDP_SOURCES.md` before distributing the adapter.
-- `services/api/lapsignal/analytics.py` before using findings beyond the synthetic/local alpha.
-- `services/api/lapsignal/coach.py` and `knowledge.py` before enabling a paid model/account.
-- `docs/PRIVACY.md`, `SECURITY.md`, and `TRADEMARK_USAGE.md` before any hosted or commercial release.
-- `.env.example`, `versions.json`, and `CHANGELOG.md` for every release.
-
-No deployment, paid infrastructure, Git push, tag, permissive license, publisher logo, testimonial, or guaranteed performance claim was created.
+The AI verification milestone is closed. Product development can move to the next milestone without another paid verification attempt.

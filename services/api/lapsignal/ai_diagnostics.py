@@ -25,6 +25,8 @@ class ProviderDiagnostics(BaseModel):
     openrouter_request_id: str | None = None
     x_request_id: str | None = None
     generation_id: str | None = None
+    provider_slug: str | None = None
+    resolved_model: str | None = None
     sdk_exception_type: str | None = None
     error_code: int | str | None = None
     error_message: str | None = None
@@ -37,13 +39,26 @@ class ProviderDiagnostics(BaseModel):
     routing_metadata: dict[str, Any] | None = None
     finish_reason: str | None = None
     streaming: bool = False
+    refusal_returned: bool = False
     error_in_http_200: bool = False
     usage_returned: bool = False
+    prompt_tokens: int | None = Field(default=None, ge=0)
+    completion_tokens: int | None = Field(default=None, ge=0)
+    reasoning_tokens: int | None = Field(default=None, ge=0)
+    total_tokens: int | None = Field(default=None, ge=0)
+    reported_cost_usd: float | None = Field(default=None, ge=0, le=1)
+    transport_latency_ms: int | None = Field(default=None, ge=0)
     retry_count: int = Field(default=0, ge=0)
     endpoint_path: str = "/api/v1/chat/completions"
+    base_contract_schema_hash: str | None = None
+    request_schema_hash: str | None = None
     schema_validation_state: str = "not_run"
     evidence_validation_state: str = "not_run"
     accepted_by_lapsignal: bool = False
+    provider_transport_verified: bool = False
+    structured_output_verified: bool = False
+    grounded_output_accepted: bool = False
+    safe_fallback_verified: bool = False
 
 
 class ProviderFailure(Exception):

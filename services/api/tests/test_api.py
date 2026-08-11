@@ -65,17 +65,17 @@ def test_health_and_version():
     with TestClient(app) as client:
         health = client.get("/health").json()
         assert health["status"] == "ok"
-        assert health["application_version"] == "0.1.0-alpha.3"
-        assert health["build_number"] == 3
+        assert health["application_version"] == "0.1.0-alpha.4"
+        assert health["build_number"] == 4
         assert health["process_id"] > 0
         assert health["cloud_ai_guard_active"] is True
         assert health["ai_contract_schema_hash"] == (
-            "5e1d18d4a757a6ac2f145710f4cff0d231daa02e00772900a5ce0abf5f41bc6c"
+            "1f7791fed1421e1d0810f9155a273a8807980145649caf89deb3494e3bd3f715"
         )
-        assert health["diagnostics_contract_version"] == "2"
+        assert health["diagnostics_contract_version"] == "3"
         version = client.get("/v1/version").json()
-        assert version["product"] == "0.1.0-alpha.3"
-        assert version["build"] == 3
+        assert version["product"] == "0.1.0-alpha.4"
+        assert version["build"] == 4
         assert version["build_identity"]["component"] == "api"
 
 
@@ -165,8 +165,8 @@ def test_circuit_calibration_management_routes_are_safe():
 def test_collector_heartbeat_exposes_safe_build_identity():
     build_identity = {
         "component": "collector",
-        "application_version": "0.1.0-alpha.3",
-        "build_number": 3,
+        "application_version": "0.1.0-alpha.4",
+        "build_number": 4,
         "git_commit": "test-commit",
         "process_id": 4242,
         "process_start_time": "2026-08-11T00:00:00Z",
@@ -176,7 +176,7 @@ def test_collector_heartbeat_exposes_safe_build_identity():
             "/v1/collector/heartbeat",
             json={
                 "collector_id": "collector-test",
-                "collector_version": "0.1.0-alpha.3",
+                "collector_version": "0.1.0-alpha.4",
                 "adapter_version": "0.1.0",
                 "telemetry_schema_version": 1,
                 "mode": "live",

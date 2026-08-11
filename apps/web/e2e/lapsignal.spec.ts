@@ -125,6 +125,102 @@ test("session detail, comparison, debrief and evidence archive", async ({ page }
   expect(errors.filter((error) => !error.includes("favicon"))).toEqual([]);
 });
 
+test("coach renders accepted, safe-fallback, and unavailable fixtures without a provider call", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("console", (message) => { if (message.type() === "error") errors.push(message.text()); });
+  const baseReport = {
+    id: "report-synthetic-fixture",
+    session_id: "f1-controller-silverstone",
+    label: "OpenRouter AI coaching",
+    session_summary: "Synthetic fixture summary.",
+    top_priorities: [],
+    what_improved: "",
+    what_regressed: "",
+    next_stint_plan: "",
+    confidence_summary: "",
+    limitations: [],
+    evidence_references: ["EV-001"],
+    provenance: {
+      provider: "openrouter",
+      resolved_model: "openai/gpt-5-mini",
+      evidence_bundle_version: "1",
+      cached: false,
+      generated_at: "2026-08-12T00:00:00Z"
+    }
+  };
+  const accepted = {
+    ...baseReport,
+    mode: "openrouter",
+    summary: "LapSignal accepted an evidence-grounded coaching action.",
+    priority_actions: [{
+      priority: 1,
+      category: "consistency",
+      title: "Repeatable execution",
+      location: "Session-wide",
+      observation: "Application varied across attempts.",
+      instruction: "Repeat the same control shape.",
+      reason: "Repeatability creates a clearer review baseline.",
+      evidence_ids: ["EV-001"],
+      evidence_context: [],
+      confidence: null,
+      expected_gain_seconds: null
+    }]
+  };
+  let fixture: Record<string, unknown> = accepted;
+  await page.route("**/v1/sessions/f1-controller-silverstone/coach**", async (route) => {
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(fixture) });
+  });
+  await page.goto("/app/coach?session=f1-controller-silverstone");
+  await page.getByRole("button", { name: "Generate AI debrief" }).click();
+  await expect(page.getByRole("heading", { name: "Repeatable execution" })).toBeVisible();
+  await expect(page.getByText("Evidence-backed", { exact: true })).toBeVisible();
+  await expect(page.getByText("Session-wide", { exact: false })).toBeVisible();
+
+  fixture = {
+    ...baseReport,
+    mode: "rule_based",
+    label: "Rule-based coaching",
+    summary: "Deterministic session analysis is ready.",
+    explanation: "Cloud coaching was rejected safely; deterministic fallback shown.",
+    provenance: { ...baseReport.provenance, provider: "rule_based" },
+    priority_actions: accepted.priority_actions
+  };
+  await page.getByRole("button", { name: "Generate AI debrief" }).click();
+  await expect(page.getByText("Fallback status", { exact: true })).toBeVisible();
+  await expect(page.getByText(/rejected safely/i)).toBeVisible();
+
+  await page.unroute("**/v1/sessions/f1-controller-silverstone/coach**");
+  await page.route("**/v1/sessions/f1-controller-silverstone/coach**", async (route) => {
+    await route.fulfill({ status: 200, contentType: "application/json", body: "{unavailable" });
+  });
+  await page.getByRole("button", { name: "Generate AI debrief" }).click();
+  await expect(page.getByText("Coach unavailable", { exact: true })).toBeVisible();
+  await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  expect(errors.filter((error) => !error.includes("favicon"))).toEqual([]);
+});
+
+test("AI consent and Cloud AI render disabled", async ({ page }) => {
+  await page.route("**/v1/profile", async (route) => {
+    await route.fulfill({
+      status: 200,
+      json: {
+        experience_level: "intermediate",
+        input_device: "controller",
+        coaching_goal: "consistency",
+        ai_consent: false,
+        cloud_ai_enabled: false,
+        post_session_ai_enabled: false,
+        ai_live_lap_coaching: false
+      }
+    });
+  });
+  await page.goto("/app/settings");
+  await page.getByRole("button", { name: "AI and consent" }).click();
+  await expect(page.getByRole("button", { name: "Toggle AI consent" })).toHaveAttribute("aria-pressed", "false");
+  await expect(page.getByRole("button", { name: "Toggle Cloud AI" })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Toggle Cloud AI" })).toHaveAttribute("aria-pressed", "false");
+});
+
 test("repeated physical-session navigation stays collector-independent", async ({ page }) => {
   const sessionId = physicalSessionId;
   test.skip(!sessionId, "A local physical session ID is required for this regression.");

@@ -1,6 +1,6 @@
 {
   "name": "lapsignal",
-  "version": "0.1.0-alpha.3",
+  "version": "0.1.0-alpha.4",
   "private": true,
   "packageManager": "pnpm@11.16.0",
   "engines": {
@@ -15,6 +15,7 @@
     "dev:status": "node scripts/dev-services.mjs status",
     "dev:stop": "node scripts/dev-services.mjs stop",
     "dev:clean-start": "node scripts/dev-services.mjs clean-start",
+    "dev:app-start": "node scripts/dev-services.mjs app-start",
     "api:dev": "uv run --project services/api uvicorn lapsignal.main:app --host 127.0.0.1 --port 8000 --reload",
     "build": "corepack pnpm -r --if-present build",
     "lint": "corepack pnpm -r --if-present lint && uv run --project services/api ruff check services/api/lapsignal services/api/tests",

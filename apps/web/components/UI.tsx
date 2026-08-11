@@ -11,7 +11,7 @@ export function ConnectionState({ online }: { online: boolean }) {
 }
 
 export function VersionBadge() {
-  return <span className="tag mono">v0.1.0-alpha.3 · build 3</span>;
+  return <span className="tag mono">v0.1.0-alpha.4 · build 4</span>;
 }
 
 export function MetricCard({ label, value, detail, trend, icon: Icon }: { label: string; value: string; detail?: string; trend?: string; icon?: LucideIcon }) {

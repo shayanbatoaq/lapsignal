@@ -103,7 +103,7 @@ async def lifespan(_: FastAPI):
 
 app = FastAPI(
     title="LapSignal API",
-    version="0.1.0-alpha.3",
+    version="0.1.0-alpha.4",
     description="Evidence-backed local telemetry ingestion, analytics, and coaching.",
     lifespan=lifespan,
 )
@@ -631,7 +631,9 @@ async def coach(session_id: str, regenerate: bool = False):
         )
         if not session:
             raise HTTPException(404, "Session not found")
-        return await generate_with_fallback(db, session, _profile_dict(db), regenerate=regenerate)
+        return await generate_with_fallback(
+            db, session, _profile_dict(db), regenerate=regenerate, max_tokens=1_500
+        )
 
 
 @app.put("/v1/sessions/{session_id}/performance-mode")

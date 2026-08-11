@@ -22,24 +22,31 @@ from lapsignal.ai import (
     OPENROUTER_CHAT_PATH,
     AICoachOutput,
     AIPreflightState,
+    CoachingCategory,
+    CoachingPriority,
     OpenAICompatibleProvider,
     OpenRouterProvider,
     PriorityAction,
+    ProviderCoachingAction,
+    ProviderCoachOutput,
     ProviderDiagnostics,
     ProviderFailure,
     build_openrouter_chat_request,
-    build_openrouter_json_object_request,
     cache_key,
     coach_schema_hash,
     coach_strict_schema,
+    enrich_provider_output,
     evidence_bundle,
     evidence_hash,
     generate_with_fallback,
     get_provider,
+    request_schema_hash,
+    request_scoped_coach_schema,
     summarize_chat_request,
     usage_cost_usd,
     validate_ai_preflight,
     validate_output,
+    validate_provider_output,
 )
 from lapsignal.ai_contracts import (
     SchemaContractError,
@@ -84,6 +91,32 @@ def valid_output(bundle, *, evidence_id: str | None = None):
     )
 
 
+def valid_provider_output(
+    bundle,
+    *,
+    evidence_id: str | None = None,
+    category: CoachingCategory | None = None,
+    observation: str = "Application varied across the measured attempts.",
+    driver_action: str = "Release pressure progressively and repeat the same input shape.",
+    explanation: str = "A repeatable input should make the next review more useful.",
+):
+    selected_id = evidence_id or bundle.evidence[0]["id"]
+    record = next((item for item in bundle.evidence if item["id"] == selected_id), None)
+    inferred = ai_module.evidence_category(record) if record else None
+    return ProviderCoachOutput(
+        actions=[
+            ProviderCoachingAction(
+                category=category or inferred or CoachingCategory.CONSISTENCY,
+                priority=CoachingPriority.PRIMARY,
+                evidence_ids=[selected_id],
+                observation=observation,
+                driver_action=driver_action,
+                explanation=explanation,
+            )
+        ]
+    )
+
+
 def completion_payload(
     bundle,
     *,
@@ -93,7 +126,7 @@ def completion_payload(
     include_usage: bool = True,
 ) -> dict[str, Any]:
     payload: dict[str, Any] = {
-        "id": "mock-completion",
+        "id": "gen-mock-completion",
         "object": "chat.completion",
         "created": 1,
         "model": model,
@@ -102,7 +135,7 @@ def completion_payload(
                 "index": 0,
                 "message": {
                     "role": "assistant",
-                    "content": content or valid_output(bundle).model_dump_json(),
+                    "content": content or valid_provider_output(bundle).model_dump_json(),
                 },
                 "finish_reason": finish_reason,
             }
@@ -181,6 +214,8 @@ def test_openrouter_headers_and_privacy_routing(monkeypatch):
     assert provider.client.default_headers["X-OpenRouter-Title"] == "LapSignal"
     assert provider.client.default_headers["X-OpenRouter-Metadata"] == "enabled"
     assert provider._extra_body()["provider"] == {
+        "order": ["openai"],
+        "allow_fallbacks": False,
         "data_collection": "deny",
         "require_parameters": True,
         "zdr": True,
@@ -189,37 +224,152 @@ def test_openrouter_headers_and_privacy_routing(monkeypatch):
 
 
 def test_evidence_is_compact_stable_and_redacted():
-    bundle = evidence_bundle(get_demo_sessions()[0], {"experience_level": "intermediate"})
+    session = get_demo_sessions()[0]
+    bundle = evidence_bundle(session, {"experience_level": "intermediate"})
     text = bundle.model_dump_json()
     assert '"telemetry"' not in text and "api_key" not in text and "file_path" not in text
+    assert session["id"] not in text
+    assert session["track_name"] not in text
+    assert str(session.get("car_id")) not in text
+    assert "participant" not in text.lower()
+    metrics = {item.get("metric") for item in bundle.evidence}
+    assert "steering_smoothness" in metrics
     assert evidence_hash(bundle) == evidence_hash(bundle)
     assert cache_key("a", "openrouter", "m", "m") == cache_key("a", "openrouter", "m", "m")
 
 
-def test_structured_validation_rejects_unknown_evidence_and_gain():
+def test_trusted_validation_rejects_unknown_evidence_and_unproven_gain():
     bundle = evidence_bundle(get_demo_sessions()[0])
     output = valid_output(bundle)
     assert validate_output(output, bundle) == output
     output.priority_actions[0].evidence_ids = ["EV-NOT-SUPPLIED"]
-    with pytest.raises(ProviderFailure, match="not supplied") as evidence_failure:
+    with pytest.raises(ProviderFailure, match="unavailable evidence") as evidence_failure:
         validate_output(output, bundle)
     assert evidence_failure.value.category == "evidence_validation_error"
     assert evidence_failure.value.diagnostics.failure_stage == "evidence_validation"
     output = valid_output(bundle)
-    output.priority_actions[0].reason = "This will save 0.4 seconds."
+    output.priority_actions[0].expected_gain_seconds = 0.4
     with pytest.raises(ProviderFailure, match="unsupported") as claim_failure:
         validate_output(output, bundle)
     assert claim_failure.value.category == "evidence_validation_error"
 
 
-def test_structured_validation_rejects_an_invented_track_location():
+def test_provider_contract_rejects_an_authored_track_location():
     bundle = evidence_bundle(get_demo_sessions()[0])
-    output = valid_output(bundle)
-    output.priority_actions[0].location = "Copse"
-    with pytest.raises(ProviderFailure, match="not present") as location_failure:
-        validate_output(output, bundle)
-    assert location_failure.value.category == "evidence_validation_error"
-    assert location_failure.value.diagnostics.failure_stage == "evidence_validation"
+    payload = valid_provider_output(bundle).model_dump()
+    payload["actions"][0]["location"] = "Copse"
+    with pytest.raises(Exception, match="Extra inputs are not permitted"):
+        ProviderCoachOutput.model_validate(payload)
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("observation", "The issue appears at Copse."),
+        ("observation", "The issue appears in the final sector."),
+        ("observation", "The issue appears on a later lap."),
+        ("driver_action", "Brake at the one hundred metre marker."),
+        ("driver_action", "Increase pressure by 5 percent."),
+        ("explanation", "This should save 0.4 seconds."),
+        ("explanation", "The measured speed was altered to 220 kph."),
+        ("explanation", "Use an unsupported mph conversion."),
+    ],
+)
+def test_provider_text_rejects_hidden_factual_and_numerical_claims(field, value):
+    bundle = evidence_bundle(get_demo_sessions()[0])
+    output = valid_provider_output(bundle)
+    setattr(output.actions[0], field, value)
+    with pytest.raises(ProviderFailure, match="unsupported factual text"):
+        validate_provider_output(output, bundle)
+
+
+def test_provider_rejects_unknown_session_evidence_and_category_mismatch():
+    bundle = evidence_bundle(get_demo_sessions()[0])
+    unknown = valid_provider_output(bundle)
+    unknown.actions[0].evidence_ids = ["another-session-EV-001"]
+    with pytest.raises(ProviderFailure, match="not supplied"):
+        validate_provider_output(unknown, bundle)
+    mismatched = valid_provider_output(bundle, category=CoachingCategory.THROTTLE)
+    with pytest.raises(ProviderFailure, match="category"):
+        validate_provider_output(mismatched, bundle)
+
+
+def test_deterministic_enrichment_handles_corner_sector_neutral_and_multiple_locations():
+    bundle = evidence_bundle(get_demo_sessions()[0])
+    bundle.evidence[0]["corner_name"] = "Abbey"
+    first = enrich_provider_output(valid_provider_output(bundle), bundle)
+    assert first.priority_actions[0].location == "Abbey"
+    assert first.priority_actions[0].evidence_context[0].metric == "consistency_score"
+
+    bundle.evidence[0].pop("corner_name")
+    bundle.evidence[0]["sector"] = 2
+    sector = enrich_provider_output(valid_provider_output(bundle), bundle)
+    assert sector.priority_actions[0].location == "Sector 2"
+
+    bundle.evidence[0].pop("sector")
+    neutral = enrich_provider_output(valid_provider_output(bundle), bundle)
+    assert neutral.priority_actions[0].location == "Session-wide"
+
+    output = valid_provider_output(bundle)
+    output.actions[0].evidence_ids.append(bundle.evidence[1]["id"])
+    multiple = enrich_provider_output(output, bundle)
+    assert multiple.priority_actions[0].location == "Multiple zones"
+
+
+def test_deterministic_enrichment_supports_three_actions_and_only_evidence_backed_gain():
+    bundle = evidence_bundle(get_demo_sessions()[0])
+    bundle.evidence[0]["expected_gain_seconds"] = 0.12
+    output = ProviderCoachOutput(
+        actions=[
+            ProviderCoachingAction(
+                category=CoachingCategory.CONSISTENCY,
+                priority=CoachingPriority.PRIMARY,
+                evidence_ids=[bundle.evidence[0]["id"]],
+                observation="Execution varied across attempts.",
+                driver_action="Repeat the same control shape.",
+                explanation="Repeatability creates a clearer review baseline.",
+            ),
+            ProviderCoachingAction(
+                category=CoachingCategory.BRAKING,
+                priority=CoachingPriority.SECONDARY,
+                evidence_ids=[bundle.evidence[1]["id"]],
+                observation="Pressure application was not repeatable.",
+                driver_action="Apply pressure smoothly and release progressively.",
+                explanation="A stable input makes the response easier to repeat.",
+            ),
+            ProviderCoachingAction(
+                category=CoachingCategory.THROTTLE,
+                priority=CoachingPriority.TERTIARY,
+                evidence_ids=[bundle.evidence[2]["id"]],
+                observation="Application was interrupted across attempts.",
+                driver_action="Build input progressively after rotation settles.",
+                explanation="A progressive input can improve repeatability.",
+            ),
+        ]
+    )
+    trusted = enrich_provider_output(output, bundle)
+    assert len(trusted.priority_actions) == 3
+    assert trusted.priority_actions[0].expected_gain_seconds == pytest.approx(0.12)
+    assert trusted.priority_actions[1].expected_gain_seconds is None
+    assert validate_output(trusted, bundle) == trusted
+
+
+@pytest.mark.parametrize(
+    ("metric", "category"),
+    [
+        ("pace_delta", CoachingCategory.PACE),
+        ("consistency_score", CoachingCategory.CONSISTENCY),
+        ("brake_release", CoachingCategory.BRAKING),
+        ("throttle_application", CoachingCategory.THROTTLE),
+        ("steering_smoothness", CoachingCategory.STEERING),
+    ],
+)
+def test_every_provider_category_is_grounded_by_matching_metric(metric, category):
+    bundle = evidence_bundle(get_demo_sessions()[0])
+    bundle.evidence[0]["metric"] = metric
+    output = valid_provider_output(bundle, category=category)
+    trusted = enrich_provider_output(output, bundle)
+    assert trusted.priority_actions[0].category == category
 
 
 @pytest.mark.parametrize(
@@ -228,8 +378,12 @@ def test_structured_validation_rejects_an_invented_track_location():
         (400, "invalid_request", "invalid_request"),
         (401, "authentication", "authentication_error"),
         (402, "payment_required", "insufficient_credits"),
+        (403, "permission_denied", "authentication_error"),
+        (408, "timeout", "timeout"),
         (429, "rate_limit_exceeded", "rate_limited"),
         (500, "server", "upstream_provider_error"),
+        (502, "provider_unavailable", "upstream_provider_error"),
+        (503, "unmapped", "upstream_provider_error"),
     ],
 )
 def test_http_error_transport_classification(status, error_type, category):
@@ -476,6 +630,22 @@ def test_non_stop_finish_reason_is_rejected_before_schema_validation():
     assert diagnostics.schema_validation_state == "not_run"
 
 
+def test_refusal_is_rejected_before_schema_validation():
+    bundle = evidence_bundle(get_demo_sessions()[0])
+
+    async def handler(_request):
+        payload = completion_payload(bundle)
+        payload["choices"][0]["message"]["refusal"] = "Synthetic refusal"
+        return httpx.Response(200, json=payload)
+
+    with pytest.raises(ProviderFailure, match="refusal") as exc_info:
+        run_provider(handler, bundle=bundle)
+    diagnostics = exc_info.value.diagnostics
+    assert exc_info.value.category == "response_parse_error"
+    assert diagnostics.finish_reason == "stop"
+    assert diagnostics.schema_validation_state == "not_run"
+
+
 def test_missing_usage_is_rejected_before_schema_validation():
     bundle = evidence_bundle(get_demo_sessions()[0])
 
@@ -492,6 +662,23 @@ def test_missing_usage_is_rejected_before_schema_validation():
     assert exc_info.value.category == "response_parse_error"
     assert diagnostics.usage_returned is False
     assert diagnostics.request_id == "usage-1"
+
+
+def test_empty_content_is_rejected_after_transport_and_usage_capture():
+    bundle = evidence_bundle(get_demo_sessions()[0])
+
+    async def handler(_request):
+        payload = completion_payload(bundle)
+        payload["choices"][0]["message"]["content"] = ""
+        return httpx.Response(200, headers={"x-request-id": "empty-1"}, json=payload)
+
+    with pytest.raises(ProviderFailure) as exc_info:
+        run_provider(handler, bundle=bundle)
+    diagnostics = exc_info.value.diagnostics
+    assert exc_info.value.category == "response_parse_error"
+    assert diagnostics.provider_transport_verified is True
+    assert diagnostics.prompt_tokens == 100
+    assert diagnostics.request_id == "empty-1"
 
 
 def test_success_records_only_sanitized_acceptance_diagnostics():
@@ -513,19 +700,50 @@ def test_success_records_only_sanitized_acceptance_diagnostics():
     assert result.diagnostics.schema_validation_state == "passed"
     assert result.diagnostics.evidence_validation_state == "passed"
     assert result.diagnostics.accepted_by_lapsignal is True
+    assert result.diagnostics.provider_transport_verified is True
+    assert result.diagnostics.structured_output_verified is True
+    assert result.diagnostics.grounded_output_accepted is True
+    assert result.diagnostics.safe_fallback_verified is False
+    assert result.diagnostics.generation_id == "gen-mock-completion"
+    assert result.diagnostics.prompt_tokens == 100
+    assert result.diagnostics.completion_tokens == 80
+    assert result.diagnostics.total_tokens == 180
+    assert result.diagnostics.reported_cost_usd == pytest.approx(0.000185)
+    assert result.diagnostics.base_contract_schema_hash == COACH_STRICT_SCHEMA_HASH
+    assert result.diagnostics.request_schema_hash == request_schema_hash(bundle)
 
 
 def test_valid_schema_with_unsupported_evidence_reference():
     bundle = evidence_bundle(get_demo_sessions()[0])
-    content = valid_output(bundle, evidence_id="NOT-SUPPLIED").model_dump_json()
+    content = valid_provider_output(bundle, evidence_id="NOT-SUPPLIED").model_dump_json()
 
     async def handler(_request):
-        return httpx.Response(200, json=completion_payload(bundle, content=content))
+        return httpx.Response(
+            200,
+            headers={"x-request-id": "evidence-rejected-1"},
+            json=completion_payload(bundle, content=content),
+        )
 
     with pytest.raises(ProviderFailure) as exc_info:
         run_provider(handler, bundle=bundle)
     assert exc_info.value.category == "evidence_validation_error"
-    assert exc_info.value.diagnostics.failure_stage == "evidence_validation"
+    diagnostics = exc_info.value.diagnostics
+    assert diagnostics.failure_stage == "evidence_validation"
+    assert diagnostics.http_status == 200
+    assert diagnostics.request_id == "evidence-rejected-1"
+    assert diagnostics.finish_reason == "stop"
+    assert diagnostics.usage_returned is True
+    assert diagnostics.prompt_tokens == 100
+    assert diagnostics.completion_tokens == 80
+    assert diagnostics.total_tokens == 180
+    assert diagnostics.reported_cost_usd == pytest.approx(0.000185)
+    assert diagnostics.generation_id == "gen-mock-completion"
+    assert diagnostics.schema_validation_state == "passed"
+    assert diagnostics.evidence_validation_state == "failed"
+    assert diagnostics.accepted_by_lapsignal is False
+    assert diagnostics.provider_transport_verified is True
+    assert diagnostics.structured_output_verified is True
+    assert diagnostics.grounded_output_accepted is False
 
 
 def test_timeout_is_sanitized_and_not_retried():
@@ -603,9 +821,13 @@ def test_safe_rule_fallback_for_every_provider_failure(monkeypatch, category):
     )
     assert result["mode"] == "rule_based"
     assert result["priority_actions"]
-    assert db.added[0].status == "failed"
+    assert db.added[0].status == "safe_fallback"
     assert db.added[0].error_category == category
     assert db.added[0].response_json["developer_diagnostics"]["failure_stage"] == ("mocked_failure")
+    assert db.added[0].response_json["developer_diagnostics"]["safe_fallback_verified"] is True
+    assert result["provenance"]["safe_fallback_verified"] is True
+    assert result["provenance"]["grounded_output_accepted"] is False
+    assert result["provenance"]["requested_model"] == "openai/gpt-5-mini"
 
 
 def test_sanitized_diagnostics_contain_no_key_prompt_or_raw_metadata(caplog):
@@ -672,16 +894,22 @@ def test_exact_chat_completions_wire_serialization_is_offline_and_not_mixed():
         "structured_output_mode": "json_schema",
         "tool_count": 0,
         "schema_name": COACH_SCHEMA_NAME,
-        "schema_hash": coach_schema_hash(),
+        "schema_hash": request_schema_hash(bundle),
+        "base_contract_schema_hash": coach_schema_hash(),
         "token_budget_fields": {"max_tokens": 1500},
-        "optional_routing_field_names": ["data_collection", "require_parameters"],
+        "optional_routing_field_names": [
+            "allow_fallbacks",
+            "data_collection",
+            "order",
+            "require_parameters",
+        ],
     }
     assert body["response_format"] == {
         "type": "json_schema",
         "json_schema": {
             "name": COACH_SCHEMA_NAME,
             "strict": True,
-            "schema": coach_strict_schema(),
+            "schema": request_scoped_coach_schema(bundle),
         },
     }
     assert body["stream"] is False
@@ -720,14 +948,25 @@ def test_endpoint_families_use_deliberate_token_parameters():
 def test_official_client_strict_schema_is_the_runtime_contract():
     schema = coach_strict_schema()
     audit = assert_strict_json_schema(schema, expected_hash=COACH_STRICT_SCHEMA_HASH)
-    assert schema == to_strict_json_schema(AICoachOutput)
+    assert schema == to_strict_json_schema(ProviderCoachOutput)
     assert coach_schema_hash() == COACH_STRICT_SCHEMA_HASH
     assert audit.valid
     assert audit.root_type == "object"
     assert audit.root_has_any_of is False
-    assert audit.property_count == 12
+    assert audit.property_count == 7
     assert audit.max_nesting_depth == 2
-    assert audit.enum_value_count == 0
+    assert audit.enum_value_count == 8
+
+
+def test_request_schema_enumerates_only_the_exact_supplied_evidence_ids():
+    bundle = evidence_bundle(get_demo_sessions()[0])
+    schema = request_scoped_coach_schema(bundle)
+    enum_values = schema["$defs"]["ProviderCoachingAction"]["properties"]["evidence_ids"]["items"][
+        "enum"
+    ]
+    assert enum_values == sorted(item["id"] for item in bundle.evidence)
+    assert request_schema_hash(bundle) != COACH_STRICT_SCHEMA_HASH
+    assert assert_strict_json_schema(schema).valid
 
 
 def test_invalid_strict_schema_reports_every_json_pointer():
@@ -845,19 +1084,10 @@ def test_endpoint_metadata_parsing_and_exact_parameter_compatibility():
     assert comparison["missing_parameters"] == ["max_completion_tokens"]
 
 
-def test_json_object_candidate_is_explicit_and_keeps_local_validation_contract():
-    request = build_openrouter_json_object_request(
-        evidence_bundle(get_demo_sessions()[0]),
-        model="openai/gpt-5-mini",
-        max_tokens=1500,
-        routing={"data_collection": "deny", "require_parameters": True},
-    )
-    summary = summarize_chat_request(request)
-    assert request["response_format"] == {"type": "json_object"}
-    assert summary["structured_output_mode"] == "json_object"
-    assert summary["schema_hash"] == COACH_STRICT_SCHEMA_HASH
-    assert "max_tokens" in request and "max_completion_tokens" not in request
-    assert "JSON object" in request["messages"][0]["content"]
+def test_no_json_object_fallback_or_repair_request_exists():
+    assert not hasattr(ai_module, "build_openrouter_json_object_request")
+    source = ai_module.OpenRouterProvider.generate_session_debrief.__code__.co_names
+    assert "json_object" not in source
 
 
 def test_disabled_cloud_gate_returns_safe_fallback_without_provider_call(monkeypatch):
@@ -886,6 +1116,7 @@ def test_disabled_cloud_gate_returns_safe_fallback_without_provider_call(monkeyp
     )
     assert result["mode"] == "rule_based"
     assert result["explanation"] == "Cloud AI preflight blocked (cloud_ai_disabled)."
+    assert result["provenance"]["safe_fallback_verified"] is True
 
 
 @pytest.mark.parametrize(
@@ -901,7 +1132,7 @@ def test_disabled_cloud_gate_returns_safe_fallback_without_provider_call(monkeyp
 )
 def test_every_ai_preflight_failure_blocks_provider_calls(monkeypatch, change, failure):
     values = {
-        "application_version": "0.1.0-alpha.3",
+        "application_version": "0.1.0-alpha.4",
         "schema_hash": COACH_STRICT_SCHEMA_HASH,
         "cloud_ai_guard_active": True,
         "ai_consent": True,

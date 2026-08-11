@@ -21,4 +21,4 @@ export const colors = {
 export const spacing = { x1: 8, x2: 16, x3: 24, x4: 32, x5: 40, x6: 48, x8: 64 } as const;
 export const radii = { control: 6, panel: 8, large: 10 } as const;
 
-export const versionLabel = "v0.1.0-alpha.3 · build 3";
+export const versionLabel = "v0.1.0-alpha.4 · build 4";

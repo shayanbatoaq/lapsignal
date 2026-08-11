@@ -304,10 +304,9 @@ async function verifyApiIdentity(api, gitCommit) {
   }, "API build identity");
 }
 
-async function verifyStarted(started, gitCommit) {
+async function verifyAppStarted(started, gitCommit) {
   const api = started.find((item) => item.service === "api");
   const web = started.find((item) => item.service === "web");
-  const collector = started.find((item) => item.service === "collector");
   const health = await verifyApiIdentity(api, gitCommit);
   await waitFor(async () => {
     const response = await fetch("http://127.0.0.1:8000/docs", { signal: AbortSignal.timeout(2_500) });
@@ -325,6 +324,12 @@ async function verifyStarted(started, gitCommit) {
     if (!response.ok) throw new Error(`frontend returned HTTP ${response.status}`);
     return true;
   }, "frontend");
+  return { health, webIdentity, collectorIdentity: null };
+}
+
+async function verifyStarted(started, gitCommit) {
+  const identity = await verifyAppStarted(started, gitCommit);
+  const collector = started.find((item) => item.service === "collector");
   const collectorStatus = await waitFor(async () => {
     const status = await fetchJson("http://127.0.0.1:8000/v1/collector/status");
     const identity = status.collector_build_identity;
@@ -337,7 +342,7 @@ async function verifyStarted(started, gitCommit) {
     if (failures.length) throw new Error(failures.join(","));
     return status;
   }, "collector build identity");
-  return { health, webIdentity, collectorIdentity: collectorStatus.collector_build_identity };
+  return { ...identity, collectorIdentity: collectorStatus.collector_build_identity };
 }
 
 async function stopAll(evaluations) {
@@ -356,7 +361,7 @@ async function stopAll(evaluations) {
   }
 }
 
-async function cleanStart() {
+async function cleanStart({ includeCollector = true } = {}) {
   const before = snapshot();
   printStatus(before);
   await stopAll(before);
@@ -371,12 +376,14 @@ async function cleanStart() {
     const api = startService(specs.find((item) => item.service === "api"), gitCommit);
     started.push(api);
     await verifyApiIdentity(api, gitCommit);
-    started.push(
-      startService(specs.find((item) => item.service === "web"), gitCommit),
-      startService(specs.find((item) => item.service === "collector"), gitCommit)
-    );
-    const identity = await verifyStarted(started, gitCommit);
-    console.log(`clean-start verified ${APPLICATION_VERSION} build ${BUILD_NUMBER} (${gitCommit})`);
+    started.push(startService(specs.find((item) => item.service === "web"), gitCommit));
+    if (includeCollector) {
+      started.push(startService(specs.find((item) => item.service === "collector"), gitCommit));
+    }
+    const identity = includeCollector
+      ? await verifyStarted(started, gitCommit)
+      : await verifyAppStarted(started, gitCommit);
+    console.log(`${includeCollector ? "clean-start" : "app-start"} verified ${APPLICATION_VERSION} build ${BUILD_NUMBER} (${gitCommit})`);
     console.log(JSON.stringify(identity, null, 2));
   } catch (error) {
     await stopAll(snapshot());
@@ -407,6 +414,15 @@ async function main() {
     const release = acquireManagerLock();
     try {
       await cleanStart();
+    } finally {
+      release();
+    }
+    return;
+  }
+  if (command === "app-start") {
+    const release = acquireManagerLock();
+    try {
+      await cleanStart({ includeCollector: false });
     } finally {
       release();
     }

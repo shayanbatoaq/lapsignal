@@ -1,6 +1,6 @@
 {
   "name": "@lapsignal/collector",
-  "version": "0.1.0-alpha.3",
+  "version": "0.1.0-alpha.4",
   "private": true,
   "type": "module",
   "bin": { "lapsignal-collector": "./dist/cli.js" },

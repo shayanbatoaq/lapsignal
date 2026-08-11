@@ -298,12 +298,12 @@ export function SettingsView() {
             <>
               <SectionHeading eyebrow="Provenance" title="LapSignal versions" />
               <div className="technical-list">
-                <Row label="Application" value={webBuild?.application_version ?? apiBuild?.application_version ?? "0.1.0-alpha.3"} />
-                <Row label="Build" value={String(webBuild?.build_number ?? apiBuild?.build_number ?? 3)} />
+                <Row label="Application" value={webBuild?.application_version ?? apiBuild?.application_version ?? "0.1.0-alpha.4"} />
+                <Row label="Build" value={String(webBuild?.build_number ?? apiBuild?.build_number ?? 4)} />
                 <Row label="Web process" value={webBuild ? `${webBuild.git_commit} · PID ${webBuild.process_id}` : "Checking…"} />
                 <Row label="API process" value={apiBuild ? `${apiBuild.git_commit} · PID ${apiBuild.process_id}` : "Checking…"} />
                 <Row label="Telemetry schema" value="1" />
-                <Row label="Coach prompt" value="race-engineer-v2 candidate" />
+                <Row label="Coach prompt" value="race-engineer-v3" />
               </div>
               <a className="button secondary" href="/" target="_blank">Product page <ExternalLink size={14} /></a>
             </>

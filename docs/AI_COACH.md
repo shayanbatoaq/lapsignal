@@ -1,33 +1,61 @@
 # AI coach architecture
 
-LapSignal has one bounded race-engineer path and one deterministic fallback. Analytics remains authoritative: no model calculates telemetry metrics, and raw high-frequency telemetry is never sent to a provider.
+LapSignal has one bounded language layer and one dependable deterministic coach. Analytics remains authoritative: a model does not calculate telemetry metrics, and raw high-frequency telemetry is never sent to a provider.
 
 ## Providers and configuration
 
-`AI_PROVIDER` selects `rule_based`, `openai`, or `openrouter` through one server-side provider interface. OpenRouter uses the official OpenAI Python client directly against the configurable `OPENROUTER_BASE_URL`; it does not use an Agents runner. Endpoint families are deliberate: the direct OpenAI-compatible route uses `max_tokens`, while the Azure route uses `max_completion_tokens`. LapSignal never guesses or swaps the field during a request. The preferred unsent candidate selects the direct route for one non-streaming `POST /api/v1/chat/completions` request with no tools, `openai/gpt-5-mini`, `max_tokens`, `provider.require_parameters: true`, and strict Chat Completions output under `response_format.json_schema`. `openai/gpt-5.2` remains reserved for optional deeper analysis. Direct OpenAI configuration remains supported independently.
+`AI_PROVIDER` selects `rule_based`, `openai`, or `openrouter` through one server-side interface. OpenRouter uses the official OpenAI Python client against `OPENROUTER_BASE_URL`. The OpenRouter path is a single non-streaming `POST /api/v1/chat/completions` request with zero tools, `reasoning_effort: low`, strict `response_format.json_schema`, and SDK retries fixed at zero. The direct OpenAI-compatible endpoint family deliberately uses `max_tokens`; the separately modeled Azure family uses `max_completion_tokens`.
 
-The canonical secret file is the repository-root `.env`, loaded by `services/api/lapsignal/config.py`. The browser receives only provider name, configured state, model IDs, reachability, sanitized diagnostics, and last success time. OpenRouter attribution and router-metadata headers are server-side only; routing requires parameter support and defaults data collection to `deny`. Endpoint metadata did not report data-policy compatibility, so compatibility with `data_collection: deny` remains unverified and must never be silently relaxed. ZDR is requested only when explicitly enabled. Raw headers and bodies are never persisted.
+OpenRouter routing is pinned to `order: ["openai"]`, `allow_fallbacks: false`, and `require_parameters: true`. Data collection remains `deny` and is never relaxed automatically. The alpha.4 live request succeeded with that policy, although endpoint metadata did not independently declare data-policy compatibility. ZDR is requested only when explicitly configured.
+
+The canonical secret file is the ignored repository-root `.env`. The browser receives only safe provider/build state and sanitized diagnostics. Keys, authorization headers, prompts, raw response bodies, physical telemetry, participant information, and capture paths are never logged or persisted.
 
 ## Consent and cadence
 
-Both persisted **AI consent** and **Cloud AI** must be enabled. Before provider construction or network access, the running API must report application `0.1.0-alpha.3`, schema `5e1d18d4a757a6ac2f145710f4cff0d231daa02e00772900a5ce0abf5f41bc6c`, an active server-side Cloud-AI guard, explicit consent, and the expected configured provider. Any mismatch returns the rule-based fallback with zero provider calls. The exact model slug and Evidence Bundle v1 must also validate. Manual generation is allowed only after those gates; post-session generation is separately opt-in; per-lap coaching is experimental and off by default. A telemetry sample can never trigger a provider call.
+Both persisted **AI consent** and **Cloud AI** must be enabled. Before provider construction or network access, the running API must report application `0.1.0-alpha.4`, base provider-contract schema `1f7791fed1421e1d0810f9155a273a8807980145649caf89deb3494e3bd3f715`, an active server-side guard, explicit consent, Cloud AI enabled, and the expected configured provider. Any mismatch returns the deterministic coach with zero provider calls. Post-session generation is separately opt-in; per-lap coaching remains experimental and off by default. A telemetry sample can never trigger a provider call.
 
-## Evidence Bundle v1
+## Untrusted provider contract
 
-The compact bundle contains session/track/car context, manual performance mode and source, completed lap summaries, deterministic consistency values, up to three priority losses, zone references, equipment profile, and stable evidence IDs. It excludes raw samples, participant names, network identifiers, IP addresses, paths, secrets, and unrelated personal information. A canonical JSON hash makes unchanged evidence cacheable.
+The model may author only one to three ordered actions containing:
 
-## Structured validation and fallback
+- a controlled coaching category and priority;
+- one or more request-enumerated evidence IDs;
+- concise observation, driver action, and explanation text.
 
-The Pydantic output permits a summary, a positive observation, no more than three priority actions, and limitations. Every action requires supplied evidence IDs and bounded confidence; `expected_gain_seconds` is required and must remain null unless a later deterministic contract explicitly supplies a gain. The runtime request uses the official OpenAI Python client's strict Pydantic transformation. The resulting schema hash is `5e1d18d4a757a6ac2f145710f4cff0d231daa02e00772900a5ce0abf5f41bc6c`; a recursive local contract audit runs before provider health or generation network access. Unsupported evidence, invented performance context, exact time-gain language, malformed output, or a provider error is discarded before display. The UI then shows rule-based coaching with a discreet sanitized reason.
+It cannot author a trusted location, corner, sector, lap, timestamp, sample range, metric value, unit, confidence, expected gain, session identity, driver identity, or car identity. Extra fields are rejected by Pydantic as well as the strict schema. Provider text containing numbers, number words, locations, internal IDs, or measurement/unit claims is rejected before display.
 
-Run metadata persists in `ai_runs`: provider, requested/resolved model, prompt/schema versions, evidence hash/cache key, timestamps, latency, token counts when returned, cost when available, status, cache state, validation result, and validated response JSON. Failed runs use the same JSON field only for a bounded `developer_diagnostics` object. Cloudflare Ray, OpenRouter request/trace, `x-request-id`, and `gen-` generation identifiers are classified into separate fields. A provider message is stored verbatim only when it passes secret and prompt-overlap screening; otherwise only a redacted marker, length, and SHA-256 hash are retained. Keys, authorization headers, prompts, raw telemetry, raw response bodies, raw model text, and hidden reasoning are never stored.
+The stable official-client-generated base schema hash is `1f7791fed1421e1d0810f9155a273a8807980145649caf89deb3494e3bd3f715`. Each request deep-copies that contract and constrains evidence-ID items to the exact supplied snapshot. The final synthetic Silverstone request schema hash was `f9f95c21c660a13fb089912e45252a62ce7127899457a2e2cfb8976167150bb9`. Recursive schema audit runs before all network access. There is no JSON-object fallback, tool loop, model repair request, provider retry, or model substitution.
 
-## Offline request verification
+## Trusted application result
 
-`build_openrouter_chat_request` constructs the preferred strict request and requires an explicit endpoint family. `build_openrouter_json_object_request` prepares an explicit compatibility candidate that still requires local Pydantic and evidence validation; the adapter never switches to it automatically. `summarize_chat_request` records only the endpoint, method, parameter names, requested model, streaming and structured-output modes, tool count, schema name/hash, token-budget fields, and routing field names. Tests send the exact serialized request only through `httpx.MockTransport`; they confirm the direct route carries `max_tokens`, the Azure route carries `max_completion_tokens`, the body contains Chat Completions `response_format` rather than Responses API `text.format`, tools are an explicit empty array, and unsupported `verbosity` is absent.
+LapSignal resolves every accepted evidence ID locally, then attaches canonical locations, sector/lap/sample context, metric values and units, evidence confidence, and an expected gain only when deterministic analytics supplied one. A single location is used when all evidence agrees; differing locations become `Multiple zones`; valid evidence without location becomes `Session-wide`. The model cannot override these values.
 
-The adapter inspects the non-streaming HTTP response envelope before SDK parsing. This preserves OpenRouter errors returned inside HTTP 200 responses, then separately gates JSON parsing, Pydantic validation, exact-model matching, and evidence validation. Streaming is not enabled for coaching, but the diagnostic parser is tested against OpenRouter's documented SSE error envelope so a future streaming path cannot silently collapse `finish_reason: error`.
+If parsing, schema, exact-model, evidence, or factual-text validation fails, the untrusted output is discarded and the rule-based coach renders. The UI supports nullable confidence and labels a valid action `Evidence-backed` when no deterministic confidence is available.
 
-## Provider verification status
+## Durable diagnostics and verification states
 
-OpenRouter is not provider-verified. One authorized synthetic Silverstone request returned HTTP 400 before generation and invoked the deterministic fallback. The historical `error.message` and header provenance were not retained, so the exact cause remains unproven. Cloud AI remains disabled. The separately verified physical telemetry path does not constitute cloud-AI verification.
+A sanitized transport record is captured immediately after the HTTP response, before structured parsing or evidence validation. It preserves separately classified Cloudflare Ray, OpenRouter trace/request, `x-request-id`, and `gen-` generation IDs; provider/model; finish/refusal/error states; prompt, completion, reasoning, and total tokens; reported cost; latency; streaming and retry state; and both schema hashes. Those facts survive every downstream rejection.
+
+Developer diagnostics report four independent states:
+
+- `provider_transport_verified`
+- `structured_output_verified`
+- `grounded_output_accepted`
+- `safe_fallback_verified`
+
+Failed/rejected runs persist only bounded diagnostics. No complete prompt, raw response, rejected model text, secret, or hidden reasoning is stored.
+
+## Alpha.4 live verification
+
+Exactly one authorized synthetic Silverstone generation was sent on 2026-08-12 using `openai/gpt-5-mini`. It returned HTTP 200 from the pinned OpenAI route, the exact requested model, `finish_reason=stop`, strict JSON that passed Pydantic validation, and usage. Usage was 857 prompt tokens, 490 completion tokens including 128 reasoning tokens, 1,347 total tokens, and `$0.00119425` reported cost; transport latency was 8,898 ms.
+
+The provider text contained an unsupported factual claim, so evidence validation rejected it before display. LapSignal returned three deterministic coaching actions, recorded safe fallback, made no retry or metadata request, and restored Cloud AI and consent to disabled.
+
+Final states for that request:
+
+- `provider_transport_verified: true`
+- `structured_output_verified: true`
+- `grounded_output_accepted: false`
+- `safe_fallback_verified: true`
+
+This verifies OpenRouter transport, the pinned provider/model route, strict structured output, durable diagnostics, and safe product behavior once with a synthetic fixture. It does **not** claim grounded live-provider acceptance and does **not** claim cloud coaching over a physical PS4 session. The physical telemetry path remains separately verified. No further paid verification attempt is recommended for this milestone.
