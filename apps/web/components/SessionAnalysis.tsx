@@ -8,8 +8,8 @@ function recordHasValues(value: Record<string, unknown> | null): boolean {
   return value !== null && Object.keys(value).length > 0 && Object.values(value).length > 0;
 }
 
-export function SessionSourceBanner({ demoData }: { demoData: boolean }) {
-  return <div className="demo-banner" role="status"><Database size={17} aria-hidden="true"/><div><strong>{demoData ? "Demo data" : "Saved telemetry"}</strong><span>{demoData ? "Seeded telemetry · fixed random seed" : "Stored locally · collector connection not required"}</span></div></div>;
+export function SessionStorageBanner() {
+  return <div className="session-source-banner" role="status"><Database size={17} aria-hidden="true"/><div><strong>Saved telemetry</strong><span>Stored locally · collector connection not required</span></div></div>;
 }
 
 export function AnalysisCoverage({ metrics }: { metrics: Metrics }) {

@@ -4,6 +4,13 @@ All notable changes follow [Keep a Changelog](https://keepachangelog.com/en/1.1.
 
 ## [Unreleased]
 
+### Changed
+
+- Removed the bundled session runtime, routes, controls, badges, configuration, persistence marker, automatic replay selection, and client fallbacks; fresh installations now initialize with no sessions.
+- Added truthful API-unavailable, collector-offline, empty-library, insufficient-comparison, unselected-debrief, and baseline-building states.
+- Isolated deterministic browser/API inputs in test-only fixture directories backed by temporary databases and telemetry roots.
+- Changed replay to require an explicitly supplied local recording while preserving physical captures, saved sessions, circuit maps, and deterministic rule-based coaching.
+
 ## [0.1.0-alpha.4] - 2026-08-12
 
 ### Changed
@@ -30,7 +37,7 @@ All notable changes follow [Keep a Changelog](https://keepachangelog.com/en/1.1.
 - Verified Windows development service management through `dev:status`, `dev:stop`, and `dev:clean-start`, with project PID manifests, guarded shutdown, duplicate detection, current-build health gates, and API/web/collector build identity.
 - Fail-before-network Cloud-AI preflight coverage for version, schema, guard, consent, enabled state, provider configuration, and explicit direct-versus-Azure token parameters.
 - LapSignal monorepo foundation and independently versioned contracts.
-- Three fixed-seed sessions, 42 laps, 7,560 telemetry samples, Parquet artifacts, and a normalized replay fixture.
+- Initial deterministic synthetic session fixtures, telemetry artifacts, and replay coverage (later removed from production and isolated under test directories).
 - FastAPI/SQLite metadata service, deterministic analytics, evidence findings, bounded live ingestion, and WebSocket stream.
 - Native Node F1 2021 UDP parser/listener, capture recording, bounded retry delivery, diagnostics, and replay CLI.
 - Rule-based coach, optional one-agent SDK path, twelve-topic original knowledge base, provenance, and twelve evaluation scenarios.
@@ -48,10 +55,10 @@ All notable changes follow [Keep a Changelog](https://keepachangelog.com/en/1.1.
 ### Changed
 
 - Rebuilt the public landing page around the "Every lap has a signal." sim-racing identity while preserving every internal product route and workflow.
-- Reduced the landing narrative to five sections and 302 authored words, with a racing-first hero, a seed-grounded debrief composition, a four-step engineering loop, equipment-aware context, and a focused final call to action.
+- Reduced the landing narrative to five sections and 302 authored words, with a racing-first hero, an evidence-grounded debrief composition, a four-step engineering loop, equipment-aware context, and a focused final call to action.
 - Added original unbranded sim-racing imagery, structural carbon-fiber surfaces, code-native illustrative circuit layouts, an animated position marker, and reduced-motion fallbacks.
 - Updated the 1200x630 social preview, metadata, responsive imagery, and asset provenance documentation.
-- Added landing acceptance coverage for the five-section and 300–400-word contracts, local anchors, primary demo navigation, reduced motion, and 1440, 1280, 390, 768, and 360 responsive views.
+- Added landing acceptance coverage for the five-section and 300–400-word contracts, local anchors, primary product navigation, reduced motion, and 1440, 1280, 390, 768, and 360 responsive views.
 
 ### Fixed
 
@@ -62,10 +69,10 @@ All notable changes follow [Keep a Changelog](https://keepachangelog.com/en/1.1.
 ### Changed
 
 - Rebuilt the marketing and product experience around a graphite/crimson pit-wall design system with Manrope, Barlow Condensed, Geist Mono, compact timing rails, sector dividers, status lamps, and a new code-native LapSignal line mark.
-- Reframed the landing page as a seeded Silverstone post-stint debrief with stored lap, sector, stint, confidence, hardware, workflow, and compatibility evidence.
+- Reframed the landing page as a conceptual Silverstone post-stint debrief with lap, sector, stint, confidence, hardware, workflow, and compatibility language.
 - Applied the system across overview, live, sessions, session detail, comparison, debrief, progress, settings, onboarding, report, loading, error, empty, and responsive navigation states.
 - Switched session and comparison telemetry views to the API's recorded, downsampled traces with deterministic fallback and a functional chart-reset control.
-- Replaced fabricated cross-track progress claims with a context-separated evidence archive built only from seeded metrics.
+- Replaced fabricated cross-track progress claims with a context-separated evidence archive built only from deterministic fixture metrics.
 - Refreshed the favicon, metadata, and 1200x630 Open Graph card; added 1280, 768, 390, and 360 responsive/overflow coverage.
 
 ### Fixed

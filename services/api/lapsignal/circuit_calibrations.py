@@ -46,12 +46,12 @@ def calibration_file_stem(sample: dict) -> str | None:
 
 
 class CircuitCalibrationRepository:
-    def __init__(self, data_dir: Path):
+    def __init__(self, data_dir: Path, *, asset_data_dir: Path | None = None):
+        asset_root = (asset_data_dir or data_dir).resolve()
         self.directory = (data_dir / "local" / "circuit-calibrations").resolve()
-        self.seed_directory = (data_dir / "circuit-seeds").resolve()
-        self.pack_directory = (data_dir / "circuit-maps").resolve()
+        self.seed_directory = (asset_root / "circuit-seeds").resolve()
+        self.pack_directory = (asset_root / "circuit-maps").resolve()
         self.directory.mkdir(parents=True, exist_ok=True)
-        self.seed_directory.mkdir(parents=True, exist_ok=True)
         self._cache: dict[Path, tuple[int, CircuitCalibrationArtifact | None]] = {}
         self._static_cache: dict[Path, tuple[int, CircuitStaticMapArtifact | None]] = {}
         self._manifest = self._read_manifest()

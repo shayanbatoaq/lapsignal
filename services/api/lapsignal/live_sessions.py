@@ -9,8 +9,8 @@ from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
 from .analytics import analyze_session
+from .coach import build_rule_based_report
 from .config import get_settings
-from .demo import build_fallback_report
 from .models import (
     AnalysisRun,
     CoachReport,
@@ -66,7 +66,7 @@ def ensure_live_session(db: Session, sample: dict) -> RaceSession:
         db.flush()
     row = RaceSession(
         id=session_id(uid),
-        profile_id="demo-driver",
+        profile_id="local-driver",
         adapter_id=adapter.id,
         session_uid=uid,
         game_id=sample["game_id"],
@@ -77,7 +77,6 @@ def ensure_live_session(db: Session, sample: dict) -> RaceSession:
         input_device=sample.get("input_device") or "unknown",
         started_at=now,
         completed_at=None,
-        demo_data=False,
         status="recording",
         provenance={"source": "physical_udp", "schema_version": 1},
         context_json=context,
@@ -114,6 +113,19 @@ def _load_samples(uid: str) -> list[dict]:
             except json.JSONDecodeError:
                 continue
     return rows
+
+
+def session_map_sample(uid: str) -> dict | None:
+    """Return only the latest stored sample needed to resolve a saved circuit map."""
+    samples = _load_samples(uid)
+    return next(
+        (
+            sample
+            for sample in reversed(samples)
+            if isinstance(sample.get("game_track_id"), int) and sample.get("game_track_id", -1) >= 0
+        ),
+        None,
+    )
 
 
 def _completed_laps(samples: list[dict]) -> list[dict]:
@@ -197,7 +209,6 @@ def finalize_live_session(
         "input_device": row.input_device,
         "started_at": row.started_at.replace(tzinfo=UTC).isoformat(),
         "completed_at": datetime.now(UTC).isoformat(),
-        "demo_data": False,
         "analysis_status": "complete",
         "performance_mode": row.performance_mode,
         "performance_mode_source": row.performance_mode_source,
@@ -207,7 +218,7 @@ def finalize_live_session(
     }
     analysis = analyze_session(payload)
     payload.update(analysis)
-    payload["report"] = build_fallback_report(payload)
+    payload["report"] = build_rule_based_report(payload)
     now = datetime.now(UTC).replace(tzinfo=None)
     analysis_id = f"analysis-{row.id}"
     try:
@@ -318,7 +329,7 @@ def finalize_live_session(
                         id=f"artifact-{row.id}-normalized",
                         session_id=row.id,
                         kind="normalized",
-                        path=str(parquet.relative_to(get_settings().data_dir)),
+                        path=parquet.relative_to(get_settings().data_dir.resolve()).as_posix(),
                         format="parquet",
                         sample_count=len(samples),
                         schema_version=1,
@@ -434,7 +445,6 @@ def live_session_payload(db: Session, row: RaceSession, include_telemetry: bool 
         "completed_at": row.completed_at.replace(tzinfo=UTC).isoformat()
         if row.completed_at
         else None,
-        "demo_data": False,
         "analysis_status": row.status,
         "performance_mode": row.performance_mode,
         "performance_mode_source": row.performance_mode_source,
@@ -494,11 +504,7 @@ def live_session_payload(db: Session, row: RaceSession, include_telemetry: bool 
 
 
 def live_session_summaries(db: Session) -> list[dict]:
-    rows = db.scalars(
-        select(RaceSession)
-        .where(RaceSession.demo_data.is_(False))
-        .order_by(RaceSession.started_at.desc())
-    ).all()
+    rows = db.scalars(select(RaceSession).order_by(RaceSession.started_at.desc())).all()
     result = []
     for row in rows:
         payload = live_session_payload(db, row)
@@ -517,7 +523,6 @@ def live_session_summaries(db: Session) -> list[dict]:
                     "session_type",
                     "input_device",
                     "started_at",
-                    "demo_data",
                     "analysis_status",
                 )
             }

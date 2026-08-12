@@ -1,7 +1,8 @@
 "use client";
 
-import { Activity, CircleStop, Play, Radio, RotateCcw, WifiOff } from "lucide-react";
+import { Activity, CircleStop, Radio, WifiOff } from "lucide-react";
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { useLiveStatus } from "@/components/LiveStatus";
 import { TrackMap } from "@/components/TrackMap";
 
@@ -11,7 +12,6 @@ const text = (value: unknown, fallback = "Unknown") =>
 
 export function LiveSession() {
   const { status, samples } = useLiveStatus();
-  const [replaying, setReplaying] = useState(false);
   const [mode, setMode] = useState(status.performance_mode ?? "unknown");
   const current = status.current_sample ?? {};
   const context = { ...status.context, ...current };
@@ -31,14 +31,6 @@ export function LiveSession() {
         .join(" "),
     [samples]
   );
-  const startReplay = async () => {
-    setReplaying(true);
-    try {
-      await fetch(`${API}/v1/demo/replay`, { method: "POST" });
-    } finally {
-      window.setTimeout(() => setReplaying(false), 3500);
-    }
-  };
   const chooseMode = async (next: "equal" | "realistic" | "unknown") => {
     setMode(next);
     await fetch(`${API}/v1/live/performance-mode`, {
@@ -69,23 +61,21 @@ export function LiveSession() {
           </p>
         </div>
 
-        {!active && !replaying && (
+        {!active && (
           <div className="connection-hero">
             <div className="connection-ring">
               <WifiOff size={32} />
             </div>
-            <h2>No fresh telemetry</h2>
+            <h2>Waiting for telemetry</h2>
             <p>
-              Start the native Windows collector or run the bundled replay. A physical packet stream
-              overrides demo status everywhere.
+              Start the native Windows collector, then begin driving in F1 2021. Live circuit, car,
+              lap, and telemetry values appear only after a real packet arrives.
             </p>
-            <button className="button" onClick={startReplay}>
-              <Play size={16} /> Replay demo telemetry
-            </button>
+            <Link className="button" href="/app/settings">View collector setup</Link>
           </div>
         )}
 
-        <div className="live-map-grid">
+        {active && <div className="live-map-grid">
           <TrackMap
             circuitMap={status.circuit_map}
             sample={current}
@@ -106,7 +96,7 @@ export function LiveSession() {
               }
             </span>
           </div>
-        </div>
+        </div>}
 
         {active && (
           <>
@@ -181,7 +171,7 @@ export function LiveSession() {
             <Radio size={18} color="var(--blue)" />
           </div>
           <div className="technical-list">
-            <Technical label="Game / format" value="F1 2021 / 2021" />
+            <Technical label="Game / format" value={context.game_id&&context.packet_format?`${String(context.game_id)} / ${String(context.packet_format)}`:"Unavailable until telemetry arrives"} />
             <Technical label="Map positioning" value={status.circuit_map?.label ?? "Unavailable"} />
             <Technical
               label="Last packet"
@@ -205,15 +195,7 @@ export function LiveSession() {
             Raw packets stay local. Normalized samples finalize into the session library on Session Ended,
             UID change, shutdown, or inactivity.
           </p>
-          <button
-            className="button secondary"
-            style={{ width: "100%" }}
-            onClick={startReplay}
-            disabled={replaying}
-          >
-            <RotateCcw size={16} />
-            {replaying ? "Replay running…" : "Run demo replay"}
-          </button>
+          {!status.recording && <p className="muted" style={{fontSize:12}}>No recording is active. Run <span className="mono">pnpm collector:listen</span> before driving.</p>}
         </div>
       </aside>
     </div>

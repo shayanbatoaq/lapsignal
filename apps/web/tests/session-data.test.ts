@@ -18,7 +18,6 @@ function sessionResponse(overrides: Record<string, unknown> = {}) {
     input_device: "unknown",
     started_at: "2000-01-01T00:00:00Z",
     completed_at: "2000-01-01T00:05:00Z",
-    demo_data: false,
     analysis_status: "analyzed",
     performance_mode: "unknown",
     performance_mode_source: "unknown",
@@ -65,7 +64,7 @@ describe("saved-session request classification", () => {
       items: [{
         id: "summary-one", title: "Test circuit · Practice", game_id: "test_game", game_label: "Test game",
         track_id: "test-circuit", track_name: "Test circuit", car_id: "unknown", car_class: "Open wheel",
-        session_type: "Practice", input_device: "unknown", started_at: "2000-01-01T00:00:00Z", demo_data: false,
+        session_type: "Practice", input_device: "unknown", started_at: "2000-01-01T00:00:00Z",
         analysis_status: "analyzed", lap_count: 1, clean_lap_count: 1, best_lap_ms: 90000, consistency_score: 100
       }]
     });
@@ -108,6 +107,5 @@ describe("saved-session request classification", () => {
     const physical = sessionResponse();
     const unavailable = vi.fn(async () => { throw new TypeError("offline"); }) as unknown as typeof fetch;
     await expect(getTelemetry(physical as never, [1], unavailable)).resolves.toEqual([]);
-    await expect(getTelemetry({ ...physical, demo_data: true } as never, [1], unavailable)).resolves.toHaveLength(1);
   });
 });

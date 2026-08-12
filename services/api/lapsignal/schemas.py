@@ -338,7 +338,6 @@ class SessionDetailResponse(BaseModel):
     input_device: Literal["controller", "wheel", "unknown"]
     started_at: datetime
     completed_at: datetime | None
-    demo_data: bool
     analysis_status: str
     performance_mode: Literal["equal", "realistic", "unknown"] | None = None
     performance_mode_source: Literal["user", "imported", "default", "unknown"] | None = None
@@ -349,4 +348,5 @@ class SessionDetailResponse(BaseModel):
     findings: list[dict]
     provenance: dict
     report: dict | None
+    circuit_map: dict | None = None
     analysis_version: str | None = None

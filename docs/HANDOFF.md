@@ -45,8 +45,10 @@ The API health response contains safe version/build, commit, PID/start time, pro
 - Physical-session detail, comparison, and deterministic debrief survive restart and remain collector-independent.
 - The complete 24-track F1 2021 circuit-map pack remains available locally.
 - Saved invalid laps stay coachable while official timing uses clean laps only.
-- Desktop/mobile browser coverage includes demo coach, saved local-session coach, accepted AI fixture, rejected-provider fallback fixture, disabled consent/Cloud AI, unavailable coach service, console-error checks, and horizontal overflow.
+- Desktop/mobile browser coverage includes truthful empty/offline states, saved local-session coaching, accepted AI fixtures, rejected-provider fallback fixtures, disabled consent/Cloud AI, unavailable coach service, console-error checks, and horizontal overflow.
 
 ## Release verification
 
-`pnpm check` passed 207 tests (7 process safety, 2 contracts, 10 telemetry-domain, 22 collector, 34 web, and 132 API/evaluation), strict TypeScript, ESLint/Ruff, the collector build, and the 12-route Next.js production build. Final Playwright passed 31 desktop/mobile flows with one intentional duplicate responsive-matrix skip. The schema audit, secret audit, capture inventory, `git diff --check`, runtime health, and OpenAPI checks also passed. Generated Playwright/QA output remains ignored.
+The product now initializes with no session content, exposes no bundled-session route or fallback, and requires an explicit path for replay. Saved physical/imported sessions remain usable with the collector offline. Automated synthetic inputs stay under test fixture directories and use temporary database/data roots.
+
+Release verification includes 208 unit/API/process checks, 31 isolated desktop/mobile Playwright flows, strict TypeScript, ESLint/Ruff, collector and Next.js production builds, schema audit, secret audit, capture inventory, `git diff --check`, runtime health, and OpenAPI checks. Generated Playwright/QA output remains ignored.

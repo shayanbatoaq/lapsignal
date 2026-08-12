@@ -68,17 +68,13 @@ test("landing page and shared dashboard status", async ({ page }, testInfo) => {
     await page.screenshot({ path: resolve(artifacts, "landing-hero-mobile.png") });
     await page.screenshot({ path: resolve(artifacts, "landing-full-mobile.png"), fullPage: true });
   }
-  await page.getByRole("link", { name: /Analyze a demo lap/i }).first().click();
+  await page.route("**/v1/sessions?page_size=50", async (route) => route.fulfill({ json: { items: [], page: 1, page_size: 50, total: 0, pages: 1 } }));
+  await page.getByRole("link", { name: /Open LapSignal/i }).first().click();
   await expect(page).toHaveURL(/\/app$/, { timeout: 20_000 });
   await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible({ timeout: 20_000 });
-  await expect(page.getByRole("heading", { name: "Session register" })).toBeVisible({ timeout: 20_000 });
-  const collectorConnected = page.getByText("Collector connected", { exact: true }).first();
-  if (await collectorConnected.isVisible()) {
-    await expect(collectorConnected).toBeVisible();
-    await expect(page.getByRole("status").getByText("Demo data")).toHaveCount(0);
-  } else {
-    await expect(page.getByRole("status").getByText(/Demo data|Recorded replay/)).toBeVisible();
-  }
+  await expect(page.getByRole("heading", { name: "Your telemetry workspace is ready" })).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByText("Collector offline", { exact: true }).last()).toBeVisible();
+  await expect(page.getByText("Nothing is pre-filled or estimated.")).toBeVisible();
   if (testInfo.project.name === "desktop") {
     await page.screenshot({ path: resolve(artifacts, "dashboard-desktop.png"), fullPage: true });
     await page.screenshot({ path: resolve(artifacts, "sidebar-expanded-desktop.png") });
@@ -102,13 +98,49 @@ test("landing anchors and reduced motion contract", async ({ page }, testInfo) =
   if (testInfo.project.name === "desktop") await page.screenshot({ path: resolve(artifacts, "landing-reduced-motion.png"), fullPage: true });
 });
 
+test("fresh storage stays empty across every data-dependent route", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("console", (message) => { if (message.type() === "error") errors.push(message.text()); });
+  await page.route("**/v1/sessions?page_size=50", async (route) => route.fulfill({
+    json: { items: [], page: 1, page_size: 50, total: 0, pages: 1 }
+  }));
+  const offline = {
+    state: "OFFLINE", source_label: "Collector offline", online: false, collector_id: null,
+    mode: null, packet_rate_hz: 0, packet_loss_available: false, out_of_order_frames: 0,
+    last_packet_at: null, session_uid: null, recording: false, current_sample: null,
+    context: {}, circuit_map: { state: "unavailable", label: "Circuit map unavailable",
+      message: "Waiting for a supported telemetry packet.", progress: 0,
+      layout_fingerprint: null, calibration: null, map_source: "none", refining: false }
+  };
+  await page.route("**/v1/collector/status", async (route) => route.fulfill({ json: offline }));
+  await page.routeWebSocket("ws://localhost:8000/v1/live", (socket) => {
+    socket.send(JSON.stringify({ type: "snapshot", status: offline, samples: [] }));
+  });
+
+  for (const [route, expected] of [
+    ["/app", "Your telemetry workspace is ready"],
+    ["/app/live", "Waiting for telemetry"],
+    ["/app/sessions", "No recorded sessions yet"],
+    ["/app/compare", "Select a recorded session"],
+    ["/app/coach", "Select a recorded session"],
+    ["/app/progress", "Establish your first baseline"]
+  ] as const) {
+    await page.goto(route);
+    await expect(page.getByText(expected, { exact: true }).first()).toBeVisible();
+    await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  }
+  const forbidden = "de" + "mo";
+  expect((await page.locator("body").innerText()).toLowerCase()).not.toContain(forbidden);
+  expect(errors.filter((error) => !error.includes("favicon"))).toEqual([]);
+});
+
 test("session detail, comparison, debrief and evidence archive", async ({ page }, testInfo) => {
   test.setTimeout(90_000);
   const errors: string[] = [];
   page.on("console", (message) => { if (message.type() === "error") errors.push(message.text()); });
-  await page.goto("/app/sessions");
-  await page.locator('a[href="/app/sessions/f1-controller-silverstone"]').click();
-  await expect(page).toHaveURL(/\/app\/sessions\/f1-controller-silverstone/, { timeout: 20_000 });
+  const sessionId = await createIsolatedRecordedSession(testInfo.project.name);
+  await page.goto(`/app/sessions/${sessionId}`);
+  await expect(page).toHaveURL(new RegExp(`/app/sessions/${sessionId}`), { timeout: 20_000 });
   await expect(page.getByText("Highest-value signals")).toBeVisible({ timeout: 20_000 });
   await expect(page.getByText("Invalid lap · coaching available", { exact: true })).toBeVisible();
   await expect(page.locator("canvas").first()).toBeVisible();
@@ -118,7 +150,7 @@ test("session detail, comparison, debrief and evidence archive", async ({ page }
   await page.getByRole("link", { name: /Compare laps/i }).click();
   await expect(page.getByText("Measured telemetry comparison")).toBeVisible({ timeout: 20_000 });
   await expect(page.locator("canvas").first()).toBeVisible();
-  await page.goto("/app/coach");
+  await page.goto(`/app/coach?session=${sessionId}`);
   await expect(page.getByText("Deterministic analysis is the source of truth")).toBeVisible();
   await page.goto("/app/progress");
   await expect(page.getByText("Driver evidence archive")).toBeVisible();
@@ -128,9 +160,10 @@ test("session detail, comparison, debrief and evidence archive", async ({ page }
 test("coach renders accepted, safe-fallback, and unavailable fixtures without a provider call", async ({ page }) => {
   const errors: string[] = [];
   page.on("console", (message) => { if (message.type() === "error") errors.push(message.text()); });
+  const sessionId = await createIsolatedRecordedSession("coach-fixture");
   const baseReport = {
     id: "report-synthetic-fixture",
-    session_id: "f1-controller-silverstone",
+    session_id: sessionId,
     label: "OpenRouter AI coaching",
     session_summary: "Synthetic fixture summary.",
     top_priorities: [],
@@ -167,10 +200,10 @@ test("coach renders accepted, safe-fallback, and unavailable fixtures without a 
     }]
   };
   let fixture: Record<string, unknown> = accepted;
-  await page.route("**/v1/sessions/f1-controller-silverstone/coach**", async (route) => {
+  await page.route(`**/v1/sessions/${sessionId}/coach**`, async (route) => {
     await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(fixture) });
   });
-  await page.goto("/app/coach?session=f1-controller-silverstone");
+  await page.goto(`/app/coach?session=${sessionId}`);
   await page.getByRole("button", { name: "Generate AI debrief" }).click();
   await expect(page.getByRole("heading", { name: "Repeatable execution" })).toBeVisible();
   await expect(page.getByText("Evidence-backed", { exact: true })).toBeVisible();
@@ -189,8 +222,8 @@ test("coach renders accepted, safe-fallback, and unavailable fixtures without a 
   await expect(page.getByText("Fallback status", { exact: true })).toBeVisible();
   await expect(page.getByText(/rejected safely/i)).toBeVisible();
 
-  await page.unroute("**/v1/sessions/f1-controller-silverstone/coach**");
-  await page.route("**/v1/sessions/f1-controller-silverstone/coach**", async (route) => {
+  await page.unroute(`**/v1/sessions/${sessionId}/coach**`);
+  await page.route(`**/v1/sessions/${sessionId}/coach**`, async (route) => {
     await route.fulfill({ status: 200, contentType: "application/json", body: "{unavailable" });
   });
   await page.getByRole("button", { name: "Generate AI debrief" }).click();
@@ -247,12 +280,25 @@ test("repeated physical-session navigation stays collector-independent", async (
   expect(errors.filter((error) => !error.includes("favicon"))).toEqual([]);
 });
 
-test("replay updates the live page", async ({ page }, testInfo) => {
+test("offline live page waits without inventing telemetry", async ({ page }, testInfo) => {
+  const offline = {
+    state: "OFFLINE", source_label: "Collector offline", online: false, collector_id: null,
+    mode: null, packet_rate_hz: 0, packet_loss_available: false, out_of_order_frames: 0,
+    last_packet_at: null, session_uid: null, recording: false, current_sample: null,
+    context: {}, circuit_map: { state: "unavailable", label: "Circuit map unavailable",
+      message: "Waiting for a supported telemetry packet.", progress: 0,
+      layout_fingerprint: null, calibration: null, map_source: "none", refining: false }
+  };
+  await page.route("**/v1/collector/status", async (route) => route.fulfill({ json: offline }));
+  await page.routeWebSocket("ws://localhost:8000/v1/live", (socket) => {
+    socket.send(JSON.stringify({ type: "snapshot", status: offline, samples: [] }));
+  });
   await page.goto("/app/live");
-  const replay = page.getByRole("button", { name: /Replay demo telemetry|Run demo replay/i }).first();
-  if (await replay.isVisible()) await replay.click();
+  await expect(page.getByRole("heading", { name: "Waiting for telemetry" })).toBeVisible();
+  await expect(page.getByText(/values appear only after a real packet arrives/i)).toBeVisible();
+  await expect(page.locator(".live-readout")).toHaveCount(0);
+  await expect(page.locator(".live-map-grid")).toHaveCount(0);
   await expect(page.getByText("UDP packets/sec", { exact: true })).toBeVisible();
-  await expect(page.getByRole("heading", { name: /SPA-FRANCORCHAMPS|No fresh telemetry|Track unavailable/i })).toBeVisible();
   await page.screenshot({ path: resolve(artifacts, testInfo.project.name === "desktop" ? "live-desktop.png" : "live-mobile.png"), fullPage: true });
 });
 
@@ -437,14 +483,15 @@ test("brand metadata and browser assets resolve", async ({ page, request }) => {
   expect(manifestBody.icons).toEqual(expect.arrayContaining([expect.objectContaining({ purpose: "maskable" })]));
 });
 
-test("OpenRouter settings are server-safe and a finalized local session is durable", async ({ page }, testInfo) => {
+test("OpenRouter settings are server-safe and an isolated recorded session is durable", async ({ page }, testInfo) => {
   test.setTimeout(75_000);
-  await createSyntheticLocalSession(testInfo.project.name);
+  await createIsolatedRecordedSession(testInfo.project.name);
   await page.goto("/app/settings");
   await page.getByRole("button", { name: "AI and consent" }).click();
   await expect(page.getByText("openai/gpt-5-mini", { exact: true })).toBeVisible({ timeout: 20_000 });
-  await expect(page.getByText("Configured", { exact: true })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Test AI connection" })).toBeVisible();
+  await expect(page.getByText("Not configured", { exact: true })).toBeVisible();
+  await expect(page.getByText("Provider verification", { exact: true })).toBeVisible();
+  await expect(page.getByText(/performs no provider request/i)).toBeVisible();
   await expect(page.locator("body")).not.toContainText("OPENROUTER_API_KEY");
   await page.goto("/app/sessions");
   const physicalSession = page.locator('a[href^="/app/sessions/live-"]').first();
@@ -471,9 +518,10 @@ test("core routes do not overflow horizontally", async ({ page }) => {
 test("1280, 768 and 360 responsive matrix stays inside the viewport", async ({ page }, testInfo) => {
   test.setTimeout(120_000);
   test.skip(testInfo.project.name !== "desktop", "The desktop project owns the additional viewport matrix.");
+  const sessionId = await createIsolatedRecordedSession("responsive");
   for (const viewport of [{ width: 1280, height: 800 }, { width: 768, height: 900 }, { width: 360, height: 844 }]) {
     await page.setViewportSize(viewport);
-    for (const route of ["/", "/app", "/app/sessions/f1-controller-silverstone"]) {
+    for (const route of ["/", "/app", `/app/sessions/${sessionId}`]) {
       await page.goto(route);
       const dimensions = await page.evaluate(() => ({ scrollWidth: document.documentElement.scrollWidth, innerWidth: window.innerWidth }));
       expect(dimensions.scrollWidth, `${route} at ${viewport.width}px`).toBeLessThanOrEqual(dimensions.innerWidth);
@@ -482,25 +530,30 @@ test("1280, 768 and 360 responsive matrix stays inside the viewport", async ({ p
   }
 });
 
-async function createSyntheticLocalSession(projectName: string) {
+async function createIsolatedRecordedSession(projectName: string): Promise<string> {
   const fixture = await readFile(
-    resolve(process.cwd(), "../../data/fixtures/f1-2021-replay.jsonl"),
+    resolve(process.cwd(), "e2e/fixtures/synthetic-replay.jsonl"),
     "utf8"
   );
-  const first = JSON.parse(fixture.split(/\r?\n/).find(Boolean)!);
-  const sessionUid = `e2e-local-${projectName}-${Date.now()}`;
-  const samples = [
-    { ...first, session_uid: sessionUid, lap_number: 1, received_at_ms: Date.now() },
-    {
-      ...first,
+  const source = fixture.replace(/^\uFEFF/, "").split(/\r?\n/).filter(Boolean).map((line) => JSON.parse(line));
+  const sessionUid = `test-e2e-${projectName}-${Date.now()}`;
+  const sourceLapOne = source.filter((sample) => sample.lap_number === 1);
+  const sourceLapTwo = source.filter((sample) => sample.lap_number === 2);
+  const samples = [sourceLapOne, sourceLapTwo, sourceLapTwo].flatMap((lapRows, lapIndex) =>
+    lapRows.map((sample, index) => ({
+      ...sample,
       session_uid: sessionUid,
-      lap_number: 2,
-      frame_id: Number(first.frame_id) + 1,
-      last_lap_time_ms: 91_234,
-      received_at_ms: Date.now() + 1
-    }
-  ];
-  const collectorId = `e2e-local-${projectName}`;
+      frame_id: lapIndex * lapRows.length + index,
+      lap_number: lapIndex + 1,
+      received_at_ms: Date.now() + lapIndex * lapRows.length + index,
+      last_lap_time_ms: lapIndex === 0 ? null : 91_234 + lapIndex * 200,
+      packet_format: 2021,
+      game_track_id: 7,
+      track_name: "Silverstone",
+      track_length_m: 5896
+    }))
+  );
+  const collectorId = `test-e2e-${projectName}`;
   const ingested = await fetch("http://127.0.0.1:8000/v1/ingest/batches", {
     method: "POST",
     headers: { "content-type": "application/json" },
@@ -520,6 +573,7 @@ async function createSyntheticLocalSession(projectName: string) {
     })
   });
   expect(finalized.ok).toBe(true);
+  return (await finalized.json()).session_id;
 }
 
 function syntheticBakuStatus(calibration: Record<string, unknown>): MockLiveStatus {

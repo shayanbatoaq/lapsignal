@@ -1,7 +1,7 @@
 import { ArrowLeft, Columns3, Download, ListChecks } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { AnalysisCoverage, ProvenanceList, SessionSourceBanner, UnavailableAnalysis } from "@/components/SessionAnalysis";
+import { AnalysisCoverage, ProvenanceList, SessionStorageBanner, UnavailableAnalysis } from "@/components/SessionAnalysis";
 import { TelemetryChart } from "@/components/TelemetryChart";
 import { TrackMap } from "@/components/TrackMap";
 import { EvidenceCard, MetricCard, SectionHeading, StateCard } from "@/components/UI";
@@ -30,7 +30,7 @@ export async function SessionDetailContent({ session }: { session: SessionDetail
   const selected = (clean.length ? clean : session.laps.filter((lap) => lap.coaching_available)).slice(0, 2).map((lap) => lap.lap_number);
   const traces = selected.length ? await getTelemetry(session, selected) : [];
   return <>
-    <SessionSourceBanner demoData={session.demo_data}/>
+    <SessionStorageBanner/>
     <div className="session-detail-head">
       <div>
         <Link className="tag" href="/app/sessions"><ArrowLeft size={12}/> Session library</Link>
@@ -54,7 +54,7 @@ export async function SessionDetailContent({ session }: { session: SessionDetail
         {timed.length ? <div className="trend-chart"><svg viewBox="0 0 700 220" preserveAspectRatio="none" role="img" aria-label="Lap time trend across the stint">{[30, 80, 130, 180].map((y) => <line className="trend-grid" x1="0" x2="700" y1={y} y2={y} key={y}/>)}<polyline className="trend-line" points={timed.map((lap, index) => `${index * (700 / Math.max(1, timed.length - 1))},${170 - ((lap.lap_time_ms ?? trendBaseline) - trendBaseline) / 18}`).join(" ")}/>{timed.map((lap, index) => <circle className="trend-point" cx={index * (700 / Math.max(1, timed.length - 1))} cy={170 - ((lap.lap_time_ms ?? trendBaseline) - trendBaseline) / 18} r="4" key={lap.id}/>)}</svg></div> : <UnavailableAnalysis label="Lap-time trend"/>}
         {pace && stint ? <div className="technical-list"><div className="technical-row"><span>Pace degradation</span><strong>{pace.pace_degradation_ms_per_lap === null ? "Not available" : `${pace.pace_degradation_ms_per_lap} ms/lap`}</strong></div><div className="technical-row"><span>Long-run stability</span><strong>{stint.long_run_stability_score}/100</strong></div><div className="technical-row"><span>Tyre-wear correlation</span><strong>{stint.tyre_wear_correlation ?? "Not available"}</strong></div></div> : <UnavailableAnalysis label="Stint analysis"/>}
       </section>
-      <section className="span-4 surface-card"><SectionHeading eyebrow="Distance analysis" title="Time-loss zones"/><TrackMap trackName={session.track_name} online={false}/></section>
+      <section className="span-4 surface-card"><SectionHeading eyebrow="Distance analysis" title="Time-loss zones"/><TrackMap circuitMap={session.circuit_map ?? undefined} trackName={session.track_name} online={false}/></section>
       <section className="span-12"><SectionHeading eyebrow="Verified findings" title="Highest-value signals"/>{session.findings.length ? <div className="findings-grid">{session.findings.map((finding) => <EvidenceCard finding={finding} key={finding.id}/>)}</div> : <StateCard title="Findings unavailable">No evidence-backed findings were recorded for this session.</StateCard>}</section>
       <section className="span-12"><SectionHeading eyebrow="Measured · distance aligned" title={selected.length ? `Telemetry · laps ${selected.join(" and ")}` : "Telemetry"}/>{traces.length ? <TelemetryChart traces={traces}/> : <StateCard title="Telemetry unavailable">No saved distance-aligned trace is available for the selected laps. Lap times and analysis remain unchanged.</StateCard>}</section>
       <section className="span-8 surface-card table-card"><SectionHeading eyebrow="Lap preparation" title="Lap classification"/>{session.laps.length ? <LapTable laps={session.laps}/> : <StateCard title="Lap data unavailable">No completed laps have been materialized for this session yet.</StateCard>}</section>

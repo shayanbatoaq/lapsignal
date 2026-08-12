@@ -12,8 +12,8 @@ import lapsignal.ai as ai_module
 import lapsignal.main as main_module
 from lapsignal.config import get_settings
 from lapsignal.database import SessionLocal
-from lapsignal.demo import get_demo_sessions
-from lapsignal.main import LIVE_STATUS, _public_live_status, app, settings
+from lapsignal.database_init import initialize_database
+from lapsignal.main import LIVE_STATUS, _public_live_status, app
 from lapsignal.models import (
     AIRun,
     AnalysisRun,
@@ -25,6 +25,7 @@ from lapsignal.models import (
     Stint,
     TelemetryArtifact,
 )
+from tests.fixtures.synthetic_sessions import get_synthetic_sessions
 
 
 @pytest.fixture(autouse=True)
@@ -32,11 +33,7 @@ def cleanup_live_test_artifacts():
     yield
     with SessionLocal() as db:
         ids = list(
-            db.scalars(
-                select(RaceSession.id).where(
-                    RaceSession.session_uid.like("test-live-finalization%")
-                )
-            ).all()
+            db.scalars(select(RaceSession.id).where(RaceSession.session_uid.like("test-%"))).all()
         )
         if ids:
             for model in (
@@ -57,8 +54,42 @@ def cleanup_live_test_artifacts():
         get_settings().data_dir / "local" / "sessions",
     ):
         if directory.exists():
-            for path in directory.glob("*test-live-finalization*"):
+            for path in directory.glob("*test-*"):
                 path.unlink(missing_ok=True)
+
+
+def create_recorded_session(client: TestClient, *, uid: str | None = None) -> str:
+    uid = uid or f"test-recorded-{uuid4()}"
+    source_laps = get_synthetic_sessions()[0]["laps"][:3]
+    samples = []
+    frame_id = 0
+    for index, source_lap in enumerate(source_laps):
+        for row in deepcopy(source_lap["telemetry"])[::3]:
+            row.update(
+                session_uid=uid,
+                frame_id=frame_id,
+                lap_number=index + 1,
+                last_lap_time_ms=(source_laps[index - 1]["lap_time_ms"] if index else None),
+            )
+            frame_id += 1
+            samples.append(row)
+    response = client.post(
+        "/v1/ingest/batches", json={"collector_id": "test-recorder", "samples": samples}
+    )
+    assert response.status_code == 200
+    finalized = client.post(
+        "/v1/collector/session-events",
+        json={
+            "collector_id": "test-recorder",
+            "session_uid": uid,
+            "event": "session_ended",
+            "interrupted": False,
+            "raw_capture_path": None,
+            "normalized_capture_path": None,
+        },
+    )
+    assert finalized.status_code == 200
+    return finalized.json()["session_id"]
 
 
 def test_health_and_version():
@@ -77,6 +108,28 @@ def test_health_and_version():
         assert version["product"] == "0.1.0-alpha.4"
         assert version["build"] == 4
         assert version["build_identity"]["component"] == "api"
+
+
+def test_database_initialization_is_idempotent_and_never_creates_sessions():
+    with SessionLocal() as db:
+        before = list(db.scalars(select(RaceSession.id)).all())
+
+    first = initialize_database()
+    second = initialize_database()
+
+    with SessionLocal() as db:
+        after = list(db.scalars(select(RaceSession.id)).all())
+    assert first["sessions_created"] == 0
+    assert second["sessions_created"] == 0
+    assert after == before
+
+
+def test_openapi_has_no_bundled_session_routes_or_provenance_fields():
+    forbidden = "de" + "mo"
+    with TestClient(app) as client:
+        document = client.get("/openapi.json")
+    assert document.status_code == 200
+    assert forbidden not in document.text.lower()
 
 
 def test_ai_status_never_validates_provider_while_cloud_gate_is_disabled(monkeypatch):
@@ -110,16 +163,17 @@ def test_ai_status_never_validates_provider_while_cloud_gate_is_disabled(monkeyp
 
 def test_session_list_filters_and_paginates():
     with TestClient(app) as client:
+        create_recorded_session(client)
         response = client.get("/v1/sessions", params={"input_device": "controller", "page_size": 1})
         payload = response.json()
         assert response.status_code == 200
-        assert payload["total"] >= 2
+        assert payload["total"] == 1
         assert len(payload["items"]) == 1
 
 
 def test_session_detail_and_downsampled_telemetry():
-    session_id = get_demo_sessions()[0]["id"]
     with TestClient(app) as client:
+        session_id = create_recorded_session(client)
         detail = client.get(f"/v1/sessions/{session_id}").json()
         assert detail["findings"]
         telemetry = client.get(
@@ -131,7 +185,8 @@ def test_session_detail_and_downsampled_telemetry():
 
 
 def test_ingestion_validation_and_live_snapshot():
-    sample = get_demo_sessions()[0]["laps"][0]["telemetry"][0]
+    sample = deepcopy(get_synthetic_sessions()[0]["laps"][0]["telemetry"][0])
+    sample["session_uid"] = f"test-ingestion-{uuid4()}"
     with TestClient(app) as client:
         response = client.post(
             "/v1/ingest/batches", json={"collector_id": "test", "samples": [sample]}
@@ -140,7 +195,8 @@ def test_ingestion_validation_and_live_snapshot():
         assert response.json()["accepted"] == 1
         status = client.get("/v1/collector/status").json()
         assert status["collector_id"] == "test"
-        assert status["circuit_map"]["state"] == "unavailable"
+        assert status["circuit_map"]["state"] == "distance_projected"
+        assert status["circuit_map"]["map_source"] in {"built_in", "static"}
 
 
 def test_circuit_calibration_management_routes_are_safe():
@@ -202,17 +258,18 @@ def test_invalid_ingest_uses_error_envelope():
 
 
 def test_rule_based_coach_and_report():
-    session = get_demo_sessions()[0]
     with TestClient(app) as client:
-        report = client.post(f"/v1/sessions/{session['id']}/coach").json()
+        session_id = create_recorded_session(client)
+        report = client.post(f"/v1/sessions/{session_id}/coach").json()
         assert report["label"] == "Rule-based coaching"
         assert len(report["priority_actions"]) <= 3
-        public = client.get(f"/v1/reports/{session['report']['id']}").json()
+        public = client.get(f"/v1/reports/report-{session_id}").json()
         assert "telemetry" not in str(public)
 
 
 def test_progress_and_websocket_snapshot():
     with TestClient(app) as client:
+        create_recorded_session(client)
         assert client.get("/v1/progress").json()["points"]
         with client.websocket_connect("/v1/live") as socket:
             snapshot = socket.receive_json()
@@ -220,7 +277,7 @@ def test_progress_and_websocket_snapshot():
             assert "circuit_map" in snapshot["status"]
 
 
-def test_live_replay_demo_offline_state_precedence(monkeypatch):
+def test_live_replay_offline_state_precedence():
     original = deepcopy(LIVE_STATUS)
     try:
         LIVE_STATUS.update(mode="live", last_packet_at=datetime.now(UTC).isoformat())
@@ -228,9 +285,6 @@ def test_live_replay_demo_offline_state_precedence(monkeypatch):
         LIVE_STATUS["mode"] = "replay"
         assert _public_live_status()["state"] == "REPLAY"
         LIVE_STATUS["last_packet_at"] = (datetime.now(UTC) - timedelta(minutes=1)).isoformat()
-        monkeypatch.setattr(settings, "demo_mode", True)
-        assert _public_live_status()["state"] == "DEMO"
-        monkeypatch.setattr(settings, "demo_mode", False)
         assert _public_live_status()["state"] == "OFFLINE"
     finally:
         LIVE_STATUS.clear()
@@ -238,7 +292,7 @@ def test_live_replay_demo_offline_state_precedence(monkeypatch):
 
 
 def test_live_session_finalization_is_idempotent_and_performance_persists():
-    base = get_demo_sessions()[0]["laps"]
+    base = get_synthetic_sessions()[0]["laps"]
     first = deepcopy(base[0]["telemetry"][0])
     second = deepcopy(base[1]["telemetry"][0])
     uid = f"test-live-finalization-{uuid4()}"

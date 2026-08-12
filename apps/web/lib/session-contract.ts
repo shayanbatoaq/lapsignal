@@ -78,7 +78,6 @@ export const sessionDetailSchema = z.object({
   input_device: z.enum(["controller", "wheel", "unknown"]),
   started_at: z.string(),
   completed_at: z.string().nullable(),
-  demo_data: z.boolean(),
   analysis_status: z.string(),
   performance_mode: z.enum(["equal", "realistic", "unknown"]).nullable().optional(),
   performance_mode_source: z.enum(["user", "imported", "default", "unknown"]).nullable().optional(),
@@ -95,6 +94,7 @@ export const sessionDetailSchema = z.object({
   findings: z.array(findingSchema),
   provenance: z.record(z.string(), scalarValue),
   report: z.record(z.string(), z.unknown()).nullable(),
+  circuit_map: z.record(z.string(), z.unknown()).nullable().optional(),
   analysis_version: z.string().nullable().optional()
 });
 
@@ -110,7 +110,6 @@ const sessionSummarySchema = z.object({
   session_type: z.string(),
   input_device: z.enum(["controller", "wheel", "unknown"]),
   started_at: z.string(),
-  demo_data: z.boolean(),
   analysis_status: z.string(),
   lap_count: z.number().int().nonnegative(),
   clean_lap_count: z.number().int().nonnegative(),

@@ -22,4 +22,4 @@ Every finding has a stable ID, type, priority, severity, 0–1 confidence, plain
 
 ## Verification
 
-`services/api/tests/test_analytics.py` covers distance alignment, visible gaps, invalid-lap filtering, theoretical best, robust consistency, braking zones, throttle pickup, degradation, missing channels, low-quality inputs, and grounded findings. The fixed demo seed creates valid, invalid, anomalous, improving, consistent, and degrading examples without claiming real-world performance.
+`services/api/tests/test_analytics.py` covers distance alignment, visible gaps, invalid-lap filtering, theoretical best, robust consistency, braking zones, throttle pickup, degradation, missing channels, low-quality inputs, and grounded findings. Deterministic synthetic inputs live only in the test fixture package, use temporary storage, and never enter a user's database.

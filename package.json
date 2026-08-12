@@ -7,11 +7,10 @@
     "node": ">=22.13.0"
   },
   "scripts": {
-    "setup": "corepack pnpm install && uv sync --project services/api",
-    "seed": "uv run --project services/api python -m lapsignal.seed",
+    "setup": "corepack pnpm install && uv sync --project services/api && corepack pnpm db:init",
+    "db:init": "uv run --project services/api python -m lapsignal.database_init",
     "dev": "node scripts/dev-services.mjs clean-start",
     "dev:live": "corepack pnpm dev:clean-start",
-    "dev:demo": "corepack pnpm seed && corepack pnpm dev:clean-start",
     "dev:status": "node scripts/dev-services.mjs status",
     "dev:stop": "node scripts/dev-services.mjs stop",
     "dev:clean-start": "node scripts/dev-services.mjs clean-start",
@@ -23,7 +22,7 @@
     "test": "node --test scripts/dev-services.test.mjs && corepack pnpm -r --if-present test && uv run --project services/api pytest",
     "test:e2e": "corepack pnpm --filter @lapsignal/web test:e2e",
     "collector:listen": "corepack pnpm --filter @lapsignal/collector start listen --data-dir ../../data",
-    "collector:replay": "corepack pnpm --filter @lapsignal/collector start replay ../../data/fixtures/f1-2021-replay.jsonl --data-dir ../../data",
+    "collector:replay": "corepack pnpm --filter @lapsignal/collector start replay --data-dir ../../data",
     "calibration:list": "corepack pnpm --filter @lapsignal/collector exec tsx src/calibration-admin.ts list --data-dir ../../data",
     "calibration:validate": "corepack pnpm --filter @lapsignal/collector exec tsx src/calibration-admin.ts validate --data-dir ../../data",
     "calibration:promote": "corepack pnpm --filter @lapsignal/collector exec tsx src/calibration-admin.ts promote --data-dir ../../data",

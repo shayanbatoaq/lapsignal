@@ -61,7 +61,7 @@ from lapsignal.ai_diagnostics import (
     sanitize_provider_message,
 )
 from lapsignal.config import get_settings
-from lapsignal.demo import get_demo_sessions
+from tests.fixtures.synthetic_sessions import get_synthetic_sessions
 
 
 @pytest.fixture(autouse=True)
@@ -183,7 +183,7 @@ def provider_with_transport(handler):
 
 def run_provider(handler, *, bundle=None, max_tokens: int = 1500):
     provider, http_client = provider_with_transport(handler)
-    selected_bundle = bundle or evidence_bundle(get_demo_sessions()[0])
+    selected_bundle = bundle or evidence_bundle(get_synthetic_sessions()[0])
 
     async def execute():
         try:
@@ -224,7 +224,7 @@ def test_openrouter_headers_and_privacy_routing(monkeypatch):
 
 
 def test_evidence_is_compact_stable_and_redacted():
-    session = get_demo_sessions()[0]
+    session = get_synthetic_sessions()[0]
     bundle = evidence_bundle(session, {"experience_level": "intermediate"})
     text = bundle.model_dump_json()
     assert '"telemetry"' not in text and "api_key" not in text and "file_path" not in text
@@ -239,7 +239,7 @@ def test_evidence_is_compact_stable_and_redacted():
 
 
 def test_trusted_validation_rejects_unknown_evidence_and_unproven_gain():
-    bundle = evidence_bundle(get_demo_sessions()[0])
+    bundle = evidence_bundle(get_synthetic_sessions()[0])
     output = valid_output(bundle)
     assert validate_output(output, bundle) == output
     output.priority_actions[0].evidence_ids = ["EV-NOT-SUPPLIED"]
@@ -255,7 +255,7 @@ def test_trusted_validation_rejects_unknown_evidence_and_unproven_gain():
 
 
 def test_provider_contract_rejects_an_authored_track_location():
-    bundle = evidence_bundle(get_demo_sessions()[0])
+    bundle = evidence_bundle(get_synthetic_sessions()[0])
     payload = valid_provider_output(bundle).model_dump()
     payload["actions"][0]["location"] = "Copse"
     with pytest.raises(Exception, match="Extra inputs are not permitted"):
@@ -276,7 +276,7 @@ def test_provider_contract_rejects_an_authored_track_location():
     ],
 )
 def test_provider_text_rejects_hidden_factual_and_numerical_claims(field, value):
-    bundle = evidence_bundle(get_demo_sessions()[0])
+    bundle = evidence_bundle(get_synthetic_sessions()[0])
     output = valid_provider_output(bundle)
     setattr(output.actions[0], field, value)
     with pytest.raises(ProviderFailure, match="unsupported factual text"):
@@ -284,7 +284,7 @@ def test_provider_text_rejects_hidden_factual_and_numerical_claims(field, value)
 
 
 def test_provider_rejects_unknown_session_evidence_and_category_mismatch():
-    bundle = evidence_bundle(get_demo_sessions()[0])
+    bundle = evidence_bundle(get_synthetic_sessions()[0])
     unknown = valid_provider_output(bundle)
     unknown.actions[0].evidence_ids = ["another-session-EV-001"]
     with pytest.raises(ProviderFailure, match="not supplied"):
@@ -295,7 +295,7 @@ def test_provider_rejects_unknown_session_evidence_and_category_mismatch():
 
 
 def test_deterministic_enrichment_handles_corner_sector_neutral_and_multiple_locations():
-    bundle = evidence_bundle(get_demo_sessions()[0])
+    bundle = evidence_bundle(get_synthetic_sessions()[0])
     bundle.evidence[0]["corner_name"] = "Abbey"
     first = enrich_provider_output(valid_provider_output(bundle), bundle)
     assert first.priority_actions[0].location == "Abbey"
@@ -317,7 +317,7 @@ def test_deterministic_enrichment_handles_corner_sector_neutral_and_multiple_loc
 
 
 def test_deterministic_enrichment_supports_three_actions_and_only_evidence_backed_gain():
-    bundle = evidence_bundle(get_demo_sessions()[0])
+    bundle = evidence_bundle(get_synthetic_sessions()[0])
     bundle.evidence[0]["expected_gain_seconds"] = 0.12
     output = ProviderCoachOutput(
         actions=[
@@ -365,7 +365,7 @@ def test_deterministic_enrichment_supports_three_actions_and_only_evidence_backe
     ],
 )
 def test_every_provider_category_is_grounded_by_matching_metric(metric, category):
-    bundle = evidence_bundle(get_demo_sessions()[0])
+    bundle = evidence_bundle(get_synthetic_sessions()[0])
     bundle.evidence[0]["metric"] = metric
     output = valid_provider_output(bundle, category=category)
     trusted = enrich_provider_output(output, bundle)
@@ -578,7 +578,7 @@ def test_malformed_json_is_response_parse_error():
 
 
 def test_valid_json_that_fails_pydantic_schema():
-    bundle = evidence_bundle(get_demo_sessions()[0])
+    bundle = evidence_bundle(get_synthetic_sessions()[0])
 
     async def handler(_request):
         return httpx.Response(
@@ -593,7 +593,7 @@ def test_valid_json_that_fails_pydantic_schema():
 
 
 def test_length_finish_reason_records_truncation_before_schema_validation():
-    bundle = evidence_bundle(get_demo_sessions()[0])
+    bundle = evidence_bundle(get_synthetic_sessions()[0])
 
     async def handler(_request):
         return httpx.Response(
@@ -613,7 +613,7 @@ def test_length_finish_reason_records_truncation_before_schema_validation():
 
 
 def test_non_stop_finish_reason_is_rejected_before_schema_validation():
-    bundle = evidence_bundle(get_demo_sessions()[0])
+    bundle = evidence_bundle(get_synthetic_sessions()[0])
 
     async def handler(_request):
         return httpx.Response(
@@ -631,7 +631,7 @@ def test_non_stop_finish_reason_is_rejected_before_schema_validation():
 
 
 def test_refusal_is_rejected_before_schema_validation():
-    bundle = evidence_bundle(get_demo_sessions()[0])
+    bundle = evidence_bundle(get_synthetic_sessions()[0])
 
     async def handler(_request):
         payload = completion_payload(bundle)
@@ -647,7 +647,7 @@ def test_refusal_is_rejected_before_schema_validation():
 
 
 def test_missing_usage_is_rejected_before_schema_validation():
-    bundle = evidence_bundle(get_demo_sessions()[0])
+    bundle = evidence_bundle(get_synthetic_sessions()[0])
 
     async def handler(_request):
         return httpx.Response(
@@ -665,7 +665,7 @@ def test_missing_usage_is_rejected_before_schema_validation():
 
 
 def test_empty_content_is_rejected_after_transport_and_usage_capture():
-    bundle = evidence_bundle(get_demo_sessions()[0])
+    bundle = evidence_bundle(get_synthetic_sessions()[0])
 
     async def handler(_request):
         payload = completion_payload(bundle)
@@ -682,7 +682,7 @@ def test_empty_content_is_rejected_after_transport_and_usage_capture():
 
 
 def test_success_records_only_sanitized_acceptance_diagnostics():
-    bundle = evidence_bundle(get_demo_sessions()[0])
+    bundle = evidence_bundle(get_synthetic_sessions()[0])
 
     async def handler(_request):
         return httpx.Response(
@@ -714,7 +714,7 @@ def test_success_records_only_sanitized_acceptance_diagnostics():
 
 
 def test_valid_schema_with_unsupported_evidence_reference():
-    bundle = evidence_bundle(get_demo_sessions()[0])
+    bundle = evidence_bundle(get_synthetic_sessions()[0])
     content = valid_provider_output(bundle, evidence_id="NOT-SUPPLIED").model_dump_json()
 
     async def handler(_request):
@@ -810,11 +810,24 @@ def test_safe_rule_fallback_for_every_provider_failure(monkeypatch, category):
             return None
 
     monkeypatch.setattr(ai_module, "get_provider", lambda _name=None: FailingProvider())
+    monkeypatch.setattr(
+        ai_module,
+        "local_ai_preflight_state",
+        lambda _profile: AIPreflightState(
+            application_version="0.1.0-alpha.4",
+            schema_hash=COACH_STRICT_SCHEMA_HASH,
+            cloud_ai_guard_active=True,
+            ai_consent=True,
+            cloud_ai_enabled=True,
+            ai_provider="openrouter",
+            provider_configured=True,
+        ),
+    )
     db = FakeDB()
     result = asyncio.run(
         generate_with_fallback(
             db,
-            get_demo_sessions()[0],
+            get_synthetic_sessions()[0],
             {"ai_consent": True, "cloud_ai_enabled": True},
             regenerate=True,
         )
@@ -861,7 +874,7 @@ def test_sanitized_diagnostics_contain_no_key_prompt_or_raw_metadata(caplog):
 
 
 def test_exact_chat_completions_wire_serialization_is_offline_and_not_mixed():
-    bundle = evidence_bundle(get_demo_sessions()[0])
+    bundle = evidence_bundle(get_synthetic_sessions()[0])
     captured: dict[str, Any] = {}
 
     async def handler(request):
@@ -920,7 +933,7 @@ def test_exact_chat_completions_wire_serialization_is_offline_and_not_mixed():
 
 def test_request_builder_has_no_responses_api_fields():
     request = build_openrouter_chat_request(
-        evidence_bundle(get_demo_sessions()[0]),
+        evidence_bundle(get_synthetic_sessions()[0]),
         model="openai/gpt-5-mini",
         max_tokens=1500,
         routing={"data_collection": "deny", "require_parameters": True},
@@ -931,7 +944,7 @@ def test_request_builder_has_no_responses_api_fields():
 
 
 def test_endpoint_families_use_deliberate_token_parameters():
-    bundle = evidence_bundle(get_demo_sessions()[0])
+    bundle = evidence_bundle(get_synthetic_sessions()[0])
     common = {
         "model": "openai/gpt-5-mini",
         "max_tokens": 1500,
@@ -959,7 +972,7 @@ def test_official_client_strict_schema_is_the_runtime_contract():
 
 
 def test_request_schema_enumerates_only_the_exact_supplied_evidence_ids():
-    bundle = evidence_bundle(get_demo_sessions()[0])
+    bundle = evidence_bundle(get_synthetic_sessions()[0])
     schema = request_scoped_coach_schema(bundle)
     enum_values = schema["$defs"]["ProviderCoachingAction"]["properties"]["evidence_ids"]["items"][
         "enum"
@@ -1036,7 +1049,7 @@ def test_schema_contract_fails_before_provider_health_or_generation():
         model="openai/gpt-5-mini",
     )
     with pytest.raises(SchemaContractError):
-        asyncio.run(provider.generate_session_debrief(evidence_bundle(get_demo_sessions()[0])))
+        asyncio.run(provider.generate_session_debrief(evidence_bundle(get_synthetic_sessions()[0])))
     assert calls["health"] == 0
 
 
@@ -1071,7 +1084,7 @@ def test_endpoint_metadata_parsing_and_exact_parameter_compatibility():
     assert endpoint.zdr_compatible is None
 
     strict_request = build_openrouter_chat_request(
-        evidence_bundle(get_demo_sessions()[0]),
+        evidence_bundle(get_synthetic_sessions()[0]),
         model="openai/gpt-5-mini",
         max_tokens=1500,
         routing={"data_collection": "deny", "require_parameters": True},
@@ -1110,7 +1123,7 @@ def test_disabled_cloud_gate_returns_safe_fallback_without_provider_call(monkeyp
     result = asyncio.run(
         generate_with_fallback(
             NoopDB(),
-            get_demo_sessions()[0],
+            get_synthetic_sessions()[0],
             {"ai_consent": True, "cloud_ai_enabled": False},
         )
     )
@@ -1154,7 +1167,7 @@ def test_every_ai_preflight_failure_blocks_provider_calls(monkeypatch, change, f
     result = asyncio.run(
         generate_with_fallback(
             object(),
-            get_demo_sessions()[0],
+            get_synthetic_sessions()[0],
             {"ai_consent": True, "cloud_ai_enabled": True},
         )
     )
@@ -1189,7 +1202,7 @@ def test_openrouter_usage_cost_is_sanitized():
 
 
 def test_resolved_model_mismatch_is_rejected_without_retry():
-    bundle = evidence_bundle(get_demo_sessions()[0])
+    bundle = evidence_bundle(get_synthetic_sessions()[0])
 
     async def handler(_request):
         return httpx.Response(

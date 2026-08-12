@@ -2,8 +2,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Check, Gamepad2, RadioTower, ScanLine } from "lucide-react";
 import { Logo } from "@/components/Logo";
-import { getSessions } from "@/lib/data";
-import { formatLapTime } from "@lapsignal/telemetry-domain";
 import styles from "./landing.module.css";
 
 const TRACKS = {
@@ -33,14 +31,6 @@ const TRACKS = {
 type TrackKey = keyof typeof TRACKS;
 
 export default async function MarketingPage() {
-  const sessions = await getSessions();
-  const session = sessions.find((item) => item.id === "f1-controller-silverstone") ?? sessions[0]!;
-  const pace = session.metrics.pace;
-  const bestLap = session.laps.find((lap) => lap.valid && lap.lap_time_ms === pace.best_lap_ms) ?? session.laps.find((lap) => lap.valid)!;
-  const available = (pace.best_lap_ms ?? 0) - (pace.theoretical_best_ms ?? 0);
-  const finding = session.findings[0]!;
-  const cleanLaps = `${pace.clean_laps}/${session.laps.length}`;
-
   return (
     <div className={styles.shell}>
       <header className={styles.header}>
@@ -66,17 +56,17 @@ export default async function MarketingPage() {
           <div className={styles.heroMedia}>
             <Image src="/media/hero-rig.webp" alt="Driver using an unbranded home sim-racing rig" fill priority sizes="(max-width: 760px) 100vw, 58vw" />
             <div className={styles.mediaShade} />
-            <div className={`${styles.signalCard} ${styles.carbon}`} aria-label="Seeded telemetry recommendation">
-              <div className={styles.signalHead}><span><i /> ACTIVE CORNER</span><strong>C06 · HEAVY BRAKE</strong></div>
+            <div className={`${styles.signalCard} ${styles.carbon}`} aria-label="LapSignal coaching interface preview">
+              <div className={styles.signalHead}><span><i /> INTERFACE PREVIEW</span><strong>YOUR RECORDED EVIDENCE</strong></div>
               <div className={styles.recommendation}>
-                <small>ENGINEER CALL · P{finding.priority}</small>
-                <strong>{finding.title}</strong>
-                <p>{finding.recommended_action}</p>
+                <small>ENGINEER CALL</small>
+                <strong>Turn measured inputs into one clear next action.</strong>
+                <p>LapSignal waits for your own telemetry, then cites the evidence behind every coaching call.</p>
               </div>
               <div className={styles.signalStats}>
-                <Metric label="DELTA" value={`+${(available / 1000).toFixed(3)}`} tone="loss" />
-                <Metric label="CONFIDENCE" value={`${Math.round(finding.confidence * 100)}%`} tone="positive" />
-                <Metric label="BEST CLEAN" value={formatLapTime(pace.best_lap_ms)} />
+                <Metric label="SOURCE" value="LOCAL" />
+                <Metric label="CLAIMS" value="CITED" tone="positive" />
+                <Metric label="RAW DATA" value="PRIVATE" />
               </div>
               <TracePair />
             </div>
@@ -84,11 +74,11 @@ export default async function MarketingPage() {
           </div>
 
           <div className={styles.heroActions}>
-            <Link className="button" href="/app">Analyze a demo lap <ArrowRight size={17} /></Link>
+            <Link className="button" href="/app">Open LapSignal <ArrowRight size={17} /></Link>
             <a className="button secondary" href="#decoded">See the debrief</a>
           </div>
 
-          <div className={styles.compatibility} aria-label="Demo compatibility">
+          <div className={styles.compatibility} aria-label="Telemetry compatibility">
             <span>F1 2021</span><i /> <span>PS4 UDP</span><i /> <span>20 HZ</span><i /> <span>CONTROLLER READY</span>
           </div>
         </section>
@@ -98,21 +88,21 @@ export default async function MarketingPage() {
             <p className={styles.eyebrow}>01 · CORNER INTELLIGENCE</p>
             <h2 id="decoded-title">Your lap, <span>decoded.</span></h2>
             <p>See the corner. Find the loss. Know what to change. Every claim stays traceable.</p>
-            <Link href="/app/sessions/f1-controller-silverstone">Inspect every evidence ID <ArrowRight size={15} /></Link>
+            <Link href="/app/sessions">Inspect your evidence archive <ArrowRight size={15} /></Link>
           </div>
 
           <div className={`${styles.analysisFrame} ${styles.carbon}`}>
-            <header><span>SEEDED RUN · {session.track_name.toUpperCase()}</span><strong><i /> ANALYSIS COMPLETE</strong></header>
+            <header><span>RECORDED RUN · YOUR SESSION</span><strong><i /> EVIDENCE FIRST</strong></header>
             <div className={styles.analysisBody}>
               <figure className={styles.circuitPanel}>
                 <Circuit className={styles.analysisCircuit} track="monza" />
-                <figcaption>Monza reference outline · Silverstone values remain separate</figcaption>
+                <figcaption>Monza reference outline · session values appear only after capture</figcaption>
                 <div className={styles.cornerFlag}><span>REFERENCE TRACK</span><strong>MONZA</strong><small>RECOGNIZABLE OUTLINE</small></div>
               </figure>
               <div className={styles.analysisData}>
-                <div className={styles.lapReadout}><span>BEST CLEAN · LAP {bestLap.lap_number}</span><strong>{formatLapTime(pace.best_lap_ms)}</strong><small>{cleanLaps} clean laps · {pace.consistency_score} consistency</small></div>
+                <div className={styles.lapReadout}><span>BEST CLEAN · YOUR SESSION</span><strong>—:—.———</strong><small>No session data is bundled</small></div>
                 <TracePair detailed />
-                <div className={styles.engineerCall}><span>RECOMMENDATION</span><strong>{finding.title}</strong><p>{finding.recommended_action}</p></div>
+                <div className={styles.engineerCall}><span>RECOMMENDATION</span><strong>Built from your recorded evidence</strong><p>Specific actions appear only when measured telemetry supports them.</p></div>
               </div>
             </div>
           </div>
@@ -147,7 +137,7 @@ export default async function MarketingPage() {
           </div>
           <div className={styles.setupVisual}>
             <Image src="/media/setup-hardware.webp" alt="Unbranded controller beside a compact sim-racing wheel and pedal setup" fill loading="eager" sizes="(max-width: 760px) 100vw, 52vw" />
-            <div className={`${styles.profileCard} ${styles.carbon}`}><span>ACTIVE PROFILE</span><strong>CONTROLLER</strong><small>{session.track_name} · {session.laps.length} recorded laps</small><i /></div>
+            <div className={`${styles.profileCard} ${styles.carbon}`}><span>ACTIVE PROFILE</span><strong>YOUR INPUT</strong><small>Your finalized sessions stay local</small><i /></div>
           </div>
         </section>
 
@@ -156,8 +146,8 @@ export default async function MarketingPage() {
           <div>
             <p className={styles.eyebrow}>READY FOR THE NEXT RUN</p>
             <h2 id="cta-title">Your next lap <span>starts here.</span></h2>
-            <p>Open the reproducible Silverstone demo. Read the signal, take the call, and go again.</p>
-            <Link className="button" href="/app">Analyze a demo lap <ArrowRight size={17} /></Link>
+            <p>Start the collector, record your first session, read the signal, and go again.</p>
+            <Link className="button" href="/app">Open LapSignal <ArrowRight size={17} /></Link>
           </div>
         </section>
       </main>
@@ -177,7 +167,7 @@ function Metric({ label, value, tone }: { label: string; value: string; tone?: "
 
 function TracePair({ detailed = false }: { detailed?: boolean }) {
   return (
-    <div className={`${styles.traces} ${detailed ? styles.tracesDetailed : ""}`} aria-label="Normalized seeded driver and reference telemetry traces">
+    <div className={`${styles.traces} ${detailed ? styles.tracesDetailed : ""}`} aria-label="Normalized driver and reference telemetry traces">
       <div><span>BRAKE</span><svg viewBox="0 0 440 48" preserveAspectRatio="none" aria-hidden="true"><path className={styles.traceReference} d="M0 41 L72 41 L96 7 L176 7 L201 36 L274 39 L304 17 L351 35 L440 40" /><path className={styles.traceDriver} d="M0 41 L83 41 L110 10 L185 9 L219 38 L280 40 L318 23 L365 38 L440 40" /></svg></div>
       <div><span>THROTTLE</span><svg viewBox="0 0 440 48" preserveAspectRatio="none" aria-hidden="true"><path className={styles.traceReference} d="M0 7 L68 7 L104 41 L190 41 L224 10 L282 7 L315 36 L365 12 L440 7" /><path className={styles.traceDriver} d="M0 8 L79 8 L117 42 L198 42 L235 13 L291 9 L328 40 L375 16 L440 8" /></svg></div>
       <div className={styles.traceLegend}><span><i /> DRIVER</span><span><i /> REFERENCE</span></div>

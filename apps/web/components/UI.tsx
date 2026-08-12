@@ -1,10 +1,5 @@
 import { AlertTriangle, ArrowUpRight, Check, Info, type LucideIcon } from "lucide-react";
 import type { Finding } from "@/lib/types";
-import { DemoStatusBanner } from "./DemoStatusBanner";
-
-export function DemoBanner() {
-  return <DemoStatusBanner />;
-}
 
 export function ConnectionState({ online }: { online: boolean }) {
   return <span className={`status-chip ${online ? "" : "muted"}`}><span className={`status-dot ${online ? "live" : "idle"}`} />{online ? "Collector online" : "Collector offline"}</span>;

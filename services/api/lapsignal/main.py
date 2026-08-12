@@ -12,7 +12,6 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 from fastapi import (
-    BackgroundTasks,
     FastAPI,
     HTTPException,
     Query,
@@ -31,14 +30,15 @@ from .circuit_calibrations import CircuitCalibrationRepository
 from .coach import answer_question
 from .config import REPO_ROOT, get_settings
 from .database import SessionLocal
-from .demo import get_demo_report, get_demo_session, get_demo_sessions
+from .database_init import initialize_database
 from .live_sessions import (
     ensure_live_session,
     finalize_live_session,
     live_session_payload,
     live_session_summaries,
+    session_map_sample,
 )
-from .models import DriverProfile, RaceSession
+from .models import CoachReport, DriverProfile, RaceSession
 from .schemas import (
     CoachQuestion,
     CollectorHeartbeat,
@@ -48,12 +48,13 @@ from .schemas import (
     PerformanceModePayload,
     SessionDetailResponse,
 )
-from .seed import seed_database
 from .storage import LocalStorage
 
 settings = get_settings()
 storage = LocalStorage(settings.data_dir)
-calibration_repository = CircuitCalibrationRepository(settings.data_dir)
+calibration_repository = CircuitCalibrationRepository(
+    settings.data_dir, asset_data_dir=REPO_ROOT / "data"
+)
 
 LIVE_STATUS: dict = {
     "online": False,
@@ -62,8 +63,8 @@ LIVE_STATUS: dict = {
     "adapter_version": None,
     "telemetry_schema_version": 1,
     "mode": None,
-    "game": "F1 2021",
-    "packet_format": 2021,
+    "game": None,
+    "packet_format": None,
     "session_uid": None,
     "packet_rate_hz": 0.0,
     "packet_loss_available": False,
@@ -71,7 +72,7 @@ LIVE_STATUS: dict = {
     "last_packet_at": None,
     "recording": False,
     "current_sample": None,
-    "state": "DEMO" if settings.demo_mode else "OFFLINE",
+    "state": "OFFLINE",
     "context": {},
 }
 LIVE_SOCKETS: set[WebSocket] = set()
@@ -91,7 +92,7 @@ PROFILE: dict = {
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    seed_database(reset=False)
+    initialize_database()
     stop = asyncio.Event()
     task = asyncio.create_task(_inactivity_monitor(stop))
     managed_stop_task = asyncio.create_task(_managed_stop_monitor(stop))
@@ -192,42 +193,6 @@ def _build_identity() -> dict:
     )
 
 
-def _lap_without_telemetry(lap: dict) -> dict:
-    payload = {key: value for key, value in lap.items() if key != "telemetry"}
-    payload.setdefault("coaching_available", True)
-    payload.setdefault(
-        "status_label",
-        "Clean lap" if lap.get("valid") else "Invalid lap · coaching available",
-    )
-    return payload
-
-
-def _session_summary(session: dict) -> dict:
-    pace = session["metrics"]["pace"]
-    return {
-        "id": session["id"],
-        "title": session["title"],
-        "game_id": session["game_id"],
-        "game_label": session["game_label"],
-        "track_id": session["track_id"],
-        "track_name": session["track_name"],
-        "car_id": session["car_id"],
-        "car_class": session["car_class"],
-        "session_type": session["session_type"],
-        "input_device": session["input_device"],
-        "started_at": session["started_at"],
-        "demo_data": session["demo_data"],
-        "analysis_status": session["analysis_status"],
-        "lap_count": len(session["laps"]),
-        "clean_lap_count": pace["clean_laps"],
-        "best_lap_ms": pace["best_lap_ms"],
-        "median_lap_ms": pace["median_lap_ms"],
-        "consistency_score": pace["consistency_score"],
-        "pace_degradation_ms_per_lap": pace["pace_degradation_ms_per_lap"],
-        "top_priority": session["findings"][0] if session["findings"] else None,
-    }
-
-
 async def _broadcast(payload: dict) -> None:
     stale = []
     for socket in LIVE_SOCKETS:
@@ -253,8 +218,6 @@ def _public_live_status() -> dict:
         if fresh and mode == "live"
         else "REPLAY"
         if fresh and mode == "replay"
-        else "DEMO"
-        if settings.demo_mode
         else "OFFLINE"
     )
     return {
@@ -264,10 +227,9 @@ def _public_live_status() -> dict:
         "online": state in {"LIVE", "REPLAY"},
         "state": state,
         "source_label": {
-            "LIVE": "Live PS4",
-            "REPLAY": "Recorded replay",
-            "DEMO": "Demo data",
-            "OFFLINE": "Offline",
+            "LIVE": "Live PS4 telemetry",
+            "REPLAY": "Recorded telemetry replay",
+            "OFFLINE": "Collector offline",
         }[state],
     }
 
@@ -331,9 +293,8 @@ async def _ingest(collector_id: str, samples: list[dict]) -> dict:
     ):
         with SessionLocal() as db:
             finalize_live_session(db, previous_uid, interrupted=False)
-    if collector_id != "demo-replay":
-        with SessionLocal() as db:
-            ensure_live_session(db, current)
+    with SessionLocal() as db:
+        ensure_live_session(db, current)
     LIVE_STATUS.update(
         {
             "online": True,
@@ -341,7 +302,7 @@ async def _ingest(collector_id: str, samples: list[dict]) -> dict:
             "session_uid": current.get("session_uid"),
             "last_packet_at": datetime.now(UTC).isoformat(),
             "current_sample": current,
-            "recording": collector_id != "demo-replay",
+            "recording": True,
             "context": {
                 key: current.get(key)
                 for key in (
@@ -362,31 +323,18 @@ async def _ingest(collector_id: str, samples: list[dict]) -> dict:
             },
         }
     )
-    if collector_id != "demo-replay":
-        storage.append_jsonl(f"local/live/sessions/{current['session_uid']}.jsonl", samples)
-    else:
-        storage.append_jsonl(f"local/live/{collector_id}.jsonl", samples)
+    storage.append_jsonl(f"local/live/sessions/{current['session_uid']}.jsonl", samples)
     await _broadcast(
         {"type": "telemetry_batch", "status": _public_live_status(), "samples": samples[-30:]}
     )
     return {"accepted": len(samples), "buffer_size": len(LIVE_BUFFER)}
 
 
-async def _run_demo_replay() -> None:
-    session = get_demo_sessions()[0]
-    LIVE_STATUS.update({"mode": "replay", "recording": True, "packet_rate_hz": 20.0})
-    samples = [sample for lap in session["laps"][:2] for sample in lap["telemetry"][::4]]
-    for index in range(0, len(samples), 4):
-        await _ingest("demo-replay", samples[index : index + 4])
-        await asyncio.sleep(0.08)
-    LIVE_STATUS["recording"] = False
-
-
 @app.get("/health")
 def health():
     return {
         "status": "ok",
-        "mode": "demo" if settings.demo_mode else "local",
+        "mode": "local",
         "database": "ready",
         **_build_identity(),
     }
@@ -482,7 +430,6 @@ def sessions(
 ):
     with SessionLocal() as db:
         items = live_session_summaries(db)
-    items += [_session_summary(session) for session in get_demo_sessions()]
     if search:
         needle = search.lower()
         items = [item for item in items if needle in json.dumps(item).lower()]
@@ -517,25 +464,22 @@ def sessions(
 def session_detail(session_id: str):
     with SessionLocal() as db:
         row = db.get(RaceSession, session_id)
-        if row and not row.demo_data:
-            return live_session_payload(db, row)
-    session = get_demo_session(session_id)
-    if not session:
-        raise HTTPException(404, "Session not found")
-    session["laps"] = [_lap_without_telemetry(lap) for lap in session["laps"]]
-    return session
+        if not row:
+            raise HTTPException(404, "Session not found")
+        payload = live_session_payload(db, row)
+        payload["circuit_map"] = calibration_repository.status_for(
+            session_map_sample(row.session_uid)
+        )
+        return payload
 
 
 @app.get("/v1/sessions/{session_id}/laps")
 def session_laps(session_id: str):
     with SessionLocal() as db:
         row = db.get(RaceSession, session_id)
-        if row and not row.demo_data:
-            return {"items": live_session_payload(db, row)["laps"]}
-    session = get_demo_session(session_id)
-    if not session:
-        raise HTTPException(404, "Session not found")
-    return {"items": [_lap_without_telemetry(lap) for lap in session["laps"]]}
+        if not row:
+            raise HTTPException(404, "Session not found")
+        return {"items": live_session_payload(db, row)["laps"]}
 
 
 @app.get("/v1/sessions/{session_id}/telemetry")
@@ -547,13 +491,9 @@ def session_telemetry(
 ):
     with SessionLocal() as db:
         row = db.get(RaceSession, session_id)
-        session = (
-            live_session_payload(db, row, include_telemetry=True)
-            if row and not row.demo_data
-            else get_demo_session(session_id)
-        )
-    if not session:
-        raise HTTPException(404, "Session not found")
+        if not row:
+            raise HTTPException(404, "Session not found")
+        session = live_session_payload(db, row, include_telemetry=True)
     selected = {int(value) for value in lap_numbers.split(",")} if lap_numbers else {1}
     allowed = {
         "speed_kph",
@@ -595,42 +535,33 @@ def session_telemetry(
 def finalize_session(session_id: str):
     with SessionLocal() as db:
         row = db.get(RaceSession, session_id)
-        if row and not row.demo_data:
-            return finalize_live_session(db, row.session_uid, interrupted=True)
-    if not get_demo_session(session_id):
-        raise HTTPException(404, "Session not found")
-    return {
-        "session_id": session_id,
-        "status": "finalized",
-        "analysis_ready": True,
-        "idempotent": True,
-    }
+        if not row:
+            raise HTTPException(404, "Session not found")
+        return finalize_live_session(db, row.session_uid, interrupted=True)
 
 
 @app.post("/v1/sessions/{session_id}/analyze")
 def analyze(session_id: str):
-    session = get_demo_session(session_id)
-    if not session:
-        raise HTTPException(404, "Session not found")
-    return {
-        "session_id": session_id,
-        "status": "complete",
-        **session["metrics"],
-        "findings": session["findings"],
-    }
+    with SessionLocal() as db:
+        row = db.get(RaceSession, session_id)
+        if not row:
+            raise HTTPException(404, "Session not found")
+        session = live_session_payload(db, row)
+        return {
+            "session_id": session_id,
+            "status": row.status,
+            **session["metrics"],
+            "findings": session["findings"],
+        }
 
 
 @app.post("/v1/sessions/{session_id}/coach")
 async def coach(session_id: str, regenerate: bool = False):
     with SessionLocal() as db:
         row = db.get(RaceSession, session_id)
-        session = (
-            live_session_payload(db, row, include_telemetry=True)
-            if row and not row.demo_data
-            else get_demo_session(session_id)
-        )
-        if not session:
+        if not row:
             raise HTTPException(404, "Session not found")
+        session = live_session_payload(db, row, include_telemetry=True)
         return await generate_with_fallback(
             db, session, _profile_dict(db), regenerate=regenerate, max_tokens=1_500
         )
@@ -667,17 +598,20 @@ def set_live_performance_mode(payload: PerformanceModePayload):
 
 @app.post("/v1/sessions/{session_id}/coach/questions")
 def coach_question(session_id: str, payload: CoachQuestion):
-    session = get_demo_session(session_id)
-    if not session:
-        raise HTTPException(404, "Session not found")
-    return answer_question(session, payload.question)
+    with SessionLocal() as db:
+        row = db.get(RaceSession, session_id)
+        if not row:
+            raise HTTPException(404, "Session not found")
+        return answer_question(live_session_payload(db, row), payload.question)
 
 
 @app.get("/v1/progress")
 def progress(input_device: str | None = None, days: int = Query(90, ge=7, le=365)):
-    sessions = get_demo_sessions()
+    with SessionLocal() as db:
+        rows = db.scalars(select(RaceSession).order_by(RaceSession.started_at)).all()
+        sessions = [live_session_payload(db, row) for row in rows]
     if input_device:
-        sessions = [session for session in sessions if session["input_device"] == input_device]
+        sessions = [item for item in sessions if item["input_device"] == input_device]
     points = [
         {
             "session_id": session["id"],
@@ -691,37 +625,28 @@ def progress(input_device: str | None = None, days: int = Query(90, ge=7, le=365
                 90 - (session["metrics"]["throttle"].get("time_to_full_s") or 0) * 5, 1
             ),
         }
-        for session in sorted(sessions, key=lambda item: item["started_at"])
+        for session in sessions
     ]
     return {
         "days": days,
         "points": points,
         "sessions_by_device": {
-            "controller": sum(s["input_device"] == "controller" for s in get_demo_sessions()),
-            "wheel": sum(s["input_device"] == "wheel" for s in get_demo_sessions()),
+            "controller": sum(s["input_device"] == "controller" for s in sessions),
+            "wheel": sum(s["input_device"] == "wheel" for s in sessions),
+            "unknown": sum(s["input_device"] == "unknown" for s in sessions),
         },
-        "skills": {"pace": 74, "consistency": 81, "braking": 77, "throttle": 72, "stint": 79},
-        "achievements": [
-            {
-                "id": "clean-10",
-                "label": "10 clean laps",
-                "evidence": "Recorded in the hypercar stint.",
-            },
-            {
-                "id": "stable-close",
-                "label": "Stable closing phase",
-                "evidence": "Derived from stored phase consistency.",
-            },
-        ],
+        "skills": {},
+        "achievements": [],
     }
 
 
 @app.get("/v1/reports/{report_id}")
 def report(report_id: str):
-    payload = get_demo_report(report_id)
-    if not payload:
-        raise HTTPException(404, "Report not found")
-    return payload
+    with SessionLocal() as db:
+        payload = db.get(CoachReport, report_id)
+        if not payload:
+            raise HTTPException(404, "Report not found")
+        return payload.report_json
 
 
 @app.get("/v1/profile")
@@ -733,7 +658,7 @@ def get_profile():
 @app.put("/v1/profile")
 def update_profile(payload: DriverProfilePayload):
     with SessionLocal() as db:
-        row = db.get(DriverProfile, "demo-driver")
+        row = db.get(DriverProfile, "local-driver")
         if not row:
             raise HTTPException(500, "Local profile is unavailable")
         for key, value in payload.model_dump().items():
@@ -743,7 +668,7 @@ def update_profile(payload: DriverProfilePayload):
 
 
 def _profile_dict(db) -> dict:
-    row = db.get(DriverProfile, "demo-driver")
+    row = db.get(DriverProfile, "local-driver")
     if not row:
         return PROFILE
     return {
@@ -782,37 +707,15 @@ async def ai_status(validate_model: bool = False):
     return status
 
 
-@app.post("/v1/ai/test-connection")
-async def test_ai_connection():
-    with SessionLocal() as db:
-        profile = _profile_dict(db)
-        if not (profile["ai_consent"] and profile["cloud_ai_enabled"]):
-            raise HTTPException(409, "Enable AI consent and Cloud AI first")
-        result = await generate_with_fallback(
-            db, get_demo_sessions()[0], profile, regenerate=True, max_tokens=800
-        )
-        if result["mode"] != "openrouter":
-            raise HTTPException(503, result.get("explanation") or "OpenRouter test failed")
-        return {
-            "success": True,
-            "provider": "openrouter",
-            "requested_model": result["provenance"]["requested_model"],
-            "resolved_model": result["provenance"]["resolved_model"],
-            "latency_ms": None,
-            "validated": True,
-            "evidence_ids": [
-                eid for action in result["priority_actions"] for eid in action["evidence_ids"]
-            ],
-        }
-
-
 @app.get("/v1/export")
 def export_data():
+    with SessionLocal() as db:
+        summaries = live_session_summaries(db)
     return {
         "export_version": 1,
         "generated_at": datetime.now(UTC).isoformat(),
         "profile": get_profile(),
-        "sessions": [_session_summary(session) for session in get_demo_sessions()],
+        "sessions": summaries,
         "note": "High-frequency raw telemetry is excluded from this summary export.",
     }
 
@@ -827,18 +730,7 @@ def delete_local_data(confirm: str = Query(...)):
     if target.exists():
         shutil.rmtree(target)
     target.mkdir(parents=True, exist_ok=True)
-    return {"deleted": True, "scope": "local user telemetry", "demo_data_preserved": True}
-
-
-@app.post("/v1/demo/reset")
-def reset_demo():
-    return seed_database(reset=True)
-
-
-@app.post("/v1/demo/replay")
-async def start_demo_replay(background_tasks: BackgroundTasks):
-    background_tasks.add_task(_run_demo_replay)
-    return {"started": True, "mode": "replay", "collector_id": "demo-replay"}
+    return {"deleted": True, "scope": "local user telemetry"}
 
 
 @app.websocket("/v1/live")

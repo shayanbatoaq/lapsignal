@@ -85,7 +85,6 @@ export function SettingsView() {
   const [apiBuild, setApiBuild] = useState<BuildIdentity | null>(null);
   const [calibrations, setCalibrations] = useState<CalibrationItem[]>([]);
   const [message, setMessage] = useState<string | null>(null);
-  const [testing, setTesting] = useState(false);
 
   const refreshCalibrations = async () => {
     const payload = await fetch(`${API}/v1/circuit-calibrations`, { cache: "no-store" }).then((response) => response.json());
@@ -116,24 +115,6 @@ export function SettingsView() {
     }
   };
 
-  const testConnection = async () => {
-    if (!profile.ai_consent || !profile.cloud_ai_enabled) {
-      setMessage("Enable AI consent and Cloud AI before testing.");
-      return;
-    }
-    setTesting(true);
-    try {
-      const response = await fetch(`${API}/v1/ai/test-connection`, { method: "POST" });
-      const payload = await response.json();
-      setMessage(response.ok ? `Validated ${payload.provider} · ${payload.resolved_model}.` : payload.error?.message ?? "Connection test failed.");
-      setAI(await fetch(`${API}/v1/ai/status`).then((result) => result.json()));
-    } catch {
-      setMessage("Connection test could not reach the local API.");
-    } finally {
-      setTesting(false);
-    }
-  };
-
   const exportData = async () => {
     const payload = await fetch(`${API}/v1/export`).then((response) => response.json());
     const url = URL.createObjectURL(new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" }));
@@ -145,9 +126,9 @@ export function SettingsView() {
   };
 
   const deleteData = async () => {
-    if (!confirm("Delete local user telemetry? Demo data remains.")) return;
+    if (!confirm("Permanently delete all local user telemetry and saved sessions?")) return;
     const response = await fetch(`${API}/v1/local-data?confirm=${encodeURIComponent("DELETE LOCAL DATA")}`, { method: "DELETE" });
-    setMessage(response.ok ? "Local telemetry deleted; demo data preserved." : "Nothing was deleted.");
+    setMessage(response.ok ? "Local telemetry and saved sessions deleted." : "Nothing was deleted.");
   };
 
   const resetCalibration = async (item: CalibrationItem) => {
@@ -257,9 +238,9 @@ export function SettingsView() {
               <Toggle title="Cloud AI" note="Server-side provider only. No raw captures, paths, identities, or network data." value={profile.cloud_ai_enabled} disabled={!profile.ai_consent} onChange={(value) => void save({ ...profile, cloud_ai_enabled: value })} />
               <Toggle title="Post-session automatic coaching" note="Allow one debrief after durable finalization." value={profile.post_session_ai_enabled} disabled={!profile.cloud_ai_enabled} onChange={(value) => void save({ ...profile, post_session_ai_enabled: value })} />
               <Toggle title="Per-lap coaching · experimental" note="Disabled by default; never runs per telemetry sample." value={profile.ai_live_lap_coaching} disabled={!profile.cloud_ai_enabled} onChange={(value) => void save({ ...profile, ai_live_lap_coaching: value })} />
-              <button className="button secondary" onClick={testConnection} disabled={testing}>
-                {testing ? "Validating structured output…" : "Test AI connection"}
-              </button>
+              <StateCard title="Provider verification">
+                Cloud coaching runs only from a selected recorded session after both consent gates are enabled. This page performs no provider request.
+              </StateCard>
               <StateCard title="What leaves this laptop">
                 Only compact lap summaries, deterministic metrics, evidence IDs, selected performance mode, and equipment context. Raw high-frequency telemetry never leaves through this feature.
               </StateCard>
@@ -272,7 +253,7 @@ export function SettingsView() {
               <Setting title="Export summary" note="Profile, sessions, findings and provenance; no high-frequency traces.">
                 <button className="button secondary small" onClick={exportData}><Download size={14} /> Export</button>
               </Setting>
-              <Setting title="Delete local user telemetry" note="Demo fixtures remain available.">
+              <Setting title="Delete local user telemetry" note="Removes saved sessions and local telemetry after explicit confirmation.">
                 <button className="button ghost small" onClick={deleteData}><Trash2 size={14} /> Delete</button>
               </Setting>
             </>

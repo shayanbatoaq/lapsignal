@@ -15,7 +15,6 @@ class Settings(BaseSettings):
     )
 
     app_env: str = "development"
-    demo_mode: bool = True
     database_url: str = f"sqlite:///{(REPO_ROOT / 'data/local/lapsignal.db').as_posix()}"
     data_dir: Path = REPO_ROOT / "data"
     api_host: str = "127.0.0.1"
@@ -42,7 +41,7 @@ class Settings(BaseSettings):
     ai_live_lap_coaching: bool = False
     live_session_inactivity_seconds: int = 30
     git_sha: str = "local"
-    build_number: int = 3
+    build_number: int = 4
 
     @field_validator("data_dir")
     @classmethod

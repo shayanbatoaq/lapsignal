@@ -16,7 +16,7 @@ SQLite is the zero-configuration default; SQLAlchemy models remain PostgreSQL-co
 | `CoachReport`, `CoachMessage`, `ModelRun` | Structured explanation and AI/fallback provenance |
 | `AppBuild` | Product/build/component versions and Git SHA |
 
-Raw sample streams are not relational rows. Demo telemetry is stored as Zstandard-compressed Parquet; native collection also records a length-prefixed `.lsraw` capture and normalized JSONL. Storage paths are resolved beneath `DATA_DIR`; traversal outside that root is rejected.
+Raw sample streams are not relational rows. Native collection records a length-prefixed `.lsraw` capture and normalized JSONL; finalized telemetry is stored as Zstandard-compressed Parquet. Storage paths are resolved beneath `DATA_DIR`; traversal outside that root is rejected.
 
 Finalized physical or replay sessions persist lap validity, the complete nested analysis contract (pace, stint, braking, throttle, and steering), evidence-backed findings, a rule-based coach report, and normalized Parquet telemetry. The session telemetry endpoint reloads the local normalized stream for bounded, downsampled multi-lap comparison after a process restart. Invalid and incomplete attempts remain available as technique evidence, but only clean completed laps can set personal-best, benchmark, or theoretical-best timing.
 
@@ -37,3 +37,5 @@ Unavailable adapter fields are `null`; the adapter must never synthesize a measu
 ## Provenance chain
 
 Each stored session links the collector, F1 adapter, telemetry schema, normalized and raw artifacts when present, analysis version, input device, build number, and Git SHA. Findings link to an analysis run and carry metric IDs, units, reference values, involved laps, confidence, and limitations. Reports list every supplied finding ID so UI claims can return to deterministic evidence.
+
+`pnpm db:init` is idempotent and content-free. It creates schema plus required adapter/build rows and never creates sessions, laps, artifacts, analyses, findings, reports, comparisons, personal bests, or progress points.

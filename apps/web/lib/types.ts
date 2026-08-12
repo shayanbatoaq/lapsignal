@@ -50,7 +50,6 @@ export interface Session {
   input_device: "controller" | "wheel" | "unknown";
   started_at: string;
   completed_at: string | null;
-  demo_data: boolean;
   analysis_status: string;
   performance_mode?: "equal" | "realistic" | "unknown" | null;
   performance_mode_source?: "user" | "imported" | "default" | "unknown" | null;
@@ -84,6 +83,7 @@ export interface Session {
   findings: Finding[];
   provenance: Record<string, string | number | boolean | null>;
   report: CoachReport;
+  circuit_map?: CircuitMapStatus | null;
 }
 
 export interface SessionSummary {
@@ -98,7 +98,6 @@ export interface SessionSummary {
   session_type: string;
   input_device: "controller" | "wheel" | "unknown";
   started_at: string;
-  demo_data: boolean;
   analysis_status: string;
   lap_count: number;
   clean_lap_count: number;
@@ -179,3 +178,4 @@ export interface TelemetryTrace {
   quality_score: number;
   samples: TelemetryPoint[];
 }
+import type { CircuitMapStatus } from "@lapsignal/contracts";

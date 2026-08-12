@@ -32,7 +32,6 @@ Provider output is untrusted and limited to category, priority, exact request-en
 
 ```powershell
 pnpm setup
-pnpm seed
 pnpm dev:app-start
 ```
 
@@ -48,6 +47,8 @@ Use `pnpm dev:status` to inspect verified processes and `pnpm dev:stop` to stop 
 
 ## Verification and privacy
 
-The alpha.4 gate passed 207 unit/API/process tests plus 31 final Playwright flows (one intentional duplicate responsive-matrix skip), complete lint/type/build checks, schema audit, secret audit, capture inventory, and runtime health checks. `.env`, raw captures, databases, Parquet/telemetry recordings, logs, PID files, caches, and QA artifacts remain ignored and excluded from the release.
+The bundled-session architecture has subsequently been removed without changing the alpha.4/build 4 identity. Fresh initialization stays empty; saved physical/imported sessions remain available while the collector is offline; replay requires an explicit local file. Automated synthetic inputs are confined to isolated temporary test storage and are not exposed through production routes.
+
+The verification gate covers 208 unit/API/process checks and 31 isolated desktop/mobile browser flows, plus complete lint/type/build checks, schema and terminology audits, secret audit, capture inventory, and runtime health checks. `.env`, raw captures, databases, Parquet/telemetry recordings, logs, PID files, caches, test fixtures copied at runtime, and QA artifacts remain ignored and excluded from Git.
 
 The AI verification milestone is closed. Product development can move to the next milestone without another paid verification attempt.

@@ -1,28 +1,23 @@
 # LapSignal implementation plan
 
-## Status
+## Current direction
 
-LapSignal starts at `v0.1.0-alpha.1` (build 1). The repository was empty, so no prior application code or user changes required preservation.
+LapSignal is a real-data-first, local telemetry product. A fresh installation initializes schema and required static metadata but contains no sessions. Sessions enter the product only from the native collector or an explicitly selected local recording.
 
 ## Architecture decisions
 
-1. **Offline-first demo:** deterministic JSON fixtures are the canonical demo source. The API seeds SQLite metadata and materializes normalized telemetry as Parquet when PyArrow is available, with JSONL as a transparent local fallback.
-2. **Bounded telemetry:** raw captures and normalized telemetry live outside relational tables. Browser responses are downsampled.
+1. **Truthful local state:** the UI distinguishes an unavailable API, an offline collector, an empty library, and persisted saved sessions. It never substitutes bundled session data.
+2. **Bounded telemetry:** physical captures and normalized telemetry live outside relational tables. Browser responses are downsampled.
 3. **One analytics authority:** Python calculations produce findings. The coach only summarizes stored evidence.
-4. **One optional coach agent:** the OpenAI Agents SDK uses narrow typed tools and a Pydantic output model. Missing credentials always select the deterministic fallback.
+4. **One optional coach agent:** the provider path uses narrow typed contracts and Pydantic validation. Missing consent, Cloud AI, configuration, or valid output always selects the deterministic fallback without a network attempt.
 5. **Native collector:** Node's `dgram` owns transport; F1 2021 parsing, normalization, recording, delivery, and CLI concerns stay isolated.
 6. **Game-independent contracts:** the normalized schema is versioned separately from the F1 adapter.
-7. **Client boundaries:** the Next.js app works against the API when available and falls back to the same seeded snapshot for portfolio reliability.
+7. **Isolated verification:** automated synthetic fixtures exist only under test directories and always use temporary database and telemetry roots.
 
-## Milestones
+## Completed milestones
 
-- [x] M0: inspect the repository, verify source requirements, initialize Git, record versions and decisions.
-- [x] M1: monorepo, API, database migration, deterministic seed data, and complete responsive UI.
-- [x] M2: deterministic lap preparation, pace, braking, throttle, steering, and stint analysis with tests.
-- [x] M3: verified F1 2021 packet parser, native UDP listener, replay, recording, queueing, and diagnostics.
-- [x] M4: fallback coach, optional one-agent SDK path, structured evidence, provenance, and evaluation scenarios.
-- [x] M5: lint, typing, unit/API/E2E tests, production builds, browser screenshots, documentation, and handoff.
-
-## Definition of done
-
-The local acceptance path is verified and every executed command is recorded in `HANDOFF.md`. Cloud-coach execution and packets from a physical PS4 remain external-credential/hardware checks and are explicitly not claimed as executed.
+- Monorepo, API, empty-safe database initialization, and complete responsive UI.
+- Deterministic lap preparation, pace, braking, throttle, steering, and stint analysis.
+- Verified F1 2021 packet parser, native UDP listener, explicit replay, recording, queueing, and diagnostics.
+- Rule-based coach, bounded optional provider path, structured evidence, provenance, and evaluations.
+- PID-verified Windows service management, production builds, browser acceptance, documentation, and private release workflow.

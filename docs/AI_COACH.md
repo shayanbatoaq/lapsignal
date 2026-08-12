@@ -1,6 +1,6 @@
 # AI coach architecture
 
-LapSignal has one bounded language layer and one dependable deterministic coach. Analytics remains authoritative: a model does not calculate telemetry metrics, and raw high-frequency telemetry is never sent to a provider.
+LapSignal has one bounded language layer and one dependable deterministic coach. Analytics remains authoritative: a model does not calculate telemetry metrics, and raw high-frequency telemetry is never sent to a provider. Fresh databases contain no coaching content; reports are produced only for persisted collector/import sessions.
 
 ## Providers and configuration
 
@@ -59,3 +59,5 @@ Final states for that request:
 - `safe_fallback_verified: true`
 
 This verifies OpenRouter transport, the pinned provider/model route, strict structured output, durable diagnostics, and safe product behavior once with a synthetic fixture. It does **not** claim grounded live-provider acceptance and does **not** claim cloud coaching over a physical PS4 session. The physical telemetry path remains separately verified. No further paid verification attempt is recommended for this milestone.
+
+All current automated AI inputs are isolated test fixtures backed by temporary storage. They cannot appear in Sessions, Compare, Debrief, or Progress and they never trigger a provider request.

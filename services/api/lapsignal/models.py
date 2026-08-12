@@ -15,7 +15,7 @@ class TimestampMixin:
 class DriverProfile(TimestampMixin, Base):
     __tablename__ = "driver_profiles"
     id: Mapped[str] = mapped_column(String, primary_key=True)
-    display_name: Mapped[str] = mapped_column(String, default="Demo Driver")
+    display_name: Mapped[str] = mapped_column(String, default="Local Driver")
     experience_level: Mapped[str] = mapped_column(String, default="intermediate")
     input_device: Mapped[str] = mapped_column(String, default="controller")
     primary_interest: Mapped[str] = mapped_column(String, default="mixed")
@@ -66,7 +66,6 @@ class RaceSession(TimestampMixin, Base):
     input_device: Mapped[str] = mapped_column(String, index=True)
     started_at: Mapped[datetime] = mapped_column(DateTime)
     completed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
-    demo_data: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
     status: Mapped[str] = mapped_column(String, default="analyzed")
     best_lap_ms: Mapped[int | None] = mapped_column(Integer, nullable=True)
     consistency_score: Mapped[float | None] = mapped_column(Float, nullable=True)

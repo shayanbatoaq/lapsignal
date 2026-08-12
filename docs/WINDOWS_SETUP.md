@@ -16,18 +16,17 @@ Enable pnpm through Corepack and install both runtimes:
 
 ```powershell
 corepack pnpm setup
-corepack pnpm seed
 ```
 
-`corepack pnpm setup` installs the pnpm workspace and runs `uv sync --project services/api`. It does not write a global shim and does not require an Administrator terminal. If `corepack enable` returns EPERM under `C:\Program Files\nodejs`, skip it and keep using `corepack pnpm ...`.
+`corepack pnpm setup` installs both runtimes and runs the idempotent database initializer. The initializer creates schema and required static adapter/build rows only; it never inserts a session, lap, telemetry stream, analysis, finding, report, comparison, or progress entry. It does not write a global shim and does not require an Administrator terminal. If `corepack enable` returns EPERM under `C:\Program Files\nodejs`, skip it and keep using `corepack pnpm ...`.
 
-## Start demo mode
+## Start the application
 
 ```powershell
-pnpm dev:demo
+pnpm dev:app-start
 ```
 
-Open `http://localhost:3000`. Local metadata is written to `data\local\lapsignal.db`; normalized demo artifacts are Parquet files under `data\demo`. Both are reproducible with `pnpm seed`.
+Open `http://localhost:3000`. Local metadata is written to `data\local\lapsignal.db`; captures, normalized streams, and finalized artifacts stay below ignored local data directories. A fresh database remains empty until the collector receives telemetry or the user explicitly replays a local recording.
 
 LapSignal uses project-specific PID manifests under ignored `data\local\dev-services`. The manager verifies the executable, exact command markers, recorded working directory, process creation time, expected port owner, version, build, Git identity, AI schema, and Cloud-AI guard before it treats a service as owned or current. It never terminates a process only because it occupies port 3000, 8000, or UDP 20777.
 
@@ -68,7 +67,7 @@ corepack pnpm --filter @lapsignal/collector start doctor
 corepack pnpm collector:listen
 ```
 
-Do not place the collector in WSL: a native Windows UDP socket avoids virtual-network and firewall ambiguity. Captures stay under ignored `data\captures`; the bounded retry queue stays under ignored `data\local`. `scripts\lapsignal.ps1` also exposes `setup`, `seed`, `demo`, `live`, `collector`, `replay`, and `verify` actions.
+Do not place the collector in WSL: a native Windows UDP socket avoids virtual-network and firewall ambiguity. Captures stay under ignored `data\captures`; the bounded retry queue stays under ignored `data\local`. `scripts\lapsignal.ps1` exposes `setup`, `init`, `app`, `live`, `collector`, `replay`, and `verify` actions.
 
 The replay command accepts either LapSignal normalized JSONL or a local `.lsraw` recording. Raw replay uses the production F1 2021 parser and adapter, sends through the normal bounded API queue, and requests session finalization only after the queue drains:
 
@@ -80,4 +79,4 @@ Keep physical captures beneath ignored local storage. Replay reads the selected 
 
 ## Environment overrides
 
-Copy `.env.example` to `.env` only when necessary. Safe local defaults cover the database, data directory, ports, CORS, collector target, demo flag, and fallback coach. Never commit `.env` or paste an API key into a client-side `NEXT_PUBLIC_*` variable.
+Copy `.env.example` to `.env` only when necessary. Safe local defaults cover the database, data directory, ports, CORS, collector target, and fallback coach. Never commit `.env` or paste an API key into a client-side `NEXT_PUBLIC_*` variable.

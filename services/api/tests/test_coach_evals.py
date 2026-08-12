@@ -6,8 +6,9 @@ import pytest
 
 from lapsignal.ai import generate_with_fallback
 from lapsignal.analytics import analyze_session
+from lapsignal.coach import build_rule_based_report
 from lapsignal.database import SessionLocal
-from lapsignal.demo import build_fallback_report, get_demo_sessions
+from tests.fixtures.synthetic_sessions import get_synthetic_sessions
 
 SCENARIOS = [
     "early_braking",
@@ -29,14 +30,14 @@ SCENARIOS = [
 async def test_cloud_coach_requires_explicit_server_consent():
     with SessionLocal() as db:
         report = await generate_with_fallback(
-            db, get_demo_sessions()[0], {"ai_consent": False, "cloud_ai_enabled": True}
+            db, get_synthetic_sessions()[0], {"ai_consent": False, "cloud_ai_enabled": True}
         )
     assert report["label"] == "Rule-based coaching"
     assert report["provenance"]["provider"] == "rule_based"
 
 
 def _scenario(name: str) -> dict:
-    session = deepcopy(get_demo_sessions()[0])
+    session = deepcopy(get_synthetic_sessions()[0])
     session["id"] = f"eval-{name}"
     if name == "invalid_lap_contamination":
         session["laps"][1]["valid"] = False
@@ -71,7 +72,7 @@ def _scenario(name: str) -> dict:
                 elif name != "excessive_throttle_modulation" and index % 30 < 5:
                     sample["throttle_0_1"] = 0.0
     session.update(analyze_session(session))
-    session["report"] = build_fallback_report(session)
+    session["report"] = build_rule_based_report(session)
     return session
 
 

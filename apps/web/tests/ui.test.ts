@@ -1,7 +1,7 @@
 import { createElement } from "react";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { ConnectionState, DemoBanner, EvidenceCard, MetricCard, VersionBadge } from "@/components/UI";
+import { ConnectionState, EvidenceCard, MetricCard, VersionBadge } from "@/components/UI";
 
 describe("product UI primitives", () => {
   it("renders metric values with context", () => {
@@ -20,12 +20,6 @@ describe("product UI primitives", () => {
     expect(screen.getByText("Collector offline")).toBeInTheDocument();
     rerender(createElement(ConnectionState, { online: true }));
     expect(screen.getByText("Collector online")).toBeInTheDocument();
-  });
-
-  it("labels seeded content visibly", () => {
-    render(createElement(DemoBanner));
-    expect(screen.getByText("Demo data")).toBeInTheDocument();
-    expect(screen.getByText(/fixed random seed/i)).toBeInTheDocument();
   });
 
   it("renders finding evidence and confidence without color dependence", () => {

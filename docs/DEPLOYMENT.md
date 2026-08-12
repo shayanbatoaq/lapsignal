@@ -6,7 +6,6 @@ No infrastructure is created or deployed by this repository. The alpha's support
 
 ```powershell
 pnpm setup
-pnpm seed
 pnpm build
 pnpm api:dev
 ```

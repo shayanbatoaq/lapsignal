@@ -1,5 +1,4 @@
-import { DemoBanner } from "@/components/UI";
-import { getSessionSummaries } from "@/lib/data";
+import { getSessionSummariesResult } from "@/lib/data";
 import { SessionLibrary } from "./SessionLibrary";
 
-export default async function SessionsPage(){return <><DemoBanner/><SessionLibrary sessions={await getSessionSummaries()}/></>}
+export default async function SessionsPage(){const result=await getSessionSummariesResult();return <SessionLibrary sessions={result.sessions} status={result.status}/>}

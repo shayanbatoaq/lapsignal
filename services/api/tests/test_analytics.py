@@ -11,16 +11,16 @@ from lapsignal.analytics import (
     robust_consistency_score,
     throttle_metrics,
 )
-from lapsignal.demo import get_demo_sessions
+from tests.fixtures.synthetic_sessions import get_synthetic_sessions
 
 
 def test_invalid_laps_are_excluded():
-    session = get_demo_sessions()[0]
+    session = get_synthetic_sessions()[0]
     assert len(clean_laps(session["laps"])) < len(session["laps"])
 
 
 def test_invalid_laps_keep_technique_coaching_but_never_set_personal_best():
-    session = deepcopy(get_demo_sessions()[0])
+    session = deepcopy(get_synthetic_sessions()[0])
     for lap in session["laps"]:
         lap["valid"] = False
         lap["classification"] = "invalid"
@@ -40,7 +40,7 @@ def test_invalid_laps_keep_technique_coaching_but_never_set_personal_best():
 
 
 def test_distance_alignment_preserves_channels():
-    lap = get_demo_sessions()[0]["laps"][0]
+    lap = get_synthetic_sessions()[0]["laps"][0]
     aligned, limitations = resample_by_distance(lap["telemetry"], points=100)
     assert len(aligned) == 100
     assert aligned[0]["lap_distance_m"] == 0
@@ -49,14 +49,14 @@ def test_distance_alignment_preserves_channels():
 
 
 def test_large_gap_is_disclosed():
-    lap = get_demo_sessions()[0]["laps"][0]
+    lap = get_synthetic_sessions()[0]["laps"][0]
     sparse = lap["telemetry"][:20] + lap["telemetry"][60:]
     _, limitations = resample_by_distance(sparse, max_gap_m=80)
     assert limitations
 
 
 def test_theoretical_best_does_not_exceed_best_lap():
-    pace = pace_metrics(get_demo_sessions()[0]["laps"])
+    pace = pace_metrics(get_synthetic_sessions()[0]["laps"])
     assert pace["theoretical_best_ms"] <= pace["best_lap_ms"]
 
 
@@ -67,18 +67,18 @@ def test_consistency_penalizes_anomaly():
 
 
 def test_braking_zone_detection_and_throttle_pickup():
-    lap = get_demo_sessions()[0]["laps"][0]
+    lap = get_synthetic_sessions()[0]["laps"][0]
     assert len(braking_metrics(lap)) >= 4
     assert throttle_metrics(lap)["pickup_distance_m"] is not None
 
 
 def test_degradation_slope_detects_long_run_trend():
-    session = get_demo_sessions()[2]
+    session = get_synthetic_sessions()[2]
     assert analyze_session(session)["metrics"]["stint"]["pace_degradation_ms_per_lap"] > 0
 
 
 def test_missing_channels_return_limitations_not_claims():
-    session = deepcopy(get_demo_sessions()[1])
+    session = deepcopy(get_synthetic_sessions()[1])
     for lap in session["laps"]:
         lap["tyre_wear_pct"] = None
     result = analyze_session(session)
