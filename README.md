@@ -89,3 +89,7 @@ docs                  Operations and design documentation
 ```
 
 Automated synthetic inputs live only below test fixture directories, use temporary databases/data roots, and are unavailable through production routes. Start with [Architecture](ARCHITECTURE.md), [Windows setup](docs/WINDOWS_SETUP.md), [analytics](docs/ANALYTICS.md), and [AI coach design](docs/AI_COACH.md). The alpha is private-source: no open-source license is granted or included.
+
+## Public portfolio showcase
+
+The web workspace also has an explicit, read-only portfolio mode selected only by server-side `LAPSIGNAL_SHOWCASE=true`. It uses a compact fictionalized Spa programme, never falls back into local mode, and performs no API, collector, database, WebSocket, or provider calls. See [showcase data flow](docs/SHOWCASE_DATA_FLOW.md) and [exact Vercel dashboard settings](docs/VERCEL_SHOWCASE.md). This mode does not change the product version and must not be used as a source of physical-session evidence.

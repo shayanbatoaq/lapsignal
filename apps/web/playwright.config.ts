@@ -14,6 +14,7 @@ process.once("exit", () => {
 
 export default defineConfig({
   testDir: "./e2e",
+  testIgnore: "showcase.spec.ts",
   timeout: 30_000,
   fullyParallel: false,
   workers: 1,

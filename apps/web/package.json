@@ -2,6 +2,8 @@
   "name": "@lapsignal/web",
   "version": "0.1.0-alpha.4",
   "private": true,
+  "packageManager": "pnpm@11.16.0",
+  "engines": { "node": ">=22.13.0 <23" },
   "type": "module",
   "scripts": {
     "dev": "next dev --port 3000",
@@ -10,7 +12,8 @@
     "lint": "eslint . --max-warnings=0",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:e2e": "playwright test --project=desktop && playwright test --project=mobile"
+    "test:e2e": "playwright test --project=desktop && playwright test --project=mobile",
+    "test:e2e:showcase": "playwright test --config=playwright.showcase.config.ts"
   },
   "dependencies": {
     "@lapsignal/contracts": "workspace:*",

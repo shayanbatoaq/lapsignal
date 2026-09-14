@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowRight, Check, Gamepad2, RadioTower, ScanLine } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import styles from "./landing.module.css";
+import { isShowcaseMode } from "@/lib/runtime-server";
 
 const TRACKS = {
   spa: {
@@ -31,8 +32,10 @@ const TRACKS = {
 type TrackKey = keyof typeof TRACKS;
 
 export default async function MarketingPage() {
+  const showcase = isShowcaseMode();
   return (
     <div className={styles.shell}>
+      {showcase && <div className="showcase-banner" role="status"><div><strong>INTERACTIVE PRODUCT PREVIEW</strong><span>Representative telemetry · Read-only</span></div><Link href="/app">Open the preview <ArrowRight size={12}/></Link></div>}
       <header className={styles.header}>
         <nav className={styles.nav} aria-label="Marketing navigation">
           <Logo variant="dark" size={172} priority />

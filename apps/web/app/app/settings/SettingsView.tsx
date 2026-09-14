@@ -1,7 +1,7 @@
 "use client";
 
 import { Download, ExternalLink, MapPinned, ShieldCheck, Trash2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { SectionHeading, StateCard } from "@/components/UI";
 
 const API = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
@@ -77,7 +77,7 @@ const tabs = [
   ["about", "About"]
 ] as const;
 
-export function SettingsView() {
+export function SettingsView({ readOnly = false }: { readOnly?: boolean }) {
   const [tab, setTab] = useState<(typeof tabs)[number][0]>("profile");
   const [profile, setProfile] = useState(initial);
   const [ai, setAI] = useState<AIStatus | null>(null);
@@ -86,12 +86,17 @@ export function SettingsView() {
   const [calibrations, setCalibrations] = useState<CalibrationItem[]>([]);
   const [message, setMessage] = useState<string | null>(null);
 
-  const refreshCalibrations = async () => {
+  const refreshCalibrations = useCallback(async () => {
+    if (readOnly) return;
     const payload = await fetch(`${API}/v1/circuit-calibrations`, { cache: "no-store" }).then((response) => response.json());
     setCalibrations(payload.items ?? []);
-  };
+  }, [readOnly]);
 
   useEffect(() => {
+    if (readOnly) {
+      setAI({ provider: "disabled", configured: false, coach_model: "Unavailable in public preview", deep_model: "Unavailable in public preview", fallback_available: true, reachable: null, last_error_category: null, last_successful_request_time: null, canonical_env: "" });
+      return;
+    }
     void Promise.all([
       fetch(`${API}/v1/profile`).then((response) => response.json()).then(setProfile),
       fetch(`${API}/v1/ai/status`).then((response) => response.json()).then(setAI),
@@ -99,9 +104,10 @@ export function SettingsView() {
       fetch("/api/build").then((response) => response.json()).then(setWebBuild),
       refreshCalibrations()
     ]).catch(() => setMessage("A local service is offline."));
-  }, []);
+  }, [readOnly, refreshCalibrations]);
 
   const save = async (next: Profile) => {
+    if (readOnly) { setMessage("Available in the local application. Public preview settings are read-only."); return; }
     setProfile(next);
     try {
       const response = await fetch(`${API}/v1/profile`, {
@@ -116,6 +122,7 @@ export function SettingsView() {
   };
 
   const exportData = async () => {
+    if (readOnly) { setMessage("Available in the local application. No private or physical data is present here."); return; }
     const payload = await fetch(`${API}/v1/export`).then((response) => response.json());
     const url = URL.createObjectURL(new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" }));
     const anchor = document.createElement("a");
@@ -126,12 +133,14 @@ export function SettingsView() {
   };
 
   const deleteData = async () => {
+    if (readOnly) { setMessage("Available in the local application. The representative dataset cannot be changed."); return; }
     if (!confirm("Permanently delete all local user telemetry and saved sessions?")) return;
     const response = await fetch(`${API}/v1/local-data?confirm=${encodeURIComponent("DELETE LOCAL DATA")}`, { method: "DELETE" });
     setMessage(response.ok ? "Local telemetry and saved sessions deleted." : "Nothing was deleted.");
   };
 
   const resetCalibration = async (item: CalibrationItem) => {
+    if (readOnly) { setMessage("Available in the local application."); return; }
     if (!confirm(`Reset only the local refinement for ${item.circuit_name}? Packaged maps, telemetry seeds, and raw captures will be preserved.`)) return;
     const response = await fetch(
       `${API}/v1/circuit-calibrations/local/${encodeURIComponent(item.layout_fingerprint)}?confirm=${encodeURIComponent("RESET LOCAL REFINEMENT")}`,
@@ -150,9 +159,9 @@ export function SettingsView() {
     <>
       <div className="session-detail-head">
         <div>
-          <p className="eyebrow">Local-first controls</p>
+          <p className="eyebrow">{readOnly ? "Public preview controls" : "Local-first controls"}</p>
           <h2>Settings and privacy</h2>
-          <p>Cloud AI is opt-in. Raw telemetry remains local by design.</p>
+          <p>{readOnly ? "This deployment is read-only. Physical telemetry is not collected and Cloud AI is unavailable." : "Cloud AI is opt-in. Raw telemetry remains local by design."}</p>
         </div>
       </div>
       <div className="settings-layout">
@@ -168,14 +177,14 @@ export function SettingsView() {
             <>
               <SectionHeading eyebrow="Defaults" title="Driver profile" />
               <Setting title="Input device" note="Used when the adapter cannot identify the device.">
-                <select className="select" value={profile.input_device} onChange={(event) => void save({ ...profile, input_device: event.target.value as Profile["input_device"] })}>
+                <select className="select" disabled={readOnly} title={readOnly ? "Available in the local application" : undefined} value={profile.input_device} onChange={(event) => void save({ ...profile, input_device: event.target.value as Profile["input_device"] })}>
                   <option value="controller">Controller</option>
                   <option value="wheel">Wheel</option>
                   <option value="unknown">Unknown</option>
                 </select>
               </Setting>
               <Setting title="Units" note="Contracts remain metric internally.">
-                <select className="select" value={profile.units} onChange={(event) => void save({ ...profile, units: event.target.value as Profile["units"] })}>
+                <select className="select" disabled={readOnly} title={readOnly ? "Available in the local application" : undefined} value={profile.units} onChange={(event) => void save({ ...profile, units: event.target.value as Profile["units"] })}>
                   <option value="metric">Metric</option>
                   <option value="imperial">Imperial display</option>
                 </select>
@@ -186,7 +195,7 @@ export function SettingsView() {
           {tab === "circuits" && (
             <>
               <SectionHeading eyebrow="Beginner-first calibration" title="Circuit maps" />
-              <StateCard title="All 24 full circuits are ready">
+              <StateCard title={readOnly ? "Spa map included in this preview" : "All 24 full circuits are ready"}>
                 Telemetry seeds and licensed packaged maps appear immediately. Partial local calibration can improve positioning diagnostics, but it never replaces a complete circuit silhouette.
               </StateCard>
               <div className="calibration-settings-list">
@@ -234,10 +243,10 @@ export function SettingsView() {
                 <Row label="Last success" value={ai?.last_successful_request_time ? new Date(ai.last_successful_request_time).toLocaleString() : "Never"} />
                 <Row label="Last error" value={ai?.last_error_category ?? "None"} />
               </div>
-              <Toggle title="AI consent" note="Allow compact derived Evidence Bundle v1 to be used by the optional coach." value={profile.ai_consent} onChange={(value) => void save({ ...profile, ai_consent: value, cloud_ai_enabled: value ? profile.cloud_ai_enabled : false })} />
-              <Toggle title="Cloud AI" note="Server-side provider only. No raw captures, paths, identities, or network data." value={profile.cloud_ai_enabled} disabled={!profile.ai_consent} onChange={(value) => void save({ ...profile, cloud_ai_enabled: value })} />
-              <Toggle title="Post-session automatic coaching" note="Allow one debrief after durable finalization." value={profile.post_session_ai_enabled} disabled={!profile.cloud_ai_enabled} onChange={(value) => void save({ ...profile, post_session_ai_enabled: value })} />
-              <Toggle title="Per-lap coaching · experimental" note="Disabled by default; never runs per telemetry sample." value={profile.ai_live_lap_coaching} disabled={!profile.cloud_ai_enabled} onChange={(value) => void save({ ...profile, ai_live_lap_coaching: value })} />
+              <Toggle title="AI consent" note={readOnly ? "Disabled in the public preview. Available in the local application." : "Allow compact derived Evidence Bundle v1 to be used by the optional coach."} value={profile.ai_consent} disabled={readOnly} onChange={(value) => void save({ ...profile, ai_consent: value, cloud_ai_enabled: value ? profile.cloud_ai_enabled : false })} />
+              <Toggle title="Cloud AI" note={readOnly ? "No provider is available in this deployment." : "Server-side provider only. No raw captures, paths, identities, or network data."} value={profile.cloud_ai_enabled} disabled={readOnly || !profile.ai_consent} onChange={(value) => void save({ ...profile, cloud_ai_enabled: value })} />
+              <Toggle title="Post-session automatic coaching" note="Allow one debrief after durable finalization." value={profile.post_session_ai_enabled} disabled={readOnly || !profile.cloud_ai_enabled} onChange={(value) => void save({ ...profile, post_session_ai_enabled: value })} />
+              <Toggle title="Per-lap coaching · experimental" note="Disabled by default; never runs per telemetry sample." value={profile.ai_live_lap_coaching} disabled={readOnly || !profile.cloud_ai_enabled} onChange={(value) => void save({ ...profile, ai_live_lap_coaching: value })} />
               <StateCard title="Provider verification">
                 Cloud coaching runs only from a selected recorded session after both consent gates are enabled. This page performs no provider request.
               </StateCard>
@@ -251,23 +260,23 @@ export function SettingsView() {
             <>
               <SectionHeading eyebrow="Ownership" title="Export or delete local data" />
               <Setting title="Export summary" note="Profile, sessions, findings and provenance; no high-frequency traces.">
-                <button className="button secondary small" onClick={exportData}><Download size={14} /> Export</button>
+                <button className="button secondary small" disabled={readOnly} title={readOnly ? "Available in the local application" : undefined} onClick={exportData}><Download size={14} /> Export</button>
               </Setting>
               <Setting title="Delete local user telemetry" note="Removes saved sessions and local telemetry after explicit confirmation.">
-                <button className="button ghost small" onClick={deleteData}><Trash2 size={14} /> Delete</button>
+                <button className="button ghost small" disabled={readOnly} title={readOnly ? "Available in the local application" : undefined} onClick={deleteData}><Trash2 size={14} /> Delete</button>
               </Setting>
             </>
           )}
 
           {tab === "collector" && (
             <>
-              <SectionHeading eyebrow="F1 2021 on PS4" title="Collector connection" />
+              <SectionHeading eyebrow={readOnly ? "Local product capability" : "F1 2021 on PS4"} title={readOnly ? "Collector unavailable in public preview" : "Collector connection"} />
               <div className="technical-list">
                 <Row label="PowerShell" value="corepack pnpm collector:listen" />
                 <Row label="Bind" value="0.0.0.0:20777" />
                 <Row label="Format" value="2021" />
                 <Row label="Recommended send rate" value="20 Hz" />
-                <Row label="API" value="http://localhost:8000" />
+                <Row label="API" value={readOnly ? "Not contacted" : "http://localhost:8000"} />
               </div>
               <StateCard title="Same private network required">
                 Enter the laptop IPv4 address in F1 2021 UDP settings and allow inbound UDP 20777 on the Private firewall profile if needed.
@@ -281,8 +290,8 @@ export function SettingsView() {
               <div className="technical-list">
                 <Row label="Application" value={webBuild?.application_version ?? apiBuild?.application_version ?? "0.1.0-alpha.4"} />
                 <Row label="Build" value={String(webBuild?.build_number ?? apiBuild?.build_number ?? 4)} />
-                <Row label="Web process" value={webBuild ? `${webBuild.git_commit} · PID ${webBuild.process_id}` : "Checking…"} />
-                <Row label="API process" value={apiBuild ? `${apiBuild.git_commit} · PID ${apiBuild.process_id}` : "Checking…"} />
+                <Row label="Web process" value={readOnly ? "Vercel-hosted preview" : webBuild ? `${webBuild.git_commit} · PID ${webBuild.process_id}` : "Checking…"} />
+                <Row label="API process" value={readOnly ? "Not present" : apiBuild ? `${apiBuild.git_commit} · PID ${apiBuild.process_id}` : "Checking…"} />
                 <Row label="Telemetry schema" value="1" />
                 <Row label="Coach prompt" value="race-engineer-v3" />
               </div>

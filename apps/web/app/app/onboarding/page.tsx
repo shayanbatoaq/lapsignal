@@ -3,6 +3,7 @@
 import { ArrowLeft, ArrowRight, CheckCircle2, Gamepad2, Radio, RotateCcw, Wifi } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useLiveStatus } from "@/components/LiveStatus";
 
 const steps = [
   { key: "experience_level", title: "Where are you starting from?", copy: "LapSignal adjusts the density and language of coaching—not the evidence standard.", options: [["beginner","Learning the foundations"],["intermediate","Building consistency"],["advanced","Refining technique"]] },
@@ -15,10 +16,12 @@ type Profile = { experience_level: string; input_device: string; primary_interes
 
 export default function OnboardingPage() {
   const router = useRouter();
+  const { runtimeMode } = useLiveStatus();
+  const readOnly = runtimeMode === "showcase";
   const [step, setStep] = useState(0);
   const [profile, setProfile] = useState<Profile>({ experience_level: "intermediate", input_device: "controller", primary_interest: "mixed", coaching_goal: "consistency" });
-  useEffect(() => { const saved = localStorage.getItem("lapsignal-profile"); if (saved) setProfile(JSON.parse(saved)); }, []);
-  const finish = () => { localStorage.setItem("lapsignal-profile", JSON.stringify(profile)); localStorage.setItem("lapsignal-onboarded", "true"); router.push("/app"); };
+  useEffect(() => { if (readOnly) return; const saved = localStorage.getItem("lapsignal-profile"); if (saved) setProfile(JSON.parse(saved)); }, [readOnly]);
+  const finish = () => { if (!readOnly) { localStorage.setItem("lapsignal-profile", JSON.stringify(profile)); localStorage.setItem("lapsignal-onboarded", "true"); } router.push("/app"); };
   const select = (key: keyof Profile, value: string) => setProfile((current) => ({ ...current, [key]: value }));
   const content = steps[step];
   return <div className="onboarding"><div className="onboarding-progress" aria-label={`Step ${step+1} of 6`}>{Array.from({length:6},(_,index)=><span className={index<=step?"active":""} key={index}/>)}</div><section className="onboarding-card">

@@ -17,6 +17,8 @@ import { useState } from "react";
 import { Logo } from "./Logo";
 import { useLiveStatus } from "./LiveStatus";
 
+const portfolioUrl = process.env.NEXT_PUBLIC_PORTFOLIO_URL ?? "https://shayan.patricians.pk";
+
 const navigation = [
   { href: "/app", label: "Overview", icon: CircleGauge },
   { href: "/app/live", label: "Live session", icon: Radio },
@@ -30,7 +32,8 @@ const navigation = [
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
-  const { status } = useLiveStatus();
+  const { status, runtimeMode } = useLiveStatus();
+  const isShowcase = runtimeMode === "showcase";
   const title = navigation.find((item) => pathname === item.href || (item.href !== "/app" && pathname.startsWith(item.href)))?.label ?? "Session detail";
   return (
     <div className={`app-shell ${collapsed ? "nav-collapsed" : ""}`}>
@@ -53,17 +56,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           })}
         </nav>
         <div className="sidebar-foot">
-          <div className="collector-mini"><span className={`status-dot ${status.online ? "live" : "idle"}`} /> <span>{status.state === "LIVE" ? "Collector live" : status.state === "REPLAY" ? "Replay active" : "Collector idle"}</span></div>
+          <div className="collector-mini"><span className={`status-dot ${status.online ? "live" : "idle"}`} /> <span>{isShowcase ? "Read-only preview" : status.state === "LIVE" ? "Collector live" : status.state === "REPLAY" ? "Replay active" : "Collector idle"}</span></div>
           <small>v0.1.0-alpha.4 · build 4</small>
+          {isShowcase && <a className="builder-link" href={portfolioUrl} target="_blank" rel="noreferrer">Built by Shayan Batoaq</a>}
         </div>
       </aside>
       <div className="app-workspace">
+        {isShowcase && <div className="showcase-banner" role="status"><div><strong>INTERACTIVE PRODUCT PREVIEW</strong><span>Representative telemetry · Read-only</span></div><details><summary aria-label="About this product preview">What is this?</summary><p>This public preview uses representative telemetry to demonstrate LapSignal’s interface and evidence-backed analysis. The full local application records physical F1 telemetry through its Windows collector.</p></details></div>}
         <header className="topbar">
           <Logo className="mobile-brand" variant="symbol" size={42} priority href="/app" />
           <div className="topbar-heading"><p className="eyebrow">Pit-wall workspace</p><h1>{title}</h1></div>
           <div className="topbar-status">
             <span className="status-chip"><Activity size={14} /> {status.source_label}</span>
-            <span className={`status-chip ${status.online ? "" : "muted"}`}><span className={`status-dot ${status.online ? "live" : "idle"}`} /> {status.online ? "Collector connected" : "Collector offline"}</span>
+            <span className={`status-chip ${status.online ? "" : "muted"}`}><span className={`status-dot ${status.online ? "live" : "idle"}`} /> {isShowcase ? "No physical collector" : status.online ? "Collector connected" : "Collector offline"}</span>
           </div>
         </header>
         <main className="app-main">{children}</main>

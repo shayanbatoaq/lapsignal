@@ -10,9 +10,10 @@ import type { Lap, SessionDetail } from "@/lib/types";
 import { formatLapTime } from "@lapsignal/telemetry-domain";
 import { PerformanceModeControl } from "../PerformanceModeControl";
 import { ProcessingSessionState, SessionRequestState } from "./SessionDetailState";
+import { isShowcaseMode } from "@/lib/runtime-server";
 
 export default async function SessionDetailPage({ params }: { params: Promise<{ sessionId: string }> }) {
-  const { sessionId } = await params;
+  const sessionId = decodeURIComponent((await params).sessionId);
   const result = await getSessionDetail(sessionId);
   if (result.status === "not_found") notFound();
   if (result.status === "processing") return <ProcessingSessionState/>;
@@ -21,6 +22,7 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
 }
 
 export async function SessionDetailContent({ session }: { session: SessionDetail }) {
+  const readOnly = isShowcaseMode();
   const pace = session.metrics.pace;
   const stint = session.metrics.stint;
   const clean = session.laps.filter((lap) => lap.valid);
@@ -36,12 +38,12 @@ export async function SessionDetailContent({ session }: { session: SessionDetail
         <Link className="tag" href="/app/sessions"><ArrowLeft size={12}/> Session library</Link>
         <h2>{session.track_name}</h2>
         <p>{session.game_label} · {session.car_class} · {session.session_type} · {session.input_device}</p>
-        <PerformanceModeControl sessionId={session.id} initial={session.performance_mode ?? "unknown"} source={session.performance_mode_source ?? "unknown"}/>
+        <PerformanceModeControl sessionId={session.id} initial={session.performance_mode ?? "unknown"} source={session.performance_mode_source ?? "unknown"} readOnly={readOnly}/>
       </div>
       <div className="detail-actions">
         <Link className="button secondary small" href={`/app/compare?session=${session.id}`}><Columns3 size={14}/> Compare laps</Link>
         <Link className="button small" href={`/app/coach?session=${session.id}`}><ListChecks size={14}/> Open debrief</Link>
-        <button className="icon-button" aria-label="Export summary"><Download size={15}/></button>
+        <button className="icon-button" aria-label="Export summary" disabled={readOnly} title={readOnly ? "Available in the local application" : undefined}><Download size={15}/></button>
       </div>
     </div>
     <div className="dashboard-grid">

@@ -1,6 +1,7 @@
 import { Database } from "lucide-react";
 import { StateCard } from "./UI";
 import type { SessionDetail } from "@/lib/types";
+import { isShowcaseMode } from "@/lib/runtime-server";
 
 type Metrics = SessionDetail["metrics"];
 
@@ -9,7 +10,8 @@ function recordHasValues(value: Record<string, unknown> | null): boolean {
 }
 
 export function SessionStorageBanner() {
-  return <div className="session-source-banner" role="status"><Database size={17} aria-hidden="true"/><div><strong>Saved telemetry</strong><span>Stored locally · collector connection not required</span></div></div>;
+  const showcase = isShowcaseMode();
+  return <div className="session-source-banner" role="status"><Database size={17} aria-hidden="true"/><div><strong>{showcase ? "Representative telemetry" : "Saved telemetry"}</strong><span>{showcase ? "Bundled product-preview fixture · read-only" : "Stored locally · collector connection not required"}</span></div></div>;
 }
 
 export function AnalysisCoverage({ metrics }: { metrics: Metrics }) {
